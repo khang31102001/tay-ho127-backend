@@ -1,6 +1,6 @@
-namespace AdminPlatform.Modules.Identity.Application;
+using AdminPlatform.Common.Security;
 
-public sealed record UserPermissionsSnapshot(IReadOnlyCollection<string> Roles, IReadOnlyCollection<string> Permissions);
+namespace AdminPlatform.Modules.Identity.Application;
 
 /// <summary>Port the Identity module depends on to resolve a user's roles/permissions when issuing a JWT,
 /// without referencing the AccessControl module's project directly. The real implementation lives in the
