@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.SharedKernel\AdminPlatform.SharedKernel.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.Common\AdminPlatform.Common.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\AdminPlatform.Modules.Identity\AdminPlatform.Modules.Identity.csproj" />

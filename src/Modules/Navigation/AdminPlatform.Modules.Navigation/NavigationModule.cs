@@ -21,6 +21,7 @@ public static class NavigationModule
         {
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__ef_migrations_history", NavigationDbContext.Schema));
+            options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(
                 sp.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
                 sp.GetRequiredService<AuditLogSinkInterceptor>());

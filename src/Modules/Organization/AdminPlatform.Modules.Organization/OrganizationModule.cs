@@ -23,6 +23,7 @@ public static class OrganizationModule
         {
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__ef_migrations_history", OrganizationDbContext.Schema));
+            options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(
                 sp.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
                 sp.GetRequiredService<AuditLogSinkInterceptor>());

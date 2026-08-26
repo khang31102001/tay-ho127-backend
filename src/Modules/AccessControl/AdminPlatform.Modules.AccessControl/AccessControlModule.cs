@@ -22,6 +22,7 @@ public static class AccessControlModule
         {
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__ef_migrations_history", AccessControlDbContext.Schema));
+            options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(
                 sp.GetRequiredService<AuditableEntitySaveChangesInterceptor>(),
                 sp.GetRequiredService<AuditLogSinkInterceptor>());

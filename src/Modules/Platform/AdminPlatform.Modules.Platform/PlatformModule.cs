@@ -25,6 +25,7 @@ public static class PlatformModule
         {
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__ef_migrations_history", PlatformDbContext.Schema));
+            options.UseSnakeCaseNamingConvention();
             // Safe to include the audit sink interceptor here too: AuditLog itself is a plain Entity, not
             // an AuditableEntity, so writing an AuditLog row never triggers another audit event.
             options.AddInterceptors(
