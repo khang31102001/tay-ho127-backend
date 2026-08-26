@@ -3,6 +3,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 
   <ItemGroup>

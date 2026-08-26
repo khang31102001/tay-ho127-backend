@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Microsoft.AspNetCore.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\AdminPlatform.SharedKernel\AdminPlatform.SharedKernel.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\AdminPlatform.Common\AdminPlatform.Common.csproj" />
   </ItemGroup>
