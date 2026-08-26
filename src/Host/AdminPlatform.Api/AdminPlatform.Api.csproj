@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Enrichers.Environment" />
+    <PackageReference Include="Serilog.Enrichers.CorrelationId" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.SharedKernel\AdminPlatform.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.Common\AdminPlatform.Common.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\AdminPlatform.Modules.Identity\AdminPlatform.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\Modules\AccessControl\AdminPlatform.Modules.AccessControl\AdminPlatform.Modules.AccessControl.csproj" />
+    <ProjectReference Include="..\..\Modules\Organization\AdminPlatform.Modules.Organization\AdminPlatform.Modules.Organization.csproj" />
+    <ProjectReference Include="..\..\Modules\Navigation\AdminPlatform.Modules.Navigation\AdminPlatform.Modules.Navigation.csproj" />
+    <ProjectReference Include="..\..\Modules\Platform\AdminPlatform.Modules.Platform\AdminPlatform.Modules.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>AdminPlatform.Migrator</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.SharedKernel\AdminPlatform.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\AdminPlatform.Common\AdminPlatform.Common.csproj" />
+    <ProjectReference Include="..\..\Modules\Identity\AdminPlatform.Modules.Identity\AdminPlatform.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\Modules\AccessControl\AdminPlatform.Modules.AccessControl\AdminPlatform.Modules.AccessControl.csproj" />
+    <ProjectReference Include="..\..\Modules\Organization\AdminPlatform.Modules.Organization\AdminPlatform.Modules.Organization.csproj" />
+    <ProjectReference Include="..\..\Modules\Navigation\AdminPlatform.Modules.Navigation\AdminPlatform.Modules.Navigation.csproj" />
+    <ProjectReference Include="..\..\Modules\Platform\AdminPlatform.Modules.Platform\AdminPlatform.Modules.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

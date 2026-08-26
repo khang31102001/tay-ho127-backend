@@ -1,0 +1,47 @@
+# Build results
+bin/
+obj/
+out/
+publish/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# EF Core
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+*.pfx
+*.pem
+appsettings.*.local.json
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Old/backup git metadata kept locally, never pushed
+.git.broken-backup-*/
