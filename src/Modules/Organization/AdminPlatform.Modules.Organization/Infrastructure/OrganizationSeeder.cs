@@ -13,7 +13,9 @@ public static class OrganizationSeeder
     public const string SampleDepartmentCode = "general";
     public const string SampleBrandCode = "main";
 
-    public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
+    /// <summary>Returns the sample Organization's id so the Migrator can pass it to modules that seed
+    /// their own Organization-scoped sample data (e.g. Platform's sample FiscalYear).</summary>
+    public static async Task<Guid> SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var db = services.GetRequiredService<IOrganizationDbContext>();
 
@@ -40,5 +42,7 @@ public static class OrganizationSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        return organization.Id;
     }
 }
