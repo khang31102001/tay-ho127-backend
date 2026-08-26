@@ -6,6 +6,11 @@ Role-Based + Permission-Based authorization, dynamic menus, audit logging,
 and a deployment-safe migration story — built as a foundation for future
 internal admin systems, not a single branded app.
 
+> Extending this codebase? See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+> and [`docs/DEVELOPMENT_GUIDE.md`](docs/DEVELOPMENT_GUIDE.md) — the second
+> one is a step-by-step guide to adding a new module, a new feature, or a new
+> entity/permission/menu using this codebase's own conventions.
+
 ## Architecture
 
 Five business modules, each a single project with internal
