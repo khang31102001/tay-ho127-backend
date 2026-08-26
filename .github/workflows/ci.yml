@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore AdminPlatform.sln
+
+      - name: Format check (lint)
+        run: dotnet format AdminPlatform.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build AdminPlatform.sln --no-restore -c Release
+
+      - name: Unit tests
+        run: dotnet test tests/AdminPlatform.UnitTests/AdminPlatform.UnitTests.csproj --no-build -c Release --logger "trx;LogFileName=unit.trx" --results-directory TestResults
+
+      - name: Architecture tests
+        run: dotnet test tests/AdminPlatform.ArchitectureTests/AdminPlatform.ArchitectureTests.csproj --no-build -c Release --logger "trx;LogFileName=architecture.trx" --results-directory TestResults
+
+      - name: Migration validation (no pending model changes)
+        run: |
+          dotnet tool install --global dotnet-ef --version 8.*
+          for pair in \
+            "src/Modules/Identity/AdminPlatform.Modules.Identity/AdminPlatform.Modules.Identity.csproj:AdminPlatform.Modules.Identity.Infrastructure.IdentityDbContext" \
+            "src/Modules/AccessControl/AdminPlatform.Modules.AccessControl/AdminPlatform.Modules.AccessControl.csproj:AdminPlatform.Modules.AccessControl.Infrastructure.AccessControlDbContext" \
+            "src/Modules/Organization/AdminPlatform.Modules.Organization/AdminPlatform.Modules.Organization.csproj:AdminPlatform.Modules.Organization.Infrastructure.OrganizationDbContext" \
+            "src/Modules/Navigation/AdminPlatform.Modules.Navigation/AdminPlatform.Modules.Navigation.csproj:AdminPlatform.Modules.Navigation.Infrastructure.NavigationDbContext" \
+            "src/Modules/Platform/AdminPlatform.Modules.Platform/AdminPlatform.Modules.Platform.csproj:AdminPlatform.Modules.Platform.Infrastructure.PlatformDbContext" ; do
+            project="${pair%%:*}"
+            context="${pair##*:}"
+            echo "::group::has-pending-model-changes — $context"
+            dotnet ef migrations has-pending-model-changes --project "$project" --context "$context"
+            echo "::endgroup::"
+          done
+        env:
+          ConnectionStrings__Default: "Host=localhost;Database=adminplatform;Username=postgres;Password=postgres"
+
+      - name: Integration tests (Testcontainers — needs Docker, available on this runner)
+        run: dotnet test tests/AdminPlatform.IntegrationTests/AdminPlatform.IntegrationTests.csproj --no-build -c Release --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
