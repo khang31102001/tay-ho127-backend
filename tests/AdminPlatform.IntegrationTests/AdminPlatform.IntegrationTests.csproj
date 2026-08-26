@@ -20,6 +20,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Host\AdminPlatform.Api\AdminPlatform.Api.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\AdminPlatform.Common\AdminPlatform.Common.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Identity\AdminPlatform.Modules.Identity\AdminPlatform.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\AccessControl\AdminPlatform.Modules.AccessControl\AdminPlatform.Modules.AccessControl.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Organization\AdminPlatform.Modules.Organization\AdminPlatform.Modules.Organization.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Navigation\AdminPlatform.Modules.Navigation\AdminPlatform.Modules.Navigation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Platform\AdminPlatform.Modules.Platform\AdminPlatform.Modules.Platform.csproj" />
   </ItemGroup>
 
 </Project>
