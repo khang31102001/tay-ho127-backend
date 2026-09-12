@@ -19,6 +19,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Core" Version="8.0.11" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2" />
+    <!-- Verifies Google ID tokens server-side for Customer Google Sign-In (signature/audience/issuer/expiry
+         against Google's published certs) — never trust a client-supplied Google profile without this. -->
+    <PackageVersion Include="Google.Apis.Auth" Version="1.68.0" />
 
     <!-- Validation -->
     <PackageVersion Include="FluentValidation" Version="11.9.2" />

@@ -2,6 +2,8 @@ using AdminPlatform.Common;
 using AdminPlatform.Migrator;
 using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Customer;
+using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Application.Users;
@@ -43,6 +45,7 @@ appBuilder.Services.AddAccessControlModule(appBuilder.Configuration);
 appBuilder.Services.AddOrganizationModule(appBuilder.Configuration);
 appBuilder.Services.AddNavigationModule(appBuilder.Configuration);
 appBuilder.Services.AddPlatformModule(appBuilder.Configuration);
+appBuilder.Services.AddCustomerModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -95,6 +98,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
 
     logger.LogInformation("Applying Platform module migrations...");
     await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
+
+    logger.LogInformation("Applying Customer module migrations...");
+    await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
 
     logger.LogInformation("All migrations applied.");
 }

@@ -15,6 +15,7 @@ public class LayeringTests
         typeof(Modules.Organization.OrganizationModule).Assembly,
         typeof(Modules.Navigation.NavigationModule).Assembly,
         typeof(Modules.Platform.PlatformModule).Assembly,
+        typeof(Modules.Customer.CustomerModule).Assembly,
     }.Select(a => new object[] { a });
 
     [Theory]

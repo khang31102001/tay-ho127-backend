@@ -2,13 +2,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using AdminPlatform.Common.Abstractions;
-using AdminPlatform.Common.Security;
-using AdminPlatform.Modules.Identity.Application;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace AdminPlatform.Modules.Identity.Infrastructure;
+namespace AdminPlatform.Common.Security;
 
+/// <summary>Shared JWT issuing/refresh-token infrastructure. Lives in Common (alongside JwtOptions, which it
+/// binds) so every module issuing its own token pairs (Identity's admin users, Customer's local/Google
+/// accounts, ...) signs with the exact same reviewed implementation instead of duplicating signing code.
+/// Callers embed whichever claims identify their own principal (see AppClaimTypes.AccountType) — this class
+/// has no notion of "admin" vs "customer".</summary>
 internal sealed class JwtTokenService : IJwtTokenService
 {
     private readonly JwtOptions _options;

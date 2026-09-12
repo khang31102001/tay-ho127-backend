@@ -1,0 +1,300 @@
+# TASK — Build Customer Module + Customer Authentication
+
+## Context
+
+Hãy xây dựng module `Customer` dựa trên database design sau:
+
+```dbml
+Table customers {
+  id varchar [pk]
+  customer_code varchar [unique, not null]
+  full_name varchar [not null]
+  phone varchar [not null]
+  email varchar
+  avatar_media_id varchar [ref: > media.id]
+  date_of_birth date
+  gender gender_type
+  status entity_status [not null, default: 'active']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+}
+
+Table customer_addresses {
+  id varchar [pk]
+  customer_id varchar [ref: > customers.id, not null]
+  receiver_name varchar [not null]
+  phone varchar [not null]
+  address_line varchar [not null]
+  ward varchar
+  district varchar
+  province varchar
+  address_note text
+  is_default boolean [not null, default: false]
+}
+
+1. Đọc Architecture trước khi code
+
+Trước tiên phải đọc:
+
+CLAUDE.md
+docs/ARCHITECTURE.md
+docs/DEVELOPMENT_GUIDE.md
+.claude/rules
+.claude/skills liên quan
+Auth/Admin module hiện tại
+các module có implementation pattern tương tự.
+
+Mục tiêu:
+
+reuse architecture/pattern hiện tại;
+không tạo architecture mới -> nếu cần thiết thì đề xuất để tao duyệt -> trình bày lý do cho tao các kiểu;
+không làm ảnh hưởng Admin Authentication đang hoạt động.
+2. Customer Module
+
+Implement:
+
+Customer
+Create customer
+Get customer profile
+Update profile
+Update avatar
+Status management nếu cần.
+Customer Address
+Create address
+Update address
+Delete address
+Get customer addresses
+Set default address.
+
+Business rule:
+
+Một Customer có nhiều Address nhưng chỉ được có tối đa một is_default = true.
+
+3. Customer Authentication
+
+Customer phải hỗ trợ 2 phương thức đăng nhập:
+
+Method 1 — Local Account
+
+Flow:
+
+Register
+→ Login
+→ Access Token
+→ Refresh Token
+→ Authenticated Customer
+
+Register tối thiểu hỗ trợ:
+
+Full Name
+Phone
+Email
+Password
+
+Password:
+
+tuyệt đối không lưu plain text;
+sử dụng password hashing theo security pattern hiện tại.
+Method 2 — Google Login
+
+Flow:
+
+Google OAuth
+→ Verify Google identity/token
+→ tìm Customer hiện tại
+→ nếu chưa tồn tại thì tạo Customer
+→ nếu đã tồn tại thì liên kết identity
+→ phát hành Access Token / Refresh Token của hệ thống.
+
+Không sử dụng Google token làm session token chính của application.
+
+4. Auth Persistence Design
+
+Database hiện tại chưa thể hiện password/provider credentials.
+
+Hãy phân tích architecture hiện tại và thiết kế phần persistence cần thiết cho Customer Auth.
+
+Ví dụ có thể cần:
+
+customer_auth_identities
+
+hoặc cấu trúc tương đương:
+
+id
+customer_id
+provider // local | google
+provider_user_id
+email
+password_hash // local only
+created_at
+updated_at
+
+Nếu architecture hiện tại đã có Auth Identity/Credential pattern có thể reuse thì ưu tiên reuse.
+
+KHÔNG tự ý thêm field password trực tiếp vào customers nếu architecture không phù hợp.
+
+Nếu cần thay đổi Database Schema:
+→ báo cáo thay đổi trước khi tạo migration.
+
+5. Account Linking
+
+Xử lý trường hợp:
+
+Customer đăng ký bằng Email/Password
+sau đó Login Google bằng cùng email.
+
+Không tự động tạo duplicate Customer.
+
+Phân tích và implement rule an toàn để:
+
+Local Account
++
+Google Identity
+↓
+same Customer
+
+Phải tránh Account Takeover.
+
+6. Token / Session
+
+Reuse Auth infrastructure hiện tại nếu phù hợp:
+
+JWT
+Access Token
+Refresh Token
+Token expiration
+Refresh Token rotation/revocation
+Logout.
+
+Customer JWT phải có identity rõ ràng, ví dụ:
+
+sub
+customer_id
+account_type = customer
+
+Không đưa Admin Role/Permission vào Customer nếu không cần.
+
+7. Security Boundary
+
+Phải đảm bảo:
+
+Customer Authentication
+≠
+Admin Authentication
+
+Customer token không được truy cập Admin API.
+
+Admin token không tự động được coi là Customer.
+
+Nếu dùng chung JWT infrastructure thì phải có cơ chế phân biệt:
+
+account_type
+hoặc
+audience
+hoặc security mechanism tương đương theo architecture hiện tại.
+
+8. API dự kiến
+
+Customer Auth:
+
+POST /api/customer/auth/register
+POST /api/customer/auth/login
+POST /api/customer/auth/google
+POST /api/customer/auth/refresh
+POST /api/customer/auth/logout
+
+Customer:
+
+GET /api/customers/me
+PUT /api/customers/me
+
+Address:
+
+GET /api/customers/me/addresses
+POST /api/customers/me/addresses
+PUT /api/customers/me/addresses/{id}
+DELETE /api/customers/me/addresses/{id}
+PUT /api/customers/me/addresses/{id}/default
+
+Tên endpoint có thể điều chỉnh theo convention hiện tại của project.
+
+9. Implementation Flow
+
+Triển khai theo architecture hiện tại:
+
+Domain
+→ Entity / Aggregate
+→ EF Core Configuration
+→ Application Contract
+→ DTO
+→ Validation
+→ Auth Service / Use Case / Handler
+→ Infrastructure
+→ JWT / Google Authentication
+→ API
+→ Migration
+→ Tests
+
+Không code tất cả một cách tùy ý ngoài architecture hiện tại.
+
+10. Tests
+
+Tối thiểu test:
+
+Register Customer
+Duplicate Email/Phone
+Login đúng password
+Login sai password
+Google Login customer mới
+Google Login customer đã tồn tại
+Link Google với account hiện tại
+Refresh Token
+Logout / revoke token
+Customer token không truy cập được Admin API
+CRUD Address
+chỉ một default address/customer.
+Constraints
+Không làm hỏng Admin Auth hiện tại.
+Không refactor Admin Auth nếu không thực sự cần.
+Không dùng chung AdminUser với Customer.
+Không lưu password plaintext.
+Không trust dữ liệu Google từ Frontend nếu Backend chưa verify.
+Không tạo duplicate Customer khi một người dùng nhiều login provider.
+Không tự thay đổi schema đã chốt ngoài phần Customer Auth thực sự cần.
+Nếu phát hiện architecture/database conflict → báo trước khi thay đổi.
+Output
+
+Sau khi hoàn thành, báo cáo:
+
+Architecture Customer/Auth đã áp dụng
+Files created
+Files modified
+Database changes
+Migration
+API endpoints
+Local Login flow
+Google Login flow
+Token/Auth flow
+Security boundary với Admin
+Tests
+Assumptions / issues còn lại
+
+Mục tiêu cuối:
+
+Customer
+├── Profile
+├── Addresses
+└── Authentication
+├── Email/Password
+└── Google OAuth
+↓
+Access Token
+Refresh Token
+↓
+Customer APIs
+
+Trong khi:
+
+Admin Authentication
+
+vẫn hoạt động độc lập và không bị breaking change.

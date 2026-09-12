@@ -6,7 +6,21 @@ description: Design, create, or normalize a maintainable ASP.NET Core Web API co
 
 # Bootstrap ASP.NET Core API
 
-## 1. Purpose
+## 0. This Repository Already Has a Foundation
+
+This is not a greenfield project. `docs/ARCHITECTURE.md` documents an established **modular monolith**: one ASP.NET Core process, independent modules (`Identity`, `AccessControl`, `Organization`, `Navigation`, `Platform`) each as a single project with `Domain/Application/Infrastructure/Api` folders, one shared PostgreSQL database with one schema per module, no generic repository, no MediatR, no AutoMapper — see `build-backend-feature`'s §3 for the full confirmed pattern.
+
+For this repository, treat this skill's applicable scope as:
+
+* **Mode B (Normalize)** — only when asked to fix a genuine structural inconsistency, not to impose a different preferred style.
+* **Adding a new module** that follows the existing four-folder pattern (copy `Identity`'s shape: `<Module>Module.cs` entry point, `I<Module>DbContext` port, its own schema).
+* Foundational/cross-cutting infrastructure changes in `BuildingBlocks/AdminPlatform.Common` or `AdminPlatform.SharedKernel` — these are genuinely shared and changing them affects every module.
+
+For building one business capability inside an existing module, use `build-backend-feature` instead — it already encodes this repo's real conventions end-to-end and won't rediscover them from generic principles. For a single endpoint change, use `build-api-endpoint`. The general principles below (§1 onward) are still useful background — read them as *validated by* this project's existing design, not as a blank-slate template to apply over it.
+
+---
+
+# 1. Purpose
 
 Use this skill when the task requires:
 

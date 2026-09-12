@@ -1,3 +1,4 @@
+using AdminPlatform.Common.Security;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Domain;
 using Microsoft.EntityFrameworkCore;

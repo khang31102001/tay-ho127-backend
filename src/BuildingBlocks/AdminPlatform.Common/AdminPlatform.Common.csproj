@@ -5,6 +5,8 @@
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Npgsql" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
   </ItemGroup>
 
   <ItemGroup>

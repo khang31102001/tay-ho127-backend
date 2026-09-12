@@ -29,6 +29,12 @@ public static class CommonServiceCollectionExtensions
 
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, AccountTypeAuthorizationHandler>();
+
+        // Shared local-credential/JWT infrastructure — every token-issuing module (Identity, Customer, ...)
+        // depends on these interfaces rather than each rolling its own hashing/signing code.
+        services.TryAddScoped<IPasswordHasher, PasswordHasherAdapter>();
+        services.TryAddScoped<IJwtTokenService, JwtTokenService>();
 
         return services;
     }

@@ -1,4 +1,5 @@
 using AdminPlatform.Common.Pagination;
+using AdminPlatform.Common.Security;
 using AdminPlatform.Modules.Identity.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;

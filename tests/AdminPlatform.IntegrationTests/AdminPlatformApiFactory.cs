@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using AdminPlatform.Modules.AccessControl.Api;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity.Api;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Infrastructure;
@@ -62,6 +63,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         await services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
 
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
         var admin = await services.GetRequiredService<IUserLookupService>().FindByEmailAsync(AdminEmail, CancellationToken.None);
