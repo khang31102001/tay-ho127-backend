@@ -43,7 +43,8 @@ jobs:
             "src/Modules/AccessControl/AdminPlatform.Modules.AccessControl/AdminPlatform.Modules.AccessControl.csproj:AdminPlatform.Modules.AccessControl.Infrastructure.AccessControlDbContext" \
             "src/Modules/Organization/AdminPlatform.Modules.Organization/AdminPlatform.Modules.Organization.csproj:AdminPlatform.Modules.Organization.Infrastructure.OrganizationDbContext" \
             "src/Modules/Navigation/AdminPlatform.Modules.Navigation/AdminPlatform.Modules.Navigation.csproj:AdminPlatform.Modules.Navigation.Infrastructure.NavigationDbContext" \
-            "src/Modules/Platform/AdminPlatform.Modules.Platform/AdminPlatform.Modules.Platform.csproj:AdminPlatform.Modules.Platform.Infrastructure.PlatformDbContext" ; do
+            "src/Modules/Platform/AdminPlatform.Modules.Platform/AdminPlatform.Modules.Platform.csproj:AdminPlatform.Modules.Platform.Infrastructure.PlatformDbContext" \
+            "src/Modules/Media/AdminPlatform.Modules.Media/AdminPlatform.Modules.Media.csproj:AdminPlatform.Modules.Media.Infrastructure.MediaDbContext" ; do
             project="${pair%%:*}"
             context="${pair##*:}"
             echo "::group::has-pending-model-changes — $context"

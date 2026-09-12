@@ -13,6 +13,8 @@ using AdminPlatform.Modules.Identity;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Application.Users;
 using AdminPlatform.Modules.Identity.Infrastructure;
+using AdminPlatform.Modules.Media;
+using AdminPlatform.Modules.Media.Infrastructure;
 using AdminPlatform.Modules.Navigation;
 using AdminPlatform.Modules.Navigation.Infrastructure;
 using AdminPlatform.Modules.Organization;
@@ -58,6 +60,7 @@ try
     builder.Services.AddNavigationModule(builder.Configuration);
     builder.Services.AddPlatformModule(builder.Configuration);
     builder.Services.AddCustomerModule(builder.Configuration);
+    builder.Services.AddMediaModule(builder.Configuration);
 
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
@@ -192,6 +195,7 @@ static async Task MigrateDevelopmentDatabaseAsync(IServiceProvider services)
     await provider.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
 }
 
 public partial class Program;

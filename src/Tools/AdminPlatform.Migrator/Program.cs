@@ -8,6 +8,8 @@ using AdminPlatform.Modules.Identity;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Application.Users;
 using AdminPlatform.Modules.Identity.Infrastructure;
+using AdminPlatform.Modules.Media;
+using AdminPlatform.Modules.Media.Infrastructure;
 using AdminPlatform.Modules.Navigation;
 using AdminPlatform.Modules.Navigation.Infrastructure;
 using AdminPlatform.Modules.Organization;
@@ -46,6 +48,7 @@ appBuilder.Services.AddOrganizationModule(appBuilder.Configuration);
 appBuilder.Services.AddNavigationModule(appBuilder.Configuration);
 appBuilder.Services.AddPlatformModule(appBuilder.Configuration);
 appBuilder.Services.AddCustomerModule(appBuilder.Configuration);
+appBuilder.Services.AddMediaModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -101,6 +104,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
 
     logger.LogInformation("Applying Customer module migrations...");
     await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
+
+    logger.LogInformation("Applying Media module migrations...");
+    await services.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
 
     logger.LogInformation("All migrations applied.");
 }
