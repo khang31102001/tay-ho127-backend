@@ -33,8 +33,9 @@ public static class IdentityModule
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
-        services.AddScoped<IPasswordHasher, PasswordHasherAdapter>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        // IPasswordHasher / IJwtTokenService are shared building blocks registered once by
+        // AddPlatformCommon() (Common/CommonServiceCollectionExtensions.cs), which every composition root
+        // (Host, Migrator) calls before any module's AddXModule() — nothing to register here.
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();

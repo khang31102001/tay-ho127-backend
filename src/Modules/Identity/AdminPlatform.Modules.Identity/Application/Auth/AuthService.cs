@@ -146,6 +146,7 @@ public sealed class AuthService : IAuthService
         {
             new(AppClaimTypes.UserId, user.Id.ToString()),
             new(AppClaimTypes.Email, user.Email),
+            new(AppClaimTypes.AccountType, AccountTypes.Admin),
         };
         claims.AddRange(permissions.Roles.Select(role => new Claim(AppClaimTypes.Role, role)));
         claims.AddRange(permissions.Permissions.Select(permission => new Claim(AppClaimTypes.Permission, permission)));

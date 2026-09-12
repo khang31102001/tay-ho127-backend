@@ -48,6 +48,7 @@ services:
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required (base64, at least 32 bytes)}
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
+      GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       db:
         condition: service_healthy

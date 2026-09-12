@@ -1,4 +1,4 @@
-namespace AdminPlatform.Modules.Identity.Application;
+namespace AdminPlatform.Common.Security;
 
 public interface IPasswordHasher
 {

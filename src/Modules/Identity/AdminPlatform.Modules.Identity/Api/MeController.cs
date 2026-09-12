@@ -1,7 +1,6 @@
 using AdminPlatform.Common.Security;
 using AdminPlatform.Modules.Identity.Application.Auth;
 using AdminPlatform.Modules.Identity.Application.Users;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +8,7 @@ namespace AdminPlatform.Modules.Identity.Api;
 
 [ApiController]
 [Route("api/v1/me")]
-[Authorize]
+[RequireAccountType(AccountTypes.Admin)]
 public sealed class MeController : ControllerBase
 {
     private readonly IAuthService _authService;

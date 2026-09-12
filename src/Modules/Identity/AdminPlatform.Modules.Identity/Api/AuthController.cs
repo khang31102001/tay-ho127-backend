@@ -50,7 +50,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("logout-all")]
-    [Authorize]
+    [RequireAccountType(AccountTypes.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {

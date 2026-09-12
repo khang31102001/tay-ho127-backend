@@ -7,6 +7,8 @@ using AdminPlatform.Common.Web;
 using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Application;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Customer;
+using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
 using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Application.Users;
@@ -55,6 +57,7 @@ try
     builder.Services.AddOrganizationModule(builder.Configuration);
     builder.Services.AddNavigationModule(builder.Configuration);
     builder.Services.AddPlatformModule(builder.Configuration);
+    builder.Services.AddCustomerModule(builder.Configuration);
 
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
@@ -90,8 +93,16 @@ try
             };
         });
 
-    // ---- AuthZ: dynamic Permission:* policies (PermissionPolicyProvider registered by AddPlatformCommon) ----
-    builder.Services.AddAuthorization();
+    // ---- AuthZ: dynamic Permission:* policies (PermissionPolicyProvider registered by AddPlatformCommon),
+    // plus the two fixed AccountType:* policies that separate the Admin and Customer JWT "realms" even
+    // though both share this one JWT bearer scheme (api-design.md §36-37) ----
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy(AccountTypePolicy.NameFor(AccountTypes.Admin), policy =>
+            policy.RequireAuthenticatedUser().AddRequirements(new AccountTypeRequirement(AccountTypes.Admin)));
+        options.AddPolicy(AccountTypePolicy.NameFor(AccountTypes.Customer), policy =>
+            policy.RequireAuthenticatedUser().AddRequirements(new AccountTypeRequirement(AccountTypes.Customer)));
+    });
 
     // ---- Rate limiting for abuse-sensitive auth endpoints (api-design.md §53) ----
     builder.Services.AddRateLimiter(options =>
@@ -180,6 +191,7 @@ static async Task MigrateDevelopmentDatabaseAsync(IServiceProvider services)
     await provider.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
 }
 
 public partial class Program;

@@ -1,34 +1,27 @@
 ---
+name: optimize-performance
+description: Diagnose and fix measured ASP.NET Core / EF Core / PostgreSQL performance problems — query shape, N+1, pagination, indexing, async, and payload size — without speculative optimization or architecture rewrites.
+---
 
-name: test-backend
-description: Design, implement, run, and review meaningful ASP.NET Core backend tests including unit, integration, API, persistence, security, and regression tests while preserving real application behavior.
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-# Test Backend
+# Optimize Performance
 
 ## 1. Purpose
 
 Use this skill when the task requires:
 
-* Writing unit tests.
-* Writing integration tests.
-* Writing API tests.
-* Writing persistence tests.
-* Writing regression tests.
-* Testing business rules.
-* Testing authorization.
-* Testing validation.
-* Testing database behavior.
-* Increasing meaningful test coverage.
-* Verifying bug fixes.
-* Verifying refactoring.
-* Reviewing existing tests.
-* Fixing broken test infrastructure.
-* Establishing backend testing conventions.
+* Investigating a slow endpoint or background operation.
+* Reducing database round trips or query cost.
+* Reviewing/fixing N+1 query patterns.
+* Sizing or reviewing indexes for a real query pattern.
+* Reducing response payload size or serialization cost.
+* Verifying async/EF usage does not block threads unnecessarily.
+* Validating a performance fix with measurement, not assumption.
 
 The objective is:
 
-> Verify meaningful system behavior, not maximize test count.
+> Measure first, fix the actual bottleneck, and verify the fix with evidence — not general code cleanup labeled as optimization.
+
+Do not use this skill to justify unrelated refactoring, premature caching, or infrastructure additions (Redis, background workers, CDN) without a demonstrated need.
 
 ---
 
@@ -39,1657 +32,223 @@ Always follow:
 ```text
 .claude/rules/architecture.md
 .claude/rules/code-quality.md
-.claude/rules/naming.md
-.claude/rules/api-design.md
 .claude/rules/database.md
+.claude/rules/api-design.md
 .claude/rules/security.md
-.claude/rules/testing.md
-.claude/rules/task-reporting.md
 ```
 
-Tests must represent intended behavior.
-
-Do not weaken production code purely to make it easier to test.
+Performance work must not weaken authorization, validation, or change response contracts (api-design.md §38–39) unless explicitly in scope.
 
 ---
 
-# 3. Core Testing Strategy
+# 3. This Project's Performance-Relevant Facts
 
-Think in layers:
+* **Database**: PostgreSQL via Npgsql, one schema per module, `UseSnakeCaseNamingConvention()`. Every module registers its own `DbContext` (`services.AddDbContext<...DbContext>`) — connection pooling and query plans are per-module, not shared.
+* **No repository layer**: Application services query `I<Module>DbContext.Users` (a `DbSet<T>`) directly with LINQ. Performance problems live in these LINQ queries, not in a hidden data-access layer.
+* **Pagination**: `PagedRequest`/`PagedResult` + `QueryableExtensions.ToPagedResultAsync` (`AdminPlatform.Common/Pagination/`) is the existing, standard mechanism. Any new list endpoint that doesn't use it is both an API-design and a performance problem — flag/fix both together.
+* **Projection pattern already in use**: see `UserService.ListAsync` — the query is projected to the response record (`Select(u => new UserResponse(...))`) *before* `ToPagedResultAsync`, and uses `.AsNoTracking()` implicitly via `AsQueryable()` on the read path. Match this pattern; don't introduce `.ToList()` then map in memory.
+* **Audit interceptors** (`AuditableEntitySaveChangesInterceptor`, `AuditLogSinkInterceptor`) run on every `SaveChangesAsync`. Batching multiple entity changes into one `SaveChangesAsync` call (rather than one per entity) reduces interceptor overhead as well as round trips.
+* **Optimistic concurrency** uses Postgres `xmin` (`AuditableEntity.RowVersion`, `IsRowVersion()`) — no extra read needed to check a version column.
+* **Cross-module reads** go through Host-registered port/adapters (`CrossModuleAdapters/`), which are real HTTP-free in-process calls but still separate service calls — a query pattern that fans out to several cross-module adapters per item in a loop is the modular-monolith equivalent of N+1 and should be batched at the adapter/query level, not called per-row.
+
+---
+
+# 4. Core Principle: Measure Before Changing
 
 ```text
-Business Rule
+Reported Slowness
      ↓
-Unit Test
-
-Application Use Case
+Reproduce / Isolate
      ↓
-Application Test
-
-Database Behavior
+Measure (query count, duration, payload size)
      ↓
-Integration Test
-
-HTTP Contract
+Identify Actual Bottleneck
      ↓
-API Integration Test
-
-Bug
+Targeted Fix
      ↓
-Regression Test
+Re-measure
+     ↓
+Report Before/After
 ```
 
-Choose the lowest test level that can verify the behavior reliably.
-
-Do not test everything through HTTP.
-
-Do not mock everything either.
+Never "optimize" based on code appearance alone. A LINQ query that looks inefficient but runs once on 20 rows is not a priority; a query that looks fine but runs per-row in a loop is.
 
 ---
 
-# 4. Testing Priority
+# 5. How to Measure in This Stack
 
-Prioritize tests in this order:
+* **Query count/shape**: enable EF Core logging (`options.LogTo(...)` or `ILoggerFactory` sink) locally, or inspect `dotnet-trace`/`dotnet-counters` if already wired. In its absence, add temporary `LogTo(Console.WriteLine, LogLevel.Information)` scoped to the investigation — remove it before completion (`debug-backend` §50 applies here too).
+* **Wall-clock**: `Stopwatch` around the suspect code path in a throwaway test/benchmark, or existing `ILogger` timing if already present. Do not leave permanent timing instrumentation unless the project already has an observability convention for it.
+* **Generated SQL**: `ToQueryString()` on an `IQueryable<T>` before execution — cheap way to confirm projection/filter pushdown without running EF logging.
+* **Postgres-side**: `EXPLAIN ANALYZE` on the generated SQL when index behavior is in question. Only recommend an index when a real query's plan shows a sequential scan on a large/growing table — not by inspecting the schema in isolation.
 
-1. Critical business rules.
-2. Security and authorization.
-3. Data integrity.
-4. State transitions.
-5. Bug regression.
-6. Complex application logic.
-7. Important API contracts.
-8. Integration boundaries.
-9. Edge cases.
-10. Trivial implementation details.
-
-Do not spend large effort testing simple property assignments.
+Report actual numbers. "Reduced query count from 51 to 2" is a finding; "should be faster now" is not.
 
 ---
 
-# 5. Inspect Existing Test Architecture
+# 6. N+1 Detection and Fixes
 
-Before adding tests, inspect:
-
-* Existing test projects.
-* Existing test framework.
-* Existing fixture strategy.
-* Existing naming conventions.
-* Existing integration setup.
-* Existing database setup.
-* Existing mocks.
-* Existing test utilities.
-* Existing authentication helpers.
-* Existing test data builders.
-
-Prefer existing conventions unless they are clearly harmful.
-
----
-
-# 6. Supported Testing Framework
-
-Respect the framework already used.
-
-Common examples:
-
-```text
-xUnit
-NUnit
-MSTest
-```
-
-Do not introduce another test framework without a concrete reason.
-
-For a new ASP.NET Core codebase, `xUnit` is a reasonable default unless project requirements specify otherwise.
-
----
-
-# 7. Assertion Libraries
-
-Use the existing assertion strategy.
-
-Possible:
-
-```text
-xUnit Assert
-FluentAssertions
-Shouldly
-```
-
-Do not add an assertion library solely for stylistic preference.
-
-Consistency is more important.
-
----
-
-# 8. Mocking Libraries
-
-Use existing mocking infrastructure.
-
-Possible examples:
-
-```text
-Moq
-NSubstitute
-FakeItEasy
-```
-
-Do not introduce a mocking library when simple fakes or real objects are clearer.
-
----
-
-# 9. Test Naming
-
-Test names must communicate:
-
-```text
-Scenario
-+
-Expected Result
-```
-
-Preferred examples:
-
-```text
-CreateUser_WithValidRequest_ReturnsCreatedUser
-
-CreateUser_WithExistingEmail_ReturnsConflict
-
-ApproveOrder_WhenOrderIsCancelled_ThrowsBusinessRuleException
-```
-
-Avoid:
-
-```text
-Test1
-CreateUserTest
-ShouldWork
-TestCreate
-```
-
----
-
-# 10. Test Structure
-
-Prefer a clear Arrange / Act / Assert structure.
-
-Example:
+Classic N+1 in this codebase's shape:
 
 ```csharp
-[Fact]
-public async Task CreateUser_WithValidRequest_CreatesUser()
+// BAD — one query for users, then N queries for roles
+var users = await _db.Users.ToListAsync(ct);
+foreach (var user in users)
 {
-    // Arrange
-
-    // Act
-
-    // Assert
+    var roles = await _roleService.GetRolesForUserAsync(user.Id, ct); // N round trips
 }
 ```
 
-Comments are optional when structure is already obvious.
-
----
-
-# 11. One Behavior per Test
-
-Each test should verify one meaningful behavior.
-
-Avoid one test asserting dozens of unrelated scenarios.
-
-Prefer:
-
-```text
-Scenario A → Test A
-Scenario B → Test B
-Scenario C → Test C
-```
-
-This makes failures easier to diagnose.
-
----
-
-# 12. Do Not Test Implementation Details
-
-Test externally meaningful behavior.
-
-Avoid tests tightly coupled to:
-
-* Private methods.
-* Exact internal method-call order.
-* Temporary internal structure.
-* Internal variable names.
-
-Refactoring internal implementation should not break good behavioral tests.
-
----
-
-# 13. Unit Tests
-
-Use unit tests for isolated logic.
-
-Good candidates:
-
-* Calculations.
-* Business rules.
-* Value objects.
-* Domain state transitions.
-* Validators.
-* Pure application logic.
-
-Unit tests should normally:
-
-* Execute quickly.
-* Avoid network.
-* Avoid real database.
-* Be deterministic.
-
----
-
-# 14. Domain Tests
-
-Domain rules should be tested directly where possible.
-
-Example:
-
-```text
-Order.Approve()
-
-Valid:
-Pending → Approved
-
-Invalid:
-Cancelled → Approved
-```
-
-Test business meaning, not ORM behavior.
-
----
-
-# 15. Application Tests
-
-Application-level tests may verify use cases with controlled dependencies.
-
-Example:
-
-```text
-CreateUser
-    ↓
-Check Duplicate
-    ↓
-Hash Password
-    ↓
-Save User
-```
-
-Mock only boundaries whose real implementation is not relevant to the behavior being tested.
-
----
-
-# 16. Integration Tests
-
-Use integration tests when multiple real components must work together.
-
-Examples:
-
-* API → Application.
-* Application → EF Core.
-* Authentication → Authorization.
-* Serialization → HTTP contract.
-* Database constraint behavior.
-
-Integration tests should verify realistic system behavior.
-
----
-
-# 17. API Integration Tests
-
-For ASP.NET Core APIs, use `WebApplicationFactory` where appropriate.
-
-Concept:
-
-```text
-Test
- ↓
-WebApplicationFactory
- ↓
-ASP.NET Core Pipeline
- ↓
-Endpoint
- ↓
-Application
- ↓
-Infrastructure
-```
-
-This verifies more than directly calling controller methods.
-
----
-
-# 18. Controller Tests
-
-Do not unit-test thin controllers excessively.
-
-If a controller only delegates to application logic, API integration testing usually provides more value.
-
-Unit-test controllers only when they contain meaningful HTTP-specific behavior requiring isolated verification.
-
----
-
-# 19. Database Tests
-
-Use database tests when behavior depends on:
-
-* Relationships.
-* Constraints.
-* Transactions.
-* SQL translation.
-* Concurrency.
-* Unique indexes.
-* Query filters.
-
-Do not mock the database when the database itself is the behavior being tested.
-
----
-
-# 20. EF Core InMemory Provider
-
-Do not assume EF Core InMemory provider behaves like a relational database.
-
-It does not reliably test:
-
-* SQL translation.
-* Foreign keys.
-* Transactions.
-* Relational constraints.
-* Provider-specific behavior.
-
-Use only when its limitations do not affect the test.
-
----
-
-# 21. Relational Integration Database
-
-When realistic relational behavior matters, prefer:
-
-* SQLite where compatible.
-* Testcontainers.
-* Dedicated test database.
-* Same production database engine when practical.
-
-Choose based on project complexity.
-
-Do not introduce Docker/Testcontainers infrastructure for trivial tests without need.
-
----
-
-# 22. Testcontainers
-
-Use Testcontainers when high-fidelity database or infrastructure testing provides meaningful value.
-
-Good candidates:
-
-```text
-SQL Server
-PostgreSQL
-Redis
-RabbitMQ
-```
-
-Do not start infrastructure containers for every unit test.
-
----
-
-# 23. Test Isolation
-
-Tests must not depend on execution order.
-
-Each test should establish the state it requires.
-
-Avoid:
-
-```text
-Test A creates user
-Test B assumes user from Test A
-```
-
-unless explicitly implementing an ordered end-to-end scenario.
-
----
-
-# 24. Database Isolation
-
-Integration tests should prevent state leakage.
-
-Possible strategies:
-
-* New database per suite.
-* Transaction rollback.
-* Respawn/reset.
-* Unique test identifiers.
-* Container recreation where justified.
-
-Choose a strategy appropriate to test cost.
-
----
-
-# 25. Deterministic Tests
-
-Tests should produce the same result repeatedly.
-
-Avoid uncontrolled dependencies on:
-
-* Current time.
-* Random values.
-* External network.
-* Environment state.
-* Test order.
-
-Control these dependencies where behavior requires it.
-
----
-
-# 26. Time Testing
-
-For time-sensitive business logic, avoid tests depending directly on:
-
-```text
-DateTime.Now
-```
-
-when controllable time would improve reliability.
-
-Use a clock/time abstraction only where justified.
-
-Do not introduce time abstractions everywhere automatically.
-
----
-
-# 27. Random Data
-
-Random test data may improve variety but can make failures difficult to reproduce.
-
-If randomness is used:
-
-* Make failures reproducible.
-* Use deterministic seeds where practical.
-
-Critical tests should remain understandable.
-
----
-
-# 28. Test Data Builders
-
-Use builders/factories when setup becomes repetitive.
-
-Example:
-
-```text
-UserBuilder
-OrderBuilder
-```
-
-Do not create complex test-builder frameworks before repetition justifies them.
-
----
-
-# 29. Fixtures
-
-Use fixtures for expensive shared setup where appropriate.
-
-Do not let shared mutable fixture state create test coupling.
-
----
-
-# 30. Happy Path
-
-Important features should normally have at least one successful scenario.
-
-Example:
-
-```text
-Given valid user request
-When creating user
-Then user is persisted
-And response is correct
-```
-
----
-
-# 31. Validation Tests
-
-Test meaningful validation boundaries.
-
-Examples:
-
-```text
-Missing email
-Invalid email
-Name too long
-Invalid page size
-```
-
-Do not duplicate every framework-level validation behavior without value.
-
----
-
-# 32. Business Rule Tests
-
-Critical business rules require explicit tests.
-
-Example:
-
-```text
-Cancelled order cannot be approved.
-```
-
-Test:
-
-```text
-Order = Cancelled
-Action = Approve
-Expected = Rejected
-```
-
-Business-rule tests are high-value regression protection.
-
----
-
-# 33. State Transition Tests
-
-For lifecycle entities test valid and invalid transitions.
-
-Example:
-
-```text
-Draft → Pending        VALID
-Pending → Approved     VALID
-Cancelled → Approved   INVALID
-```
-
-Do not assume status setters are harmless CRUD fields.
-
----
-
-# 34. Financial Tests
-
-Financial calculations require careful coverage.
-
-Test:
-
-* Precision.
-* Rounding.
-* Zero.
-* Negative values when valid/invalid.
-* Discounts.
-* Taxes.
-* Boundaries.
-
-Use `decimal` values.
-
-Avoid floating-point comparisons for financial logic.
-
----
-
-# 35. Boundary Testing
-
-Important boundaries should include values such as:
-
-```text
-Minimum
-Maximum
-Just below
-Exact threshold
-Just above
-```
-
-Especially useful for:
-
-* Discounts.
-* Limits.
-* Pagination.
-* Validation.
-* Approval thresholds.
-
----
-
-# 36. Null Cases
-
-Test null behavior only where null is a legitimate input or failure risk.
-
-Do not create meaningless null tests for types that cannot legally be null.
-
----
-
-# 37. Empty Collections
-
-Test empty collection behavior when it changes business/API semantics.
-
-Example:
-
-```text
-GET /users
-→ 200
-→ items = []
-```
-
-not necessarily:
-
-```text
-404
-```
-
-Follow API contract.
-
----
-
-# 38. Not Found Tests
-
-Resource lookup endpoints should test missing resources.
-
-Example:
-
-```text
-GET /api/users/{unknownId}
-→ 404
-```
-
-where that is the defined contract.
-
----
-
-# 39. Conflict Tests
-
-Test real conflict scenarios.
-
-Examples:
-
-* Duplicate email.
-* Duplicate code.
-* Invalid state.
-* Concurrency conflict.
-
-Ensure conflict maps to the correct application/API behavior.
-
----
-
-# 40. Authentication Tests
-
-Important authentication scenarios may include:
-
-```text
-Valid credentials
-Invalid credentials
-Expired token
-Invalid token
-Disabled account
-```
-
-Do not test cryptographic framework internals.
-
-Test application behavior around them.
-
----
-
-# 41. Authorization Tests
-
-Protected endpoints should verify meaningful permission behavior.
-
-Minimum relevant scenarios:
-
-```text
-Unauthenticated
-→ 401
-
-Authenticated without permission
-→ 403
-
-Authenticated with permission
-→ Success
-```
-
----
-
-# 42. Ownership Tests
-
-For owner-scoped resources:
-
-```text
-Owner
-→ Allowed
-
-Different user
-→ Denied
-```
-
-This is important protection against IDOR vulnerabilities.
-
----
-
-# 43. Tenant Isolation Tests
-
-For multi-tenant systems, test cross-tenant access explicitly.
-
-Example:
-
-```text
-Tenant A user requests Tenant B resource
-→ Must not receive data
-```
-
-Tenant isolation failures are critical defects.
-
----
-
-# 44. API Contract Tests
-
-Verify important HTTP contract behavior:
-
-* Method.
-* Route.
-* Status.
-* JSON shape.
-* Required fields.
-* Error structure.
-
-Avoid snapshot testing huge responses unless it provides clear value.
-
----
-
-# 45. Serialization Tests
-
-Test serialization when contract behavior depends on:
-
-* Enum representation.
-* Custom converter.
-* Date format.
-* Null behavior.
-* Polymorphism.
-
-Do not test default `System.Text.Json` behavior redundantly.
-
----
-
-# 46. Pagination Tests
-
-For paginated endpoints, test:
-
-```text
-Page size
-Page number
-Total count
-Ordering
-Empty page
-Maximum page size
-```
-
-Ensure paging is deterministic.
-
----
-
-# 47. Filtering Tests
-
-Test important filters independently and in meaningful combinations.
-
-Do not exhaustively test every mathematically possible filter combination unless risk requires it.
-
----
-
-# 48. Sorting Tests
-
-Verify supported sorting fields and directions.
-
-Also test unsupported sort fields if the API explicitly rejects them.
-
----
-
-# 49. Database Constraint Tests
-
-When integrity relies on database constraints, integration tests should verify them where important.
-
-Examples:
-
-* Unique email.
-* Foreign key.
-* Required relation.
-* Composite uniqueness.
-
----
-
-# 50. Transaction Tests
-
-Test transactional behavior when partial persistence would be harmful.
-
-Example:
-
-```text
-Create Order
-+
-Create Order Items
-+
-Update Inventory
-
-One operation fails
-→ No partial business state
-```
-
----
-
-# 51. Concurrency Tests
-
-Use concurrency tests only where concurrent behavior is a real requirement.
-
-Examples:
-
-* Stock decrement.
-* Order approval.
-* Duplicate payment.
-* RowVersion conflict.
-
-Do not create complex concurrency tests for ordinary static lookup data.
-
----
-
-# 52. External Integration Tests
-
-For external integrations, determine the appropriate test boundary.
-
-Possible strategies:
-
-```text
-Mock external HTTP boundary
-Fake provider
-Sandbox environment
-Contract test
-```
-
-Do not make normal test suites depend on unstable public internet services.
-
----
-
-# 53. HttpClient Testing
-
-For application-level tests, mock or fake `HttpMessageHandler` when appropriate.
-
-Do not mock `HttpClient` incorrectly if handler-based testing is more suitable.
-
----
-
-# 54. Webhook Tests
-
-Test important webhook behavior:
-
-* Signature valid.
-* Signature invalid.
-* Duplicate event.
-* Invalid payload.
-* Successful processing.
-
-Do not bypass signature validation in production code for testing convenience.
-
----
-
-# 55. File Upload Tests
-
-Test relevant:
-
-* Valid type.
-* Invalid type.
-* Oversized file.
-* Invalid file name.
-* Authorization.
-* Storage failure.
-
-Avoid huge real test files unless necessary.
-
----
-
-# 56. Background Job Tests
-
-Separate:
-
-```text
-Scheduling
-```
-
-from:
-
-```text
-Job Business Logic
-```
-
-Business logic should usually be testable without waiting for a scheduler.
-
----
-
-# 57. Cache Tests
-
-Only test caching where cache behavior matters.
-
-Examples:
-
-* Cache hit.
-* Cache invalidation.
-* Tenant-aware key.
-* Expiration-sensitive logic.
-
-Do not write tests for framework internals.
-
----
-
-# 58. Regression Tests
-
-Whenever a confirmed bug is fixed, add regression coverage when practical.
-
-A good regression test should:
-
-```text
-Fail before fix
-Pass after fix
-```
-
-Name the scenario clearly.
-
----
-
-# 59. Refactor Protection
-
-Before risky refactoring, use existing tests as a behavior baseline.
-
-If important legacy code has no tests, consider characterization tests before restructuring.
-
----
-
-# 60. Characterization Tests
-
-Characterization tests capture existing behavior without asserting that the implementation is ideal.
-
-Use when:
-
-* Legacy logic is complex.
-* Behavior must be preserved.
-* Documentation is incomplete.
-* Refactoring risk is high.
-
-Do not permanently preserve behavior known to be incorrect when requirements explicitly change it.
-
----
-
-# 61. Bug Reproduction
-
-For debugging tasks:
-
-Prefer:
-
-```text
-Create failing regression test
-       ↓
-Confirm FAIL
-       ↓
-Fix root cause
-       ↓
-Confirm PASS
-```
-
-when feasible.
-
----
-
-# 62. Do Not Modify Expected Behavior Silently
-
-If a test fails because business requirements changed:
-
-Update:
-
-```text
-Implementation
-+
-Test expectation
-```
-
-only when the requirement clearly changed.
-
-Do not simply change expected output to whatever current implementation returns.
-
----
-
-# 63. Test Failure Investigation
-
-When a test fails, classify:
-
-```text
-Production defect
-Test defect
-Environment defect
-Flaky test
-Requirement change
-Infrastructure failure
-```
-
-Do not immediately rewrite the assertion.
-
----
-
-# 64. Flaky Tests
-
-A flaky test is a defect.
-
-Common causes:
-
-* Time dependency.
-* Randomness.
-* Shared state.
-* Concurrency.
-* External dependency.
-* Test order.
-* Slow timing assumptions.
-
-Fix the cause.
-
-Do not simply add large delays or retries to hide flakiness.
-
----
-
-# 65. Thread.Sleep
-
-Avoid:
+Fix by projecting/joining once, or batching the second call:
 
 ```csharp
-Thread.Sleep(...)
+// GOOD — single query with the data already needed
+var users = await _db.Users
+    .Select(u => new UserResponse(u.Id, u.Email, u.FullName, u.IsActive, u.CreatedAtUtc))
+    .ToListAsync(ct);
+
+// GOOD — batch a cross-module/adapter lookup by ids instead of per-row
+var userIds = users.Select(u => u.Id).ToList();
+var rolesByUser = await _rolePermissionQueryService.GetRolesForUsersAsync(userIds, ct);
 ```
 
-in tests unless testing timing itself.
-
-Prefer deterministic synchronization.
+If the second call is a cross-module port (`I...QueryService`), the fix is adding a batched method to that port's contract (`GetXForIds(IEnumerable<Guid> ids)`), implemented once in the providing module — not looping the existing single-id method. This is an Application-layer contract change; keep it additive (new method) so it isn't a breaking change to the port.
 
 ---
 
-# 66. Retry in Tests
+# 7. Query-Level Checklist
 
-Do not retry assertions just to get intermittent tests green.
-
-Retries may be appropriate when intentionally testing eventually consistent distributed behavior.
-
-Use deliberately.
-
----
-
-# 67. Performance Tests
-
-Do not mix ordinary unit tests with performance benchmarks.
-
-Use dedicated benchmarking/load testing approaches where required.
-
-Normal tests should validate correctness.
+* Filter and project *before* materializing (`Where`/`Select` stay in the `IQueryable`, no `.ToList()` followed by in-memory `.Where()`).
+* List endpoints paginate via `PagedRequest`/`ToPagedResultAsync` — never return an unbounded `List<T>`.
+* Read-only queries don't need change tracking; the existing `UserService` pattern (`AsQueryable()` off a `DbSet` used only for reads) already avoids unnecessary tracking overhead — don't add `.AsNoTracking()` redundantly where the query is never attached in the first place, but do add it explicitly if a read query is built from a tracked context in a write-heavy service.
+* Avoid materializing more columns than the response DTO needs — project directly into the response record, not into the entity then mapped in memory (extra column fetch + extra allocation).
+* Sorting uses an explicit allow-listed `switch` over `SortBy` (already the pattern in `UserService.ListAsync`) — this is also a performance control, since it prevents an unindexed/arbitrary `OrderBy` column from being requested.
+* Avoid `Include()` chains that pull large owned collections when the endpoint only needs summary fields — prefer projection.
+* Search filters (`EF.Functions.ILike`) on unindexed large text columns are a common slow-query source — check `EXPLAIN ANALYZE` before recommending an index, since a small table doesn't need one yet.
 
 ---
 
-# 68. Benchmarking
+# 8. SaveChanges and Write-Path Checklist
 
-For micro-performance questions, tools such as BenchmarkDotNet may be appropriate.
-
-Do not add benchmarking infrastructure without a performance requirement.
-
----
-
-# 69. Load Testing
-
-API load testing is separate from unit/integration testing.
-
-Use when requirements involve:
-
-* Throughput.
-* Concurrent users.
-* Latency.
-* Capacity.
-
-Do not claim scalability based only on unit tests.
+* Multiple related entity changes go through one `SaveChangesAsync` call, not one per entity — batches the audit interceptors and the round trip.
+* No `SaveChangesAsync` call inside a loop over user-submitted collections without considering batch size limits (see `api-design.md` §48 on bulk operations).
+* Bulk imports/updates define a max batch size explicitly; do not accept unbounded payloads.
 
 ---
 
-# 70. Code Coverage
+# 9. Async / Threading Checklist
 
-Coverage is a diagnostic metric, not the objective.
-
-Do not optimize solely for:
-
-```text
-100% coverage
-```
-
-A lower percentage covering critical behavior is more valuable than high coverage of trivial code.
+* No `.Result`, `.Wait()`, or `async void` in request-handling code paths (Controllers, Application services).
+* `CancellationToken` is threaded from the controller action through to `SaveChangesAsync`/EF query execution — already the established pattern (`CancellationToken cancellationToken` parameter throughout `UserService`); a new method missing it is a regression, not just a style nit.
+* No `Task.Run` used to fire-and-forget request-scoped work inside an HTTP request — this both loses `DbContext` scoping (which is request-scoped/scoped-lifetime) and drops exceptions silently.
 
 ---
 
-# 71. Coverage Priority
+# 10. Response / Payload Checklist
 
-Prioritize covering:
-
-```text
-Business decisions
-Security decisions
-Data transformations
-Critical workflows
-Error scenarios
-```
-
-over:
-
-```text
-Getters
-Setters
-Simple mappings
-Framework plumbing
-```
+* Response DTOs return only fields the consumer needs (also a data-exposure concern — cross-reference `review-security` if a large unused field is also sensitive).
+* Large collections are always paginated; consider whether a "summary" response record (fewer fields) is more appropriate than "details" for list endpoints — this project already separates `UserResponse` (list) from `UserDetailsResponse` (single-resource) for this reason. Follow that pattern rather than returning the details shape from a list endpoint.
 
 ---
 
-# 72. Mocking Philosophy
+# 11. Indexing
 
-Mock external boundaries when isolation helps.
-
-Good mock candidates:
-
-* Email provider.
-* Payment gateway.
-* External HTTP API.
-* Clock when relevant.
-
-Avoid mocking every internal class.
-
-Excessive mocking tightly couples tests to implementation.
+* Recommend an index only when:
+  1. A real query filters/sorts/joins on that column, confirmed via `EXPLAIN ANALYZE` or query shape review, and
+  2. The table is large enough, or growing toward large enough, for a sequential scan to matter.
+* `UserConfiguration.HasIndex(u => u.Email).IsUnique()` is the existing pattern for both uniqueness and lookup performance — mirror it for new modules' natural-key lookups.
+* New indexes are added through an EF Core migration like any other schema change (see `design-database`), never applied by hand against a live database.
+* Do not add an index for every filterable column speculatively — each index has a write-cost trade-off.
 
 ---
 
-# 73. Verify Behavior, Not Calls
+# 12. Caching
 
-Prefer:
-
-```text
-Expected result
-Expected persisted state
-Expected external outcome
-```
-
-over asserting every intermediate method invocation.
-
-Interaction verification is useful only where the interaction itself is part of behavior.
+* This project has no caching layer today. Do not introduce `IMemoryCache`, output caching, or Redis as a "performance improvement" unless:
+  1. Measurement shows the same expensive read repeating for the same input within a request/short window, and
+  2. Staleness is acceptable for that data, and
+  3. The user has agreed to the added invalidation complexity.
+* If introduced, keep it minimal and scoped to the one proven hot path — not a general caching framework.
 
 ---
 
-# 74. Test Helpers
+# 13. Workflow
 
-Test helper code should remain simple.
+## Step 1 — Capture the Complaint
+Record the reported symptom: which endpoint/operation, what latency/load, what "slow" means concretely.
 
-Do not build an internal test framework more complicated than production code.
+## Step 2 — Reproduce and Measure
+Use §5. Get a baseline number before touching code.
 
-Reuse setup only after meaningful repetition exists.
+## Step 3 — Identify Bottleneck Category
+Query count (N+1), query shape (missing filter pushdown, unindexed scan), payload size, write-path (SaveChanges overhead), or async/threading.
 
----
+## Step 4 — Design Targeted Fix
+Smallest change that addresses the measured bottleneck — prefer the patterns in §6–§11 already established in this codebase over inventing new ones.
 
-# 75. Test Project Structure
+## Step 5 — Implement
+Modify only the affected query/service/endpoint.
 
-A reasonable structure may be:
+## Step 6 — Re-measure
+Confirm the same metric captured in Step 2 actually improved.
 
-```text
-tests/
-├── Backend.UnitTests/
-│   ├── Domain/
-│   └── Application/
-│
-└── Backend.IntegrationTests/
-    ├── Api/
-    ├── Persistence/
-    └── Security/
-```
-
-Follow existing repository convention where established.
-
----
-
-# 76. Test File Naming
-
-Match production responsibility.
-
-Examples:
-
-```text
-CreateUserTests.cs
-OrderTests.cs
-UsersApiTests.cs
-UserRepositoryTests.cs
-```
-
-Avoid:
-
-```text
-TestHelpers2.cs
-GeneralTests.cs
-BackendTests.cs
-```
-
-for unrelated behavior.
-
----
-
-# 77. Production Code Changes During Testing
-
-Do not alter production architecture merely to satisfy a preferred mocking style.
-
-Production-code changes are acceptable when they improve legitimate design/testability.
-
-Examples:
-
-* Isolating real external dependency.
-* Removing hidden global state.
-* Separating business logic from framework code.
-
-Do not introduce meaningless interfaces only for tests.
-
----
-
-# 78. Security Test Data
-
-Never use real:
-
-* Passwords.
-* API keys.
-* Tokens.
-* Production customer data.
-
-Use synthetic test values.
-
----
-
-# 79. Test Configuration
-
-Testing environment must use isolated configuration.
-
-Do not point automated tests at production databases or production integrations.
-
----
-
-# 80. Database Safety
-
-Before executing integration tests that modify a database, verify the target is a test environment.
-
-Never intentionally run destructive automated tests against production.
-
----
-
-# 81. Test Execution
-
-Use targeted tests during development when appropriate.
-
-Example:
-
-```bash
-dotnet test --filter FullyQualifiedName~CreateUserTests
-```
-
-Then run broader relevant tests before completion.
-
----
-
-# 82. Build Before Tests
-
-When compilation may be affected, run:
-
+## Step 7 — Build and Test
 ```bash
 dotnet build
+dotnet test
 ```
 
-before or as part of test execution.
+## Step 8 — Regression Check
+Confirm response contract, pagination shape, and authorization are unchanged (cross-reference `api-design.md` §38 and `review-security` if authorization logic was anywhere near the touched code).
 
-Do not report tests if the project cannot compile.
-
----
-
-# 83. Full Test Suite
-
-Run the full relevant suite after significant changes when practical.
-
-Especially:
-
-* Architecture refactor.
-* Shared infrastructure change.
-* Authentication change.
-* Database change.
-
----
-
-# 84. Existing Failures
-
-If tests already fail before the task:
-
-Do not claim your change caused or fixed them unless verified.
-
-Record baseline when relevant.
-
-Example:
+## Step 9 — Report
 
 ```text
-Baseline:
-3 tests already failing before modification.
+## Performance Summary
 
-After change:
-Same 3 tests remain failing.
-```
-
----
-
-# 85. Do Not Hide Failing Tests
-
-Never delete, skip or disable a legitimate failing test merely to obtain a green build.
-
-If a test must be temporarily skipped, explain why and report it explicitly.
-
----
-
-# 86. Skip Tests
-
-Use skipped tests sparingly.
-
-Every skipped test should have a concrete reason.
-
-Do not accumulate forgotten skipped tests.
-
----
-
-# 87. Test Review
-
-Before completing a testing task, review:
-
-* Does each test verify meaningful behavior?
-* Are names clear?
-* Are tests isolated?
-* Are tests deterministic?
-* Is mocking excessive?
-* Are database tests realistic?
-* Are security boundaries covered?
-* Are edge cases meaningful?
-* Did production behavior change?
-* Are any tests flaky?
-
----
-
-# 88. Test Workflow
-
-When this skill is activated:
-
-## Step 1 — Inspect
-
-Read production code and existing tests.
-
----
-
-## Step 2 — Identify Behavior
-
-Define exactly what must be verified.
-
----
-
-## Step 3 — Select Test Level
-
-Choose:
-
-```text
-Unit
-Application
-Integration
-API
-Persistence
-Security
-Regression
-```
-
----
-
-## Step 4 — Identify Scenarios
-
-Classify:
-
-```text
-Happy Path
-Validation
-Business Rule
-Authorization
-Not Found
-Conflict
-Edge Case
-Regression
-```
-
-Only include relevant scenarios.
-
----
-
-## Step 5 — Prepare Test Environment
-
-Reuse existing fixtures/infrastructure where possible.
-
----
-
-## Step 6 — Write Tests
-
-Keep tests readable and behavior-oriented.
-
----
-
-## Step 7 — Run Targeted Tests
-
-Execute the smallest relevant test set first.
-
----
-
-## Step 8 — Fix Test Defects
-
-Fix genuine test implementation problems.
-
-Do not modify production behavior unless it is actually incorrect.
-
----
-
-## Step 9 — Run Broader Tests
-
-Run related/full suites where appropriate.
-
----
-
-## Step 10 — Review Coverage
-
-Check whether critical behavior remains untested.
-
-Do not chase arbitrary coverage percentages.
-
----
-
-## Step 11 — Review Regression Risk
-
-Identify what surrounding behavior may have been affected.
-
----
-
-## Step 12 — Report
-
-Produce global CHANGE REPORT plus testing-specific details.
-
----
-
-# 89. Test Task Report
-
-Always include:
-
-```text
-## Test Summary
-
-Test Type:
-- Unit
-- Integration
-- API
-- Persistence
-- Security
-- Regression
-
-Tests Added:
+Symptom:
 ...
 
-Tests Modified:
+Bottleneck:
+N+1 / Unindexed Scan / Unbounded Payload / Write-Path Overhead / Blocking Async
+
+Before:
+Query count: X, Duration: Yms
+
+After:
+Query count: X, Duration: Yms
+
+Fix:
 ...
 
-Tests Removed:
-...
+Regression Risk:
+LOW / MEDIUM / HIGH
 
-Production Code Modified:
-Yes / No
-
-Reason:
-...
-
-## Verification
-
-Build:
-PASS / FAIL / NOT RUN
-
-Targeted Tests:
-PASS / FAIL / NOT RUN
-
-Full Test Suite:
-PASS / FAIL / NOT RUN
+Verification:
+Build: PASS/FAIL
+Tests: PASS/FAIL
+Measurement Method: <how before/after numbers were obtained>
 ```
 
 ---
 
-# 90. Test Result Count
+# 14. Do Not
 
-When available, report exact numbers.
-
-Example:
-
-```text
-Targeted Tests:
-12 PASS
-0 FAIL
-0 SKIPPED
-
-Full Suite:
-146 PASS
-2 FAIL
-1 SKIPPED
-```
-
-Do not say simply:
-
-```text
-All good
-```
+* Do not report "should be faster" without a before/after number.
+* Do not add caching, background jobs, or a new NuGet dependency as a first response to a slow endpoint.
+* Do not change API contracts (response shape, pagination behavior) to "fix" performance without calling it out as a contract change.
+* Do not recommend indexes without query evidence.
+* Do not mix performance work with unrelated refactoring — if the query needs restructuring beyond the performance fix, hand that off to `refactor-backend`.
 
 ---
 
-# 91. Failure Report
+# 15. Definition of Done
 
-If tests fail:
+A performance task is complete only when:
 
-Report:
-
-```text
-Test:
-...
-
-Failure:
-...
-
-Likely Cause:
-...
-
-Related to Current Task:
-YES / NO / UNKNOWN
-
-Status:
-UNRESOLVED
-```
-
-Do not hide failures from the final report.
-
----
-
-# 92. Regression Report
-
-For bug fixes:
-
-```text
-Regression Scenario:
-Duplicate email creation.
-
-Before Fix:
-FAIL
-
-After Fix:
-PASS
-
-Regression Test:
-CreateUser_WithExistingEmail_ReturnsConflict
-```
-
----
-
-# 93. Coverage Report
-
-If code coverage tooling was actually executed:
-
-Report:
-
-```text
-Coverage:
-XX%
-```
-
-and identify meaningful uncovered areas when relevant.
-
-Do not invent coverage values.
-
----
-
-# 94. No False Claims
-
-Never claim:
-
-```text
-Fully tested
-100% safe
-All edge cases covered
-Production ready
-```
-
-unless supported by an appropriate verification process.
-
-Use precise statements.
-
-Example:
-
-```text
-Unit and integration suites passed.
-Load testing and production validation were not performed.
-```
-
----
-
-# 95. Definition of Done
-
-A testing task is complete only when:
-
-1. Target behavior is understood.
-2. Appropriate test level is selected.
-3. Tests verify behavior rather than implementation details.
-4. Important success and failure scenarios are covered.
-5. Tests are isolated.
-6. Tests are deterministic.
-7. Security/data boundaries are tested when relevant.
-8. Test environment is safe.
-9. Actual tests are executed when possible.
-10. Failures are reported accurately.
-11. No legitimate tests are weakened merely to pass.
-12. Test results are included in CHANGE REPORT.
-
-The objective is:
-
-> Build confidence that important backend behavior remains correct as the system evolves.
+1. The bottleneck was measured, not assumed.
+2. The fix targets the actual measured cause.
+3. Before/after numbers are reported.
+4. API contract and authorization are unchanged unless explicitly in scope.
+5. Build and relevant tests pass.
+6. No speculative infrastructure was introduced.
