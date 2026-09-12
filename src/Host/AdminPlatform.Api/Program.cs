@@ -71,18 +71,26 @@ try
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
     // ---- AuthN: JWT bearer ----
-    var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
-        ?? throw new InvalidOperationException("Missing Jwt configuration section.");
-    if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
-    {
-        throw new InvalidOperationException(
-            "Jwt:SigningKey is not set. Provide it via an environment variable or user-secrets — never commit it.");
-    }
-
+    // jwtOptions is read from IConfiguration lazily, inside Configure<IConfiguration>, rather than eagerly
+    // here from builder.Configuration: WebApplicationFactory's DeferredHostBuilder (used by the integration
+    // tests) only merges its test configuration overrides (e.g. a throwaway Jwt:SigningKey) at the moment
+    // builder.Build() actually runs — reading builder.Configuration any earlier than that always sees the
+    // real appsettings.json (SigningKey: ""), which would incorrectly throw under test.
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
+        .AddJwtBearer();
+
+    builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+        .Configure<IConfiguration>((options, configuration) =>
         {
+            var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                ?? throw new InvalidOperationException("Missing Jwt configuration section.");
+            if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey))
+            {
+                throw new InvalidOperationException(
+                    "Jwt:SigningKey is not set. Provide it via an environment variable or user-secrets — never commit it.");
+            }
+
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
