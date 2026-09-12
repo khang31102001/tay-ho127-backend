@@ -128,9 +128,17 @@ try
     });
 
     // ---- Health checks ----
-    var connectionString = builder.Configuration.GetConnectionString("Default")
-        ?? throw new InvalidOperationException("Missing ConnectionStrings:Default.");
-    builder.Services.AddHealthChecks().AddNpgSql(connectionString, name: "postgres");
+    // The connection string is resolved lazily via this factory (invoked only when /health is actually
+    // hit, reading IConfiguration from DI at that point) rather than read eagerly from builder.Configuration
+    // here: this is the actual root cause of "entry point exited without ever building an IHost" under
+    // WebApplicationFactory (integration tests) — builder.Configuration at this point in Program.cs is
+    // still the real appsettings.json (ConnectionStrings:Default: ""), since WebApplicationFactory's
+    // DeferredHostBuilder only merges its test config overrides at Build() time. Reading "" eagerly here
+    // used to make AddNpgSql's own internal null/empty guard throw before Build() ever ran.
+    builder.Services.AddHealthChecks().AddNpgSql(
+        sp => sp.GetRequiredService<IConfiguration>().GetConnectionString("Default")
+            ?? throw new InvalidOperationException("Missing ConnectionStrings:Default."),
+        name: "postgres");
 
     // ---- OpenAPI / Swagger with a JWT bearer scheme ----
     builder.Services.AddSwaggerGen(options =>
