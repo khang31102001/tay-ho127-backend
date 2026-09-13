@@ -53,20 +53,34 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
 
     public async Task InitializeAsync()
     {
+        Console.WriteLine("[DIAG] before postgres.StartAsync");
         await _postgres.StartAsync();
+        Console.WriteLine("[DIAG] after postgres.StartAsync");
 
+        Console.WriteLine("[DIAG] before Services.CreateScope");
         using var scope = Services.CreateScope();
         var services = scope.ServiceProvider;
+        Console.WriteLine("[DIAG] after Services.CreateScope");
 
+        Console.WriteLine("[DIAG] before Identity migrate");
         await services.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after Identity migrate, before AccessControl migrate");
         await services.GetRequiredService<AccessControlDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after AccessControl migrate, before Organization migrate");
         await services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after Organization migrate, before Navigation migrate");
         await services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after Navigation migrate, before Platform migrate");
         await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after Platform migrate, before Customer migrate");
         await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
+        Console.WriteLine("[DIAG] after Customer migrate");
 
+        Console.WriteLine("[DIAG] before IdentitySeeder.SeedAsync");
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
+        Console.WriteLine("[DIAG] after IdentitySeeder.SeedAsync, before FindByEmailAsync");
         var admin = await services.GetRequiredService<IUserLookupService>().FindByEmailAsync(AdminEmail, CancellationToken.None);
+        Console.WriteLine("[DIAG] after FindByEmailAsync");
 
         IReadOnlyCollection<(string Code, string Description)> allPermissions =
         [
@@ -76,8 +90,11 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. NavigationPermissions.All,
             .. PlatformPermissions.All,
         ];
+        Console.WriteLine("[DIAG] before AccessControlSeeder.SeedAsync");
         await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
+        Console.WriteLine("[DIAG] after AccessControlSeeder.SeedAsync, before NavigationSeeder.SeedAsync");
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);
+        Console.WriteLine("[DIAG] after NavigationSeeder.SeedAsync — InitializeAsync complete");
     }
 
     async Task IAsyncLifetime.DisposeAsync()
