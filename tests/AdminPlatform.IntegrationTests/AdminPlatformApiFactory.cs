@@ -44,7 +44,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:Default"] = _postgres.GetConnectionString(),
+                ["ConnectionStrings:Default"] = _postgres.GetConnectionString() + ";SSL Mode=Disable;Timeout=10",
                 ["Jwt:SigningKey"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
                 [IdentitySeeder.AdminEmailConfigKey] = AdminEmail,
                 [IdentitySeeder.AdminPasswordConfigKey] = AdminPassword,
