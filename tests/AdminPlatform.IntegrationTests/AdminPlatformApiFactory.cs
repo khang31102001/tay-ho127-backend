@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using AdminPlatform.Modules.AccessControl.Api;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
@@ -65,6 +66,34 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         }
     }
 
+    private static async Task RawTcpCheckAsync(string host, int port)
+    {
+        Diag($"before raw TCP connect to {host}:{port}");
+        try
+        {
+            using var tcp = new TcpClient();
+            var connectTask = tcp.ConnectAsync(host, port);
+            var winner = await Task.WhenAny(connectTask, Task.Delay(TimeSpan.FromSeconds(8)));
+            if (winner != connectTask)
+            {
+                Diag($"raw TCP connect to {host}:{port} DID NOT COMPLETE within 8s (still pending)");
+                return;
+            }
+
+            if (connectTask.IsFaulted)
+            {
+                Diag($"raw TCP connect to {host}:{port} FAILED: {connectTask.Exception}");
+                return;
+            }
+
+            Diag($"raw TCP connect to {host}:{port} SUCCEEDED, Connected={tcp.Connected}");
+        }
+        catch (Exception ex)
+        {
+            Diag($"raw TCP connect to {host}:{port} EXCEPTION: {ex}");
+        }
+    }
+
     private static async Task MigrateWithDiagAsync(string label, Func<CancellationToken, Task> migrate)
     {
         Diag($"before {label} migrate");
@@ -86,7 +115,11 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Diag("before postgres.StartAsync");
         await _postgres.StartAsync();
         Diag("after postgres.StartAsync");
-        Diag($"connection string: {_postgres.GetConnectionString()}");
+        var connString = _postgres.GetConnectionString();
+        Diag($"connection string: {connString}");
+        Diag($"testcontainers Hostname={_postgres.Hostname}, MappedPort={_postgres.GetMappedPublicPort(5432)}");
+
+        await RawTcpCheckAsync(_postgres.Hostname, _postgres.GetMappedPublicPort(5432));
 
         Diag("before Services.CreateScope");
         using var scope = Services.CreateScope();
