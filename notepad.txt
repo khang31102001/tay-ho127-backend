@@ -28,339 +28,136 @@ docs/DEVELOPMENT_GUIDE.md
 .claude/skills liên quan
 
 các module có implementation pattern tương tự.
-
-2. READ ARCHITECTURE BEFORE CODING
-
-Trước khi code, bắt buộc đọc:
-
-CLAUDE.md
-docs/ARCHITECTURE.md
-docs/DEVELOPMENT_GUIDE.md
-.claude/rules
-.claude/skills liên quan
-FE implementation:
-src/features/media/types
-src/features/media/mocks
-src/features/media/services
-Các Backend module có implementation pattern tương tự.
-
-Phải xác định trước:
-
-Project đang tổ chức module/layer như thế nào.
-Convention Entity / DTO / Service / Repository / Handler / Controller.
-ID generation hiện tại.
-Enum handling.
-Validation pattern.
-Error/result handling.
-Pagination/filter/search convention.
-Soft delete/status convention.
-EF Core configuration/migration convention.
-Testing convention.
-
-Không được tạo architecture hoặc pattern mới nếu project đã có pattern tương ứng.
-
-3. OBJECTIVE
-
-Build module Media end-to-end:
-
-API → Request DTO → Validation → Application → Domain → Repository/DbContext → Database → Mapping → Response DTO
-
-Module phải đủ khả năng làm shared media library để các domain khác có thể reference media.id.
-
-4. DOMAIN MODEL
-
-Thiết kế Media entity tối thiểu gồm:
-
-Id
-FileName
-Url
-Kind
-AltText
-Size
-Status
-
-Tạo/reuse enum:
-
-MediaKind
-
-Phải scan FE/source hiện tại để xác định các value đang sử dụng.
-
-Không tự đoán enum nếu source đã định nghĩa.
-
-EntityStatus
-
-Reuse enum/status abstraction hiện tại của project nếu đã có.
-
-Không duplicate EntityStatus.
-
-5. DATABASE / EF CORE
-
-Implement persistence cho bảng:
-
-media
-
-Bao gồm:
-
-Entity configuration
-Primary key
-Required fields
-Enum conversion nếu architecture yêu cầu
-Column length phù hợp theo convention hiện tại
-Default status = active
-Index cần thiết nếu hợp lý
-Migration
-
-Đảm bảo migration không làm ảnh hưởng các module hiện có.
-
-6. APPLICATION USE CASES
-
-Implement tối thiểu các use case:
-
-Get Media List
-
-Hỗ trợ theo convention hiện tại:
-
-pagination
-search theo file_name
-filter kind
-filter status
-Get Media Detail
-
-Input:
-
-mediaId
-
-Nếu không tồn tại → trả error theo standard error contract của project.
-
-Create Media
-
-Input tối thiểu:
-
-fileName
-url
-type/kind
-altText
-size
-status nếu API hiện tại cho phép
-
-Validate dữ liệu trước khi create.
-
-Update Media
-
-Cho phép cập nhật metadata phù hợp như:
-
-fileName
-url
-kind
-altText
-status
-
-Không cho thay đổi ID.
-
-Delete Media
-
-Follow đúng convention hiện tại:
-
-soft delete/status inactive nếu project sử dụng soft delete;
-hard delete chỉ khi architecture hiện tại quy định như vậy.
-
-Không tự quyết định implementation khác convention.
-
-7. API CONTRACT
-
-Expose API theo REST convention hiện tại của project.
-
-Ví dụ logical contract:
-
-GET    /api/media
-GET    /api/media/{id}
-POST   /api/media
-PUT    /api/media/{id}
-DELETE /api/media/{id}
-
-Tên route thực tế phải follow convention của project.
-
-8. FE ↔ BE MAPPING
-
-Đặc biệt kiểm tra contract FE hiện tại.
-
-FE đang sử dụng:
-
-type
-
-Trong khi domain/database dùng:
-
-kind
-
-Không rename domain thành type.
-
-Xử lý mapping ở DTO/API layer nếu cần:
-
-FE type
-   ↓
-Request DTO
-   ↓ mapping
-Media.Kind
-
-Response phải giữ compatibility với FE hiện tại nếu FE contract đang phụ thuộc type.
-
-9. FILE STORAGE BOUNDARY
-
-Phải kiểm tra project hiện tại có:
-
-file upload service;
-local storage;
-cloud storage;
-S3/Azure Blob/Cloudinary;
-storage abstraction;
-
-hay không.
-
-Nếu đã tồn tại → integrate theo abstraction đó.
-
-Nếu chưa có storage implementation, không tự build một storage architecture mới.
-
-Trong trường hợp đó, Media module chỉ quản lý:
-
-Media Metadata
-- fileName
-- url
-- kind
-- altText
-- size
-- status
-
-và ghi rõ phần upload/storage là boundary cần implement riêng.
-
-10. SHARED MEDIA RELATIONSHIP
-
-Thiết kế module để các domain khác có thể reference:
-
-Product ───────┐
-Customer ──────┤
-Article ───────┤
-Banner ────────┤
-BrandSettings ─┤──> Media
-PaymentMethod ─┤
-PageSection ───┘
-
-Tuy nhiên:
-
-Không tự ý sửa toàn bộ Product/Customer/Article/... trong task này.
-
-Chỉ expose Media entity/API đủ ổn định để các module đó tích hợp sau.
-
-Nếu source hiện tại đã có relation với Media thì preserve và hoàn thiện relation đó.
-
-11. VALIDATION
-
-Validation tối thiểu:
-
-fileName required
-url required
-kind phải thuộc enum hợp lệ
-size >= 0
-status hợp lệ
-altText optional
-
-Các giới hạn length phải follow DB/convention hiện tại.
-
-12. TESTING
-
-Viết test theo testing strategy hiện có.
-
-Tối thiểu kiểm tra:
-
-create media thành công
-validation invalid request
-get list
-get detail
-media not found
-update
-delete/deactivate
-filter by kind
-mapping type ↔ kind
-
-Không tạo testing framework mới nếu project đã có framework.
-
-13. CONSTRAINTS
-
-Bắt buộc:
-
-Follow architecture hiện tại.
-Reuse shared abstractions hiện có.
-Không duplicate code.
-Không duplicate enum.
-Không phá API/module hiện tại.
-Không over-engineer.
-Không tạo generic repository/service mới nếu project không sử dụng.
-Không tự thêm CQRS/MediatR/DDD abstraction nếu architecture hiện tại không có.
-Không tự build upload/storage system nếu chưa được yêu cầu.
-Không sửa FE ngoài phần thật sự cần thiết để maintain API compatibility.
-
-Nếu database design và source hiện tại conflict:
-
-xác định conflict;
-ưu tiên architecture + business contract hiện tại;
-thực hiện thay đổi tối thiểu;
-ghi rõ assumption.
-14. IMPLEMENTATION PROCESS
-
-Thực hiện theo thứ tự:
-
-Scan architecture.
-Scan FE Media contract.
-Scan Backend pattern tương tự.
-Xác định implementation plan ngắn gọn.
-Implement Domain.
-Implement Persistence.
-Implement Application/use cases.
-Implement API.
-Mapping FE type ↔ BE kind.
-Create migration.
-Build project.
-Run tests.
-Fix compile/test errors.
-Review dependency và regression.
-
-Không dừng lại sau khi chỉ tạo skeleton.
-
-15. DEFINITION OF DONE
-
-Task chỉ được xem là hoàn thành khi:
-
-Media module compile thành công.
-Database mapping hoàn chỉnh.
-Migration hợp lệ.
-CRUD hoạt động.
-List/search/filter hoạt động theo architecture hiện tại.
-FE contract không bị phá.
-type ↔ kind mapping rõ ràng.
-Validation hoạt động.
-Error handling đúng standard.
-Tests liên quan pass.
-Không phát sinh duplicate abstraction.
-Không có TODO quan trọng chưa xử lý.
-16. FINAL REPORT
-
-Sau khi hoàn thành, báo cáo ngắn gọn theo format:
-
-Implemented
-Files/modules đã tạo hoặc chỉnh sửa.
-API endpoints.
-Database/migration.
-Validation.
-Tests.
-Architecture Decisions
-Pattern đã reuse.
-Cách xử lý type ↔ kind.
-Cách xử lý delete/status.
-Media storage boundary.
-Verification
-Build result.
-Test result.
-Migration status.
-Assumptions / Remaining Work
-
-Chỉ liệt kê những phần thực sự chưa thể xác định từ source.
-
+ 
+ 2.
+
+
+
+
+ ================================================================================================================================================================
+
+ ```text
+## TASK 2: Setup môi trường Local Development trên VS Code
+
+### Mục tiêu
+Thiết lập máy Windows hiện tại để có thể build, chạy và debug Backend trực tiếp bằng VS Code, KHÔNG dùng Docker vì Docker đang gây lag máy.
+
+Sau khi hoàn thành, tôi phải có thể:
+- mở source bằng VS Code;
+- restore/build source;
+- chạy Backend local;
+- mở Swagger để test API/module;
+- debug, chỉnh sửa code và chạy lại dễ dàng.
+
+### Yêu cầu thực hiện
+
+1. Đọc source trước để xác định chính xác:
+   - phiên bản .NET SDK cần dùng (`global.json`, `.csproj`);
+   - database/provider đang sử dụng;
+   - EF Core version;
+   - các dependency/tool cần thiết;
+   - cấu hình Development hiện tại.
+
+2. Kiểm tra máy tôi đã có gì và chỉ cài những thứ còn thiếu, ví dụ:
+   - đúng phiên bản .NET SDK;
+   - VS Code C# / C# Dev Kit;
+   - `dotnet-ef` đúng version nếu project sử dụng migration;
+   - PostgreSQL / PostgreSQL client nếu thực sự cần;
+   - các CLI/tool khác mà source yêu cầu.
+
+Có thể dùng terminal để cài trực tiếp nếu an toàn.
+
+3. KHÔNG yêu cầu Docker để chạy local.
+
+4. Chuẩn hóa cấu hình Development:
+   - `appsettings.Development.json`;
+   - Connection String;
+   - JWT/config cần thiết;
+   - environment variables / User Secrets nếu cần.
+
+Không hard-code secret vào source và không làm thay đổi Production config.
+
+5. Sau khi setup xong, tự chạy kiểm tra:
+   `dotnet --info`
+   `dotnet restore`
+   `dotnet build`
+   `dotnet run`
+
+6. Nếu build/run lỗi:
+   đọc log → xác định root cause → sửa hoặc bổ sung môi trường → chạy lại cho đến khi Backend chạy được.
+
+7. Kiểm tra Swagger thực tế:
+   - xác định URL/port;
+   - xác nhận Swagger load thành công;
+   - thử ít nhất một API phù hợp để xác nhận application hoạt động.
+
+8. Nếu database cần migration/seed, kiểm tra kỹ trước khi chạy.
+KHÔNG chạy migration destructive hoặc thay đổi database Production/Render ngoài ý muốn.
+
+### Kết quả cuối cùng
+Báo cáo ngắn cho tôi:
+- Đã cài những công cụ nào + version.
+- Công cụ nào đã có sẵn.
+- File/config nào đã chỉnh.
+- Lệnh chuẩn để lần sau tôi tự chạy project.
+- URL Swagger local.
+- Cách Run/Debug bằng VS Code.
+- Build: PASS/FAIL.
+- Backend local: PASS/FAIL.
+- Swagger: PASS/FAIL.
+
+Chỉ kết luận hoàn thành khi tôi có thể chạy Backend + Swagger local mà không cần Docker.
+```
+ ================================================================================================================================================================
+```text
+## TASK 3: Diagnose Laptop RAM Overflow / Black Screen
+
+### Mục tiêu
+Kiểm tra laptop Windows hiện tại để xác định nguyên nhân máy bị tăng RAM bất thường, sau đó đen màn hình và chỉ có thể reset máy mới hoạt động lại.
+
+### Yêu cầu
+1. Chỉ DIAGNOSE trước, chưa tự ý xóa dữ liệu, uninstall phần mềm, chỉnh Registry/BIOS hoặc thay đổi cấu hình hệ thống nguy hiểm.
+
+2. Thu thập và phân tích:
+- Tổng RAM, RAM usage, Commit/Virtual Memory và Pagefile.
+- Process/service đang chiếm RAM nhiều nhất.
+- Memory leak hoặc process có RAM tăng liên tục.
+- Docker Desktop / WSL2 / `vmmem`.
+- VS Code, Claude/Node.js, browser và các development process.
+- GPU RAM/driver và khả năng GPU driver gây black screen.
+- Windows Event Viewer: System/Application.
+- Reliability Monitor.
+- WHEA / Kernel-Power / Display driver / Out-of-memory errors.
+- Crash dump/minidump nếu có.
+- Startup/background applications.
+
+3. Nếu cần, dùng PowerShell/CMD để lấy số liệu và tạo log phục vụ phân tích.
+
+4. Phân biệt rõ nguyên nhân có khả năng thuộc:
+- RAM vật lý thiếu/lỗi.
+- Memory leak phần mềm.
+- Pagefile cấu hình sai/thiếu.
+- Docker/WSL chiếm RAM.
+- GPU/driver.
+- Windows/system issue.
+- Phần cứng khác.
+
+5. Xếp hạng Top 3 nguyên nhân có khả năng nhất dựa trên bằng chứng thực tế.
+
+6. Sau khi xác định root cause, đề xuất cách xử lý theo thứ tự:
+   Fix an toàn → kiểm tra lại → chỉ thực hiện thay đổi lớn khi thật sự cần.
+
+7. Sau khi fix, chạy lại kiểm tra RAM và theo dõi để xác nhận vấn đề đã được cải thiện.
+
+### Báo cáo cuối
+Cho tôi bảng ngắn gồm:
+- Triệu chứng.
+- Bằng chứng/log tìm được.
+- Root cause hoặc nguyên nhân nghi ngờ.
+- Mức độ tin cậy.
+- Cách khắc phục đề xuất.
+- Những thay đổi đã thực hiện.
+- Trạng thái sau khi kiểm tra lại.
+
+Không kết luận đơn giản là “thiếu RAM”; phải tìm nguyên nhân vì sao RAM tăng và vì sao hệ thống chuyển sang black screen.
+```

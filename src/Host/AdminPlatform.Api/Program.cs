@@ -168,7 +168,7 @@ try
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseExceptionHandler();
 
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Test"))
     {
         app.UseSwagger();
         app.UseSwaggerUI();
