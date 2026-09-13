@@ -65,30 +65,40 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         }
     }
 
+    private static async Task MigrateWithDiagAsync(string label, Func<CancellationToken, Task> migrate)
+    {
+        Diag($"before {label} migrate");
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+            await migrate(cts.Token);
+            Diag($"after {label} migrate");
+        }
+        catch (Exception ex)
+        {
+            Diag($"EXCEPTION during {label} migrate: {ex}");
+            throw;
+        }
+    }
+
     public async Task InitializeAsync()
     {
         Diag("before postgres.StartAsync");
         await _postgres.StartAsync();
         Diag("after postgres.StartAsync");
+        Diag($"connection string: {_postgres.GetConnectionString()}");
 
         Diag("before Services.CreateScope");
         using var scope = Services.CreateScope();
         var services = scope.ServiceProvider;
         Diag("after Services.CreateScope");
 
-        Diag("before Identity migrate");
-        await services.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
-        Diag("after Identity migrate, before AccessControl migrate");
-        await services.GetRequiredService<AccessControlDbContext>().Database.MigrateAsync();
-        Diag("after AccessControl migrate, before Organization migrate");
-        await services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync();
-        Diag("after Organization migrate, before Navigation migrate");
-        await services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
-        Diag("after Navigation migrate, before Platform migrate");
-        await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
-        Diag("after Platform migrate, before Customer migrate");
-        await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
-        Diag("after Customer migrate");
+        await MigrateWithDiagAsync("Identity", ct => services.GetRequiredService<IdentityDbContext>().Database.MigrateAsync(ct));
+        await MigrateWithDiagAsync("AccessControl", ct => services.GetRequiredService<AccessControlDbContext>().Database.MigrateAsync(ct));
+        await MigrateWithDiagAsync("Organization", ct => services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync(ct));
+        await MigrateWithDiagAsync("Navigation", ct => services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync(ct));
+        await MigrateWithDiagAsync("Platform", ct => services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync(ct));
+        await MigrateWithDiagAsync("Customer", ct => services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync(ct));
 
         Diag("before IdentitySeeder.SeedAsync");
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
