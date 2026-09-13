@@ -12,7 +12,12 @@ env:
 
 jobs:
   build-lint-test:
-    runs-on: ubuntu-latest
+    # Pinned to 22.04 (not ubuntu-latest/24.04): the 24.04 runner image's iptables/nftables Docker
+    # networking regression breaks NAT port-forwarding for user-defined bridge networks, causing any
+    # TCP connection to a Testcontainers-mapped port (e.g. Postgres) to hang indefinitely instead of
+    # connecting or failing fast — see https://github.com/testcontainers/testcontainers-go/issues/1363
+    # and similar reports across the Testcontainers ecosystem.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
