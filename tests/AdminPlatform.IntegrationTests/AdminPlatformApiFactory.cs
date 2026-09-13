@@ -37,19 +37,29 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
     public string AdminEmail { get; } = "admin@integration.test";
     public string AdminPassword { get; } = "Integration-Test-Passw0rd!";
 
+    private readonly string _jwtSigningKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Default"] = _postgres.GetConnectionString() + ";SSL Mode=Disable;Timeout=10",
-                ["Jwt:SigningKey"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
-                [IdentitySeeder.AdminEmailConfigKey] = AdminEmail,
-                [IdentitySeeder.AdminPasswordConfigKey] = AdminPassword,
-            });
-        });
+    }
+
+    /// <summary>Sets real OS environment variables (not WebApplicationFactory's ConfigureAppConfiguration)
+    /// so every module's AddXModule(configuration) sees the test Postgres connection string: each module
+    /// reads configuration.GetConnectionString("Default") eagerly, at registration time, before
+    /// builder.Build() runs — and WebApplicationFactory's DeferredHostBuilder only merges
+    /// ConfigureAppConfiguration overrides in AT Build() time, too late for those eager reads. Environment
+    /// variables are picked up immediately when WebApplication.CreateBuilder(args) constructs its
+    /// configuration, so this must be called before the first access to Services/CreateClient() (which
+    /// triggers the host build).</summary>
+    private void SetTestEnvironmentVariables(string connectionString)
+    {
+        Environment.SetEnvironmentVariable("ConnectionStrings__Default", connectionString);
+        Environment.SetEnvironmentVariable("Jwt__SigningKey", _jwtSigningKey);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", "AdminPlatform");
+        Environment.SetEnvironmentVariable("Jwt__Audience", "AdminPlatform.Clients");
+        Environment.SetEnvironmentVariable(IdentitySeeder.AdminEmailConfigKey, AdminEmail);
+        Environment.SetEnvironmentVariable(IdentitySeeder.AdminPasswordConfigKey, AdminPassword);
     }
 
     private static readonly string DiagPath = Path.Combine(AppContext.BaseDirectory, "diag.log");
@@ -120,6 +130,9 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Diag($"testcontainers Hostname={_postgres.Hostname}, MappedPort={_postgres.GetMappedPublicPort(5432)}");
 
         await RawTcpCheckAsync(_postgres.Hostname, _postgres.GetMappedPublicPort(5432));
+
+        SetTestEnvironmentVariables(connString);
+        Diag("environment variables set");
 
         Diag("before Services.CreateScope");
         using var scope = Services.CreateScope();
