@@ -138,6 +138,39 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         }
     }
 
+    private static async Task RawEfCoreCheckAsync(string connectionString)
+    {
+        Diag("before manual IdentityDbContext (bypassing DI) migrate");
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var options = new DbContextOptionsBuilder<IdentityDbContext>()
+                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", IdentityDbContext.Schema))
+                .UseSnakeCaseNamingConvention()
+                .Options;
+            await using var db = new IdentityDbContext(options);
+            var migrateTask = db.Database.MigrateAsync(cts.Token);
+            var winner = await Task.WhenAny(migrateTask, Task.Delay(TimeSpan.FromSeconds(17)));
+            if (winner != migrateTask)
+            {
+                Diag("manual IdentityDbContext migrate DID NOT COMPLETE within 17s (still pending)");
+                return;
+            }
+
+            if (migrateTask.IsFaulted)
+            {
+                Diag($"manual IdentityDbContext migrate FAILED: {migrateTask.Exception}");
+                return;
+            }
+
+            Diag("manual IdentityDbContext migrate SUCCEEDED");
+        }
+        catch (Exception ex)
+        {
+            Diag($"manual IdentityDbContext migrate EXCEPTION: {ex}");
+        }
+    }
+
     private static async Task MigrateWithDiagAsync(string label, Func<CancellationToken, Task> migrate)
     {
         Diag($"before {label} migrate");
@@ -165,9 +198,10 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
 
         await RawTcpCheckAsync(_postgres.Hostname, _postgres.GetMappedPublicPort(5432));
         await RawNpgsqlCheckAsync(connString);
+        await RawEfCoreCheckAsync(connString);
 
         SetTestEnvironmentVariables(connString);
-        Diag("environment variables set");
+        Diag($"environment variables set; ConnectionStrings__Default now = {Environment.GetEnvironmentVariable("ConnectionStrings__Default")}");
 
         Diag("before Services.CreateScope");
         using var scope = Services.CreateScope();
