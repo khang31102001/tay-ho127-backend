@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace AdminPlatform.IntegrationTests;
@@ -104,6 +105,39 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         }
     }
 
+    private static async Task RawNpgsqlCheckAsync(string connectionString)
+    {
+        Diag("before raw Npgsql connection open");
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await using var conn = new NpgsqlConnection(connectionString);
+            var openTask = conn.OpenAsync(cts.Token);
+            var winner = await Task.WhenAny(openTask, Task.Delay(TimeSpan.FromSeconds(12)));
+            if (winner != openTask)
+            {
+                Diag("raw Npgsql OpenAsync DID NOT COMPLETE within 12s (still pending)");
+                return;
+            }
+
+            if (openTask.IsFaulted)
+            {
+                Diag($"raw Npgsql OpenAsync FAILED: {openTask.Exception}");
+                return;
+            }
+
+            Diag($"raw Npgsql connection OPENED, State={conn.State}, ServerVersion={conn.PostgreSqlVersion}");
+
+            await using var cmd = new NpgsqlCommand("SELECT 1", conn);
+            var result = await cmd.ExecuteScalarAsync(cts.Token);
+            Diag($"raw Npgsql SELECT 1 returned: {result}");
+        }
+        catch (Exception ex)
+        {
+            Diag($"raw Npgsql EXCEPTION: {ex}");
+        }
+    }
+
     private static async Task MigrateWithDiagAsync(string label, Func<CancellationToken, Task> migrate)
     {
         Diag($"before {label} migrate");
@@ -130,6 +164,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Diag($"testcontainers Hostname={_postgres.Hostname}, MappedPort={_postgres.GetMappedPublicPort(5432)}");
 
         await RawTcpCheckAsync(_postgres.Hostname, _postgres.GetMappedPublicPort(5432));
+        await RawNpgsqlCheckAsync(connString);
 
         SetTestEnvironmentVariables(connString);
         Diag("environment variables set");
