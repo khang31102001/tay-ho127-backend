@@ -1,35 +1,20 @@
-# TASK — Build Customer Module + Customer Authentication
+# TASK — Build Customer Module + Media
 
 ## Context
 
-Hãy xây dựng module `Customer` dựa trên database design sau:
+Hãy xây dựng module `Media` dựa trên database design sau:
 
 ```dbml
-Table customers {
+Table media {
   id varchar [pk]
-  customer_code varchar [unique, not null]
-  full_name varchar [not null]
-  phone varchar [not null]
-  email varchar
-  avatar_media_id varchar [ref: > media.id]
-  date_of_birth date
-  gender gender_type
+  file_name varchar [not null]
+  url varchar [not null]
+  kind media_kind [not null, note: 'FE field name is "type"']
+  alt_text varchar
+  size int [not null, note: 'bytes']
   status entity_status [not null, default: 'active']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
-}
 
-Table customer_addresses {
-  id varchar [pk]
-  customer_id varchar [ref: > customers.id, not null]
-  receiver_name varchar [not null]
-  phone varchar [not null]
-  address_line varchar [not null]
-  ward varchar
-  district varchar
-  province varchar
-  address_note text
-  is_default boolean [not null, default: false]
+  Note: 'Shared media library referenced by Product, Customer, Article, Banner, BrandSettings, PaymentMethod, PageSection'
 }
 
 1. Đọc Architecture trước khi code
@@ -41,260 +26,138 @@ docs/ARCHITECTURE.md
 docs/DEVELOPMENT_GUIDE.md
 .claude/rules
 .claude/skills liên quan
-Auth/Admin module hiện tại
+
 các module có implementation pattern tương tự.
-
-Mục tiêu:
-
-reuse architecture/pattern hiện tại;
-không tạo architecture mới -> nếu cần thiết thì đề xuất để tao duyệt -> trình bày lý do cho tao các kiểu;
-không làm ảnh hưởng Admin Authentication đang hoạt động.
-2. Customer Module
-
-Implement:
-
-Customer
-Create customer
-Get customer profile
-Update profile
-Update avatar
-Status management nếu cần.
-Customer Address
-Create address
-Update address
-Delete address
-Get customer addresses
-Set default address.
-
-Business rule:
-
-Một Customer có nhiều Address nhưng chỉ được có tối đa một is_default = true.
-
-3. Customer Authentication
-
-Customer phải hỗ trợ 2 phương thức đăng nhập:
-
-Method 1 — Local Account
-
-Flow:
-
-Register
-→ Login
-→ Access Token
-→ Refresh Token
-→ Authenticated Customer
-
-Register tối thiểu hỗ trợ:
-
-Full Name
-Phone
-Email
-Password
-
-Password:
-
-tuyệt đối không lưu plain text;
-sử dụng password hashing theo security pattern hiện tại.
-Method 2 — Google Login
-
-Flow:
-
-Google OAuth
-→ Verify Google identity/token
-→ tìm Customer hiện tại
-→ nếu chưa tồn tại thì tạo Customer
-→ nếu đã tồn tại thì liên kết identity
-→ phát hành Access Token / Refresh Token của hệ thống.
-
-Không sử dụng Google token làm session token chính của application.
-
-4. Auth Persistence Design
-
-Database hiện tại chưa thể hiện password/provider credentials.
-
-Hãy phân tích architecture hiện tại và thiết kế phần persistence cần thiết cho Customer Auth.
-
-Ví dụ có thể cần:
-
-customer_auth_identities
-
-hoặc cấu trúc tương đương:
-
-id
-customer_id
-provider // local | google
-provider_user_id
-email
-password_hash // local only
-created_at
-updated_at
-
-Nếu architecture hiện tại đã có Auth Identity/Credential pattern có thể reuse thì ưu tiên reuse.
-
-KHÔNG tự ý thêm field password trực tiếp vào customers nếu architecture không phù hợp.
-
-Nếu cần thay đổi Database Schema:
-→ báo cáo thay đổi trước khi tạo migration.
-
-5. Account Linking
-
-Xử lý trường hợp:
-
-Customer đăng ký bằng Email/Password
-sau đó Login Google bằng cùng email.
-
-Không tự động tạo duplicate Customer.
-
-Phân tích và implement rule an toàn để:
-
-Local Account
-+
-Google Identity
-↓
-same Customer
-
-Phải tránh Account Takeover.
-
-6. Token / Session
-
-Reuse Auth infrastructure hiện tại nếu phù hợp:
-
-JWT
-Access Token
-Refresh Token
-Token expiration
-Refresh Token rotation/revocation
-Logout.
-
-Customer JWT phải có identity rõ ràng, ví dụ:
-
-sub
-customer_id
-account_type = customer
-
-Không đưa Admin Role/Permission vào Customer nếu không cần.
-
-7. Security Boundary
-
-Phải đảm bảo:
-
-Customer Authentication
-≠
-Admin Authentication
-
-Customer token không được truy cập Admin API.
-
-Admin token không tự động được coi là Customer.
-
-Nếu dùng chung JWT infrastructure thì phải có cơ chế phân biệt:
-
-account_type
-hoặc
-audience
-hoặc security mechanism tương đương theo architecture hiện tại.
-
-8. API dự kiến
-
-Customer Auth:
-
-POST /api/customer/auth/register
-POST /api/customer/auth/login
-POST /api/customer/auth/google
-POST /api/customer/auth/refresh
-POST /api/customer/auth/logout
-
-Customer:
-
-GET /api/customers/me
-PUT /api/customers/me
-
-Address:
-
-GET /api/customers/me/addresses
-POST /api/customers/me/addresses
-PUT /api/customers/me/addresses/{id}
-DELETE /api/customers/me/addresses/{id}
-PUT /api/customers/me/addresses/{id}/default
-
-Tên endpoint có thể điều chỉnh theo convention hiện tại của project.
-
-9. Implementation Flow
-
-Triển khai theo architecture hiện tại:
-
-Domain
-→ Entity / Aggregate
-→ EF Core Configuration
-→ Application Contract
-→ DTO
-→ Validation
-→ Auth Service / Use Case / Handler
-→ Infrastructure
-→ JWT / Google Authentication
-→ API
-→ Migration
-→ Tests
-
-Không code tất cả một cách tùy ý ngoài architecture hiện tại.
-
-10. Tests
-
-Tối thiểu test:
-
-Register Customer
-Duplicate Email/Phone
-Login đúng password
-Login sai password
-Google Login customer mới
-Google Login customer đã tồn tại
-Link Google với account hiện tại
-Refresh Token
-Logout / revoke token
-Customer token không truy cập được Admin API
-CRUD Address
-chỉ một default address/customer.
-Constraints
-Không làm hỏng Admin Auth hiện tại.
-Không refactor Admin Auth nếu không thực sự cần.
-Không dùng chung AdminUser với Customer.
-Không lưu password plaintext.
-Không trust dữ liệu Google từ Frontend nếu Backend chưa verify.
-Không tạo duplicate Customer khi một người dùng nhiều login provider.
-Không tự thay đổi schema đã chốt ngoài phần Customer Auth thực sự cần.
-Nếu phát hiện architecture/database conflict → báo trước khi thay đổi.
-Output
-
-Sau khi hoàn thành, báo cáo:
-
-Architecture Customer/Auth đã áp dụng
-Files created
-Files modified
-Database changes
-Migration
-API endpoints
-Local Login flow
-Google Login flow
-Token/Auth flow
-Security boundary với Admin
-Tests
-Assumptions / issues còn lại
-
-Mục tiêu cuối:
-
-Customer
-├── Profile
-├── Addresses
-└── Authentication
-├── Email/Password
-└── Google OAuth
-↓
-Access Token
-Refresh Token
-↓
-Customer APIs
-
-Trong khi:
-
-Admin Authentication
-
-vẫn hoạt động độc lập và không bị breaking change.
+ 
+ 2.
+
+
+
+
+ ================================================================================================================================================================
+
+ ```text
+## TASK 2: Setup môi trường Local Development trên VS Code
+
+### Mục tiêu
+Thiết lập máy Windows hiện tại để có thể build, chạy và debug Backend trực tiếp bằng VS Code, KHÔNG dùng Docker vì Docker đang gây lag máy.
+
+Sau khi hoàn thành, tôi phải có thể:
+- mở source bằng VS Code;
+- restore/build source;
+- chạy Backend local;
+- mở Swagger để test API/module;
+- debug, chỉnh sửa code và chạy lại dễ dàng.
+
+### Yêu cầu thực hiện
+
+1. Đọc source trước để xác định chính xác:
+   - phiên bản .NET SDK cần dùng (`global.json`, `.csproj`);
+   - database/provider đang sử dụng;
+   - EF Core version;
+   - các dependency/tool cần thiết;
+   - cấu hình Development hiện tại.
+
+2. Kiểm tra máy tôi đã có gì và chỉ cài những thứ còn thiếu, ví dụ:
+   - đúng phiên bản .NET SDK;
+   - VS Code C# / C# Dev Kit;
+   - `dotnet-ef` đúng version nếu project sử dụng migration;
+   - PostgreSQL / PostgreSQL client nếu thực sự cần;
+   - các CLI/tool khác mà source yêu cầu.
+
+Có thể dùng terminal để cài trực tiếp nếu an toàn.
+
+3. KHÔNG yêu cầu Docker để chạy local.
+
+4. Chuẩn hóa cấu hình Development:
+   - `appsettings.Development.json`;
+   - Connection String;
+   - JWT/config cần thiết;
+   - environment variables / User Secrets nếu cần.
+
+Không hard-code secret vào source và không làm thay đổi Production config.
+
+5. Sau khi setup xong, tự chạy kiểm tra:
+   `dotnet --info`
+   `dotnet restore`
+   `dotnet build`
+   `dotnet run`
+
+6. Nếu build/run lỗi:
+   đọc log → xác định root cause → sửa hoặc bổ sung môi trường → chạy lại cho đến khi Backend chạy được.
+
+7. Kiểm tra Swagger thực tế:
+   - xác định URL/port;
+   - xác nhận Swagger load thành công;
+   - thử ít nhất một API phù hợp để xác nhận application hoạt động.
+
+8. Nếu database cần migration/seed, kiểm tra kỹ trước khi chạy.
+KHÔNG chạy migration destructive hoặc thay đổi database Production/Render ngoài ý muốn.
+
+### Kết quả cuối cùng
+Báo cáo ngắn cho tôi:
+- Đã cài những công cụ nào + version.
+- Công cụ nào đã có sẵn.
+- File/config nào đã chỉnh.
+- Lệnh chuẩn để lần sau tôi tự chạy project.
+- URL Swagger local.
+- Cách Run/Debug bằng VS Code.
+- Build: PASS/FAIL.
+- Backend local: PASS/FAIL.
+- Swagger: PASS/FAIL.
+
+Chỉ kết luận hoàn thành khi tôi có thể chạy Backend + Swagger local mà không cần Docker.
+```
+ ================================================================================================================================================================
+```text
+## TASK 3: Diagnose Laptop RAM Overflow / Black Screen
+
+### Mục tiêu
+Kiểm tra laptop Windows hiện tại để xác định nguyên nhân máy bị tăng RAM bất thường, sau đó đen màn hình và chỉ có thể reset máy mới hoạt động lại.
+
+### Yêu cầu
+1. Chỉ DIAGNOSE trước, chưa tự ý xóa dữ liệu, uninstall phần mềm, chỉnh Registry/BIOS hoặc thay đổi cấu hình hệ thống nguy hiểm.
+
+2. Thu thập và phân tích:
+- Tổng RAM, RAM usage, Commit/Virtual Memory và Pagefile.
+- Process/service đang chiếm RAM nhiều nhất.
+- Memory leak hoặc process có RAM tăng liên tục.
+- Docker Desktop / WSL2 / `vmmem`.
+- VS Code, Claude/Node.js, browser và các development process.
+- GPU RAM/driver và khả năng GPU driver gây black screen.
+- Windows Event Viewer: System/Application.
+- Reliability Monitor.
+- WHEA / Kernel-Power / Display driver / Out-of-memory errors.
+- Crash dump/minidump nếu có.
+- Startup/background applications.
+
+3. Nếu cần, dùng PowerShell/CMD để lấy số liệu và tạo log phục vụ phân tích.
+
+4. Phân biệt rõ nguyên nhân có khả năng thuộc:
+- RAM vật lý thiếu/lỗi.
+- Memory leak phần mềm.
+- Pagefile cấu hình sai/thiếu.
+- Docker/WSL chiếm RAM.
+- GPU/driver.
+- Windows/system issue.
+- Phần cứng khác.
+
+5. Xếp hạng Top 3 nguyên nhân có khả năng nhất dựa trên bằng chứng thực tế.
+
+6. Sau khi xác định root cause, đề xuất cách xử lý theo thứ tự:
+   Fix an toàn → kiểm tra lại → chỉ thực hiện thay đổi lớn khi thật sự cần.
+
+7. Sau khi fix, chạy lại kiểm tra RAM và theo dõi để xác nhận vấn đề đã được cải thiện.
+
+### Báo cáo cuối
+Cho tôi bảng ngắn gồm:
+- Triệu chứng.
+- Bằng chứng/log tìm được.
+- Root cause hoặc nguyên nhân nghi ngờ.
+- Mức độ tin cậy.
+- Cách khắc phục đề xuất.
+- Những thay đổi đã thực hiện.
+- Trạng thái sau khi kiểm tra lại.
+
+Không kết luận đơn giản là “thiếu RAM”; phải tìm nguyên nhân vì sao RAM tăng và vì sao hệ thống chuyển sang black screen.
+```

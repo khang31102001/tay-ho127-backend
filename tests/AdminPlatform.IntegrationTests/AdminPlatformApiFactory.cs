@@ -14,7 +14,6 @@ using AdminPlatform.Modules.Platform.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
@@ -36,24 +35,37 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
     public string AdminEmail { get; } = "admin@integration.test";
     public string AdminPassword { get; } = "Integration-Test-Passw0rd!";
 
+    private readonly string _jwtSigningKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        builder.ConfigureAppConfiguration((_, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Default"] = _postgres.GetConnectionString(),
-                ["Jwt:SigningKey"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
-                [IdentitySeeder.AdminEmailConfigKey] = AdminEmail,
-                [IdentitySeeder.AdminPasswordConfigKey] = AdminPassword,
-            });
-        });
+    }
+
+    /// <summary>Sets real OS environment variables (not WebApplicationFactory's ConfigureAppConfiguration)
+    /// so every module's AddXModule(configuration) sees the test Postgres connection string: each module
+    /// reads configuration.GetConnectionString("Default") eagerly, at registration time, before
+    /// builder.Build() runs — and WebApplicationFactory's DeferredHostBuilder only merges
+    /// ConfigureAppConfiguration overrides in AT Build() time, too late for those eager reads. Environment
+    /// variables are picked up immediately when WebApplication.CreateBuilder(args) constructs its
+    /// configuration, so this must be called before the first access to Services/CreateClient() (which
+    /// triggers the host build).</summary>
+    private void SetTestEnvironmentVariables(string connectionString)
+    {
+        Environment.SetEnvironmentVariable("ConnectionStrings__Default", connectionString);
+        Environment.SetEnvironmentVariable("Jwt__SigningKey", _jwtSigningKey);
+        Environment.SetEnvironmentVariable("Jwt__Issuer", "AdminPlatform");
+        Environment.SetEnvironmentVariable("Jwt__Audience", "AdminPlatform.Clients");
+        Environment.SetEnvironmentVariable(IdentitySeeder.AdminEmailConfigKey, AdminEmail);
+        Environment.SetEnvironmentVariable(IdentitySeeder.AdminPasswordConfigKey, AdminPassword);
+        // The whole suite shares one client address; the production auth limit (10/min) would 429 it.
+        Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "100000");
     }
 
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
+        SetTestEnvironmentVariables(_postgres.GetConnectionString());
 
         using var scope = Services.CreateScope();
         var services = scope.ServiceProvider;

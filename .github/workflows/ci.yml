@@ -55,6 +55,7 @@ jobs:
           ConnectionStrings__Default: "Host=localhost;Database=adminplatform;Username=postgres;Password=postgres"
 
       - name: Integration tests (Testcontainers — needs Docker, available on this runner)
+        timeout-minutes: 4
         run: dotnet test tests/AdminPlatform.IntegrationTests/AdminPlatform.IntegrationTests.csproj --no-build -c Release --logger "trx;LogFileName=integration.trx" --results-directory TestResults
 
       - name: Publish test results
