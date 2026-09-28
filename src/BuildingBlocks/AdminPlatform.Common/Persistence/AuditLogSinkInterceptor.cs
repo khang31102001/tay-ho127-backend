@@ -5,6 +5,7 @@ using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AdminPlatform.Common.Persistence;
 
@@ -19,20 +20,23 @@ public sealed class AuditLogSinkInterceptor : SaveChangesInterceptor
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ICorrelationIdAccessor _correlationIdAccessor;
-    private readonly IAuditEventSink _sink;
+    private readonly IServiceProvider _serviceProvider;
 
     private List<AuditEvent> _pending = [];
 
+    // IAuditEventSink is resolved lazily (at save time), not injected: the real sink depends on
+    // PlatformDbContext, whose options resolve this interceptor again. Constructor injection formed a
+    // DI cycle through the AddDbContext factories that DI cannot detect — it hung every DbContext resolve.
     public AuditLogSinkInterceptor(
         ICurrentUser currentUser,
         IDateTimeProvider dateTimeProvider,
         ICorrelationIdAccessor correlationIdAccessor,
-        IAuditEventSink sink)
+        IServiceProvider serviceProvider)
     {
         _currentUser = currentUser;
         _dateTimeProvider = dateTimeProvider;
         _correlationIdAccessor = correlationIdAccessor;
-        _sink = sink;
+        _serviceProvider = serviceProvider;
     }
 
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -53,7 +57,8 @@ public sealed class AuditLogSinkInterceptor : SaveChangesInterceptor
         {
             var events = _pending;
             _pending = [];
-            await _sink.RecordAsync(events, cancellationToken);
+            var sink = _serviceProvider.GetRequiredService<IAuditEventSink>();
+            await sink.RecordAsync(events, cancellationToken);
         }
 
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
