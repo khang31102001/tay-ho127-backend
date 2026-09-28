@@ -61,6 +61,8 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Environment.SetEnvironmentVariable("Jwt__Audience", "AdminPlatform.Clients");
         Environment.SetEnvironmentVariable(IdentitySeeder.AdminEmailConfigKey, AdminEmail);
         Environment.SetEnvironmentVariable(IdentitySeeder.AdminPasswordConfigKey, AdminPassword);
+        // The whole suite shares one client address; the production auth limit (10/min) would 429 it.
+        Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "100000");
     }
 
     private static readonly string DiagPath = Path.Combine(AppContext.BaseDirectory, "diag.log");

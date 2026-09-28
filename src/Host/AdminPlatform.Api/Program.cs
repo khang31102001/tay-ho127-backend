@@ -91,6 +91,11 @@ try
                     "Jwt:SigningKey is not set. Provide it via an environment variable or user-secrets — never commit it.");
             }
 
+            // Keep claim names exactly as issued ("sub", "email", "role", ...). The default inbound mapping
+            // renames them to long ClaimTypes URIs, so AppClaimTypes lookups (GetUserId, ICurrentUser) found
+            // nothing — every /me endpoint returned 500 and audit CreatedBy/UpdatedBy were always null.
+            options.MapInboundClaims = false;
+
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -116,16 +121,21 @@ try
     });
 
     // ---- Rate limiting for abuse-sensitive auth endpoints (api-design.md §53) ----
-    builder.Services.AddRateLimiter(options =>
-    {
-        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-        options.AddFixedWindowLimiter("auth", limiterOptions =>
+    // Limits come from RateLimiting:Auth (defaults: 10 requests / 60s) and are read lazily for the same
+    // WebApplicationFactory reason as JwtBearerOptions above — integration tests raise the limit, since
+    // every test logs in/registers through these endpoints from the same client address.
+    builder.Services.AddRateLimiter(options => options.RejectionStatusCode = StatusCodes.Status429TooManyRequests);
+    builder.Services.AddOptions<RateLimiterOptions>()
+        .Configure<IConfiguration>((options, configuration) =>
         {
-            limiterOptions.PermitLimit = 10;
-            limiterOptions.Window = TimeSpan.FromMinutes(1);
-            limiterOptions.QueueLimit = 0;
+            var authLimits = configuration.GetSection("RateLimiting:Auth");
+            options.AddFixedWindowLimiter("auth", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = authLimits.GetValue("PermitLimit", 10);
+                limiterOptions.Window = TimeSpan.FromSeconds(authLimits.GetValue("WindowSeconds", 60));
+                limiterOptions.QueueLimit = 0;
+            });
         });
-    });
 
     // ---- Health checks ----
     // The connection string is resolved lazily via this factory (invoked only when /health is actually
