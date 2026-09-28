@@ -19,14 +19,19 @@ public sealed class MediaService : IMediaService
     {
         var query = _db.Media.AsNoTracking().AsQueryable();
 
+        // Parsed before the query, not inside the Where lambda: EF evaluates in-expression calls while
+        // translating the query and wraps their exceptions, so an invalid filter surfaced as a 500 instead
+        // of the BusinessRuleValidationException's 400.
         if (!string.IsNullOrWhiteSpace(kind))
         {
-            query = query.Where(m => m.Kind == ParseKind(kind));
+            var parsedKind = ParseKind(kind);
+            query = query.Where(m => m.Kind == parsedKind);
         }
 
         if (!string.IsNullOrWhiteSpace(status))
         {
-            query = query.Where(m => m.Status == ParseStatus(status));
+            var parsedStatus = ParseStatus(status);
+            query = query.Where(m => m.Status == parsedStatus);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Search))

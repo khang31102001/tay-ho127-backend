@@ -26,6 +26,7 @@ public static class NavigationSeeder
         new("admin.fiscal-years", "Fiscal Years", "admin", "/admin/fiscal-years", "calendar", 80, "fiscal-years.view"),
         new("admin.system-settings", "System Settings", "admin", "/admin/system-settings", "sliders", 90, "system-settings.view"),
         new("admin.audit-logs", "Audit Logs", "admin", "/admin/audit-logs", "history", 100, "audit-logs.view"),
+        new("admin.media", "Media", "admin", "/admin/media", "image", 110, "media.view"),
     ];
 
     public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)

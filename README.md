@@ -124,6 +124,8 @@ docker compose run --rm migrator seed
 | `Jwt__Issuer` / `Jwt__Audience` | no | Default `AdminPlatform` / `AdminPlatform.Clients` |
 | `Jwt__AccessTokenMinutes` / `Jwt__RefreshTokenDays` | no | Default `15` / `7` |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | yes, for seeding | Read by the Migrator only, never hardcoded |
+| `SEED_DEMO_PASSWORD` | only for `seed-demo` | Shared password of the demo admin users and customers |
+| `RateLimiting__Auth__PermitLimit` / `RateLimiting__Auth__WindowSeconds` | no | Auth endpoint limit, default `10` per `60` seconds |
 | `Database__AutoMigrate` | no | Development-only convenience flag; ignored outside Development |
 
 ## Database & migrations
@@ -150,7 +152,24 @@ idempotent — safe to run on every deploy:
 - SuperAdmin user, from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (upserted by email)
 - `super-admin` role granted the full cross-module permission catalog (upserted by code)
 - One sample Organization / Department / Brand / FiscalYear (upserted by code)
-- The base Dashboard + Administration menu tree (upserted by code)
+- The base Dashboard + Administration menu tree, including Media (upserted by code)
+- Global system settings (`site.name`, `site.default-locale`, `site.default-time-zone`,
+  `paging.default-page-size`) — added when missing, existing values never overwritten
+
+### Demo data (test/dev databases only — never production)
+
+`dotnet run --project src/Tools/AdminPlatform.Migrator -- seed-demo`, run after `all`,
+adds data for manual testing and FE development. It is never part of `all`, and is
+idempotent. Demo admin users and customers share the password in `SEED_DEMO_PASSWORD`:
+
+- Admin users `manager@` / `staff@` / `viewer@demo.tayho127.test`, each with a matching
+  `demo-*` role (manager: day-to-day admin without security/delete; staff: read-only +
+  media upkeep, no audit logs; viewer: read-only)
+- Departments `sales` / `marketing` / `it` under `general`, brands `premium` / `online`,
+  and per-user department/brand scopes
+- Previous fiscal year (`fy-previous`)
+- Customers `customer1..3@demo.tayho127.test` with local logins and delivery addresses
+- Media library entries of each type (placeholder `.test` URLs)
 
 ## Tests
 
