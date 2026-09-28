@@ -12,4 +12,16 @@ internal static class AuthTestHelper
         var tokens = await response.Content.ReadFromJsonAsync<TokenResponse>();
         return tokens!.AccessToken;
     }
+
+    /// <summary>A client already authenticated as the seeded SuperAdmin (every permission).</summary>
+    public static async Task<HttpClient> CreateAdminClientAsync(AdminPlatformApiFactory factory)
+    {
+        var client = factory.CreateClient();
+        var accessToken = await LoginAndGetAccessTokenAsync(client, factory.AdminEmail, factory.AdminPassword);
+        client.DefaultRequestHeaders.Authorization = new("Bearer", accessToken);
+        return client;
+    }
+
+    /// <summary>Unique short code for entities whose Code has a unique index.</summary>
+    public static string UniqueCode(string prefix) => $"{prefix}-{Guid.NewGuid():n}"[..(prefix.Length + 13)];
 }
