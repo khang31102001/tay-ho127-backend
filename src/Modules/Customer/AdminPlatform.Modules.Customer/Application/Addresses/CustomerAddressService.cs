@@ -23,6 +23,12 @@ public sealed class CustomerAddressService : ICustomerAddressService
         return addresses.Select(ToResponse).ToList();
     }
 
+    public async Task<CustomerAddressResponse> GetAsync(Guid customerId, Guid addressId, CancellationToken cancellationToken)
+    {
+        var address = await FindOwnedOrThrowAsync(customerId, addressId, cancellationToken);
+        return ToResponse(address);
+    }
+
     public async Task<CustomerAddressResponse> CreateAsync(Guid customerId, CreateCustomerAddressRequest request, CancellationToken cancellationToken)
     {
         var hasAnyAddress = await _db.CustomerAddresses.AnyAsync(a => a.CustomerId == customerId, cancellationToken);

@@ -4,6 +4,7 @@ public interface ICustomerAddressService
 {
     Task<IReadOnlyList<CustomerAddressResponse>> ListAsync(Guid customerId, CancellationToken cancellationToken);
 
+    Task<CustomerAddressResponse> GetAsync(Guid customerId, Guid addressId, CancellationToken cancellationToken);
     Task<CustomerAddressResponse> CreateAsync(Guid customerId, CreateCustomerAddressRequest request, CancellationToken cancellationToken);
 
     Task<CustomerAddressResponse> UpdateAsync(Guid customerId, Guid addressId, UpdateCustomerAddressRequest request, CancellationToken cancellationToken);
