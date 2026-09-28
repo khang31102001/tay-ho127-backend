@@ -69,9 +69,15 @@ try
         await SeedAsync(services, logger);
     }
 
-    if (command is not ("migrate" or "seed" or "all"))
+    // Demo data is never part of "all": it must be asked for explicitly, and only for test/dev databases.
+    if (command is "seed-demo")
     {
-        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all", command);
+        await SeedDemoAsync(services, logger);
+    }
+
+    if (command is not ("migrate" or "seed" or "all" or "seed-demo"))
+    {
+        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo", command);
         return 1;
     }
 }
@@ -140,4 +146,40 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     await PlatformSeeder.SeedAsync(services, sampleOrganizationId, cancellationToken);
 
     logger.LogInformation("Seed complete.");
+}
+
+// DEMO data for test/dev databases — run after "all" (it relies on the base permission catalog, sample
+// organization and root department). Idempotent. The demo users and customers share one password, read
+// from SEED_DEMO_PASSWORD so it is never hardcoded.
+static async Task SeedDemoAsync(IServiceProvider services, ILogger logger)
+{
+    const string DemoPasswordConfigKey = "SEED_DEMO_PASSWORD";
+
+    var cancellationToken = CancellationToken.None;
+    var demoPassword = services.GetRequiredService<IConfiguration>()[DemoPasswordConfigKey];
+    if (string.IsNullOrWhiteSpace(demoPassword))
+    {
+        throw new InvalidOperationException($"{DemoPasswordConfigKey} must be set to seed demo data.");
+    }
+
+    logger.LogInformation("Seeding demo admin users (manager, staff, viewer)...");
+    var userIdsByPersona = await IdentityDemoSeeder.SeedAsync(services, demoPassword, cancellationToken);
+
+    logger.LogInformation("Seeding demo roles and role assignments...");
+    await AccessControlDemoSeeder.SeedAsync(services, userIdsByPersona, cancellationToken);
+
+    logger.LogInformation("Seeding demo departments, brands and user scopes...");
+    var sampleOrganizationId = await OrganizationSeeder.SeedAsync(services, cancellationToken);
+    await OrganizationDemoSeeder.SeedAsync(services, sampleOrganizationId, userIdsByPersona, cancellationToken);
+
+    logger.LogInformation("Seeding demo fiscal year...");
+    await PlatformDemoSeeder.SeedAsync(services, sampleOrganizationId, cancellationToken);
+
+    logger.LogInformation("Seeding demo customers and addresses...");
+    await CustomerDemoSeeder.SeedAsync(services, demoPassword, cancellationToken);
+
+    logger.LogInformation("Seeding demo media...");
+    await MediaDemoSeeder.SeedAsync(services, cancellationToken);
+
+    logger.LogInformation("Demo seed complete.");
 }
