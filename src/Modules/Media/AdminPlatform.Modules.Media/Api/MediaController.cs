@@ -1,6 +1,7 @@
 using AdminPlatform.Common.Pagination;
 using AdminPlatform.Common.Security;
 using AdminPlatform.Modules.Media.Application.Media;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AdminPlatform.Modules.Media.Api;
@@ -23,6 +24,16 @@ public sealed class MediaController : ControllerBase
         [FromQuery] PagedRequest request, [FromQuery] string? kind, [FromQuery] string? status, CancellationToken cancellationToken)
     {
         return Ok(await _mediaService.ListAsync(request, kind, status, cancellationToken));
+    }
+
+    /// <summary>Anonymous, read-only list of ACTIVE media for public pages (the user site renders images
+    /// by media id). Paged; inactive (soft-deleted) media is never returned.</summary>
+    [HttpGet("public")]
+    [AllowAnonymous]
+    [ProducesResponseType<PagedResult<PublicMediaResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<PublicMediaResponse>>> ListPublic([FromQuery] PagedRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _mediaService.ListPublicAsync(request, cancellationToken));
     }
 
     [HttpGet("{id:guid}")]

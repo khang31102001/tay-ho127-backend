@@ -80,6 +80,19 @@ public sealed class MediaService : IMediaService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<PagedResult<PublicMediaResponse>> ListPublicAsync(PagedRequest request, CancellationToken cancellationToken)
+    {
+        var query = _db.Media.AsNoTracking()
+            .Where(m => m.Status == MediaStatus.Active)
+            .OrderBy(m => m.CreatedAtUtc);
+
+        var pagedMedia = await query.ToPagedResultAsync(request, cancellationToken);
+        var items = pagedMedia.Items
+            .Select(m => new PublicMediaResponse(m.Id, m.FileName, m.Url, m.Kind.ToString(), m.AltText))
+            .ToList();
+        return new PagedResult<PublicMediaResponse>(items, pagedMedia.Page, pagedMedia.PageSize, pagedMedia.TotalItems);
+    }
+
     private async Task<MediaEntity> FindOrThrowAsync(Guid id, CancellationToken cancellationToken) =>
         await _db.Media.SingleOrDefaultAsync(m => m.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(Media), id);
