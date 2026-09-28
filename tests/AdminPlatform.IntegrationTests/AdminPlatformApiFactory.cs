@@ -1,4 +1,3 @@
-using System.Net.Sockets;
 using System.Security.Cryptography;
 using AdminPlatform.Modules.AccessControl.Api;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
@@ -15,9 +14,7 @@ using AdminPlatform.Modules.Platform.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace AdminPlatform.IntegrationTests;
@@ -65,163 +62,23 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "100000");
     }
 
-    private static readonly string DiagPath = Path.Combine(AppContext.BaseDirectory, "diag.log");
-
-    private static void Diag(string message)
-    {
-        try
-        {
-            File.AppendAllText(DiagPath, $"{DateTime.UtcNow:O} {message}{Environment.NewLine}");
-        }
-        catch
-        {
-            // best-effort diagnostic only
-        }
-    }
-
-    private static async Task RawTcpCheckAsync(string host, int port)
-    {
-        Diag($"before raw TCP connect to {host}:{port}");
-        try
-        {
-            using var tcp = new TcpClient();
-            var connectTask = tcp.ConnectAsync(host, port);
-            var winner = await Task.WhenAny(connectTask, Task.Delay(TimeSpan.FromSeconds(8)));
-            if (winner != connectTask)
-            {
-                Diag($"raw TCP connect to {host}:{port} DID NOT COMPLETE within 8s (still pending)");
-                return;
-            }
-
-            if (connectTask.IsFaulted)
-            {
-                Diag($"raw TCP connect to {host}:{port} FAILED: {connectTask.Exception}");
-                return;
-            }
-
-            Diag($"raw TCP connect to {host}:{port} SUCCEEDED, Connected={tcp.Connected}");
-        }
-        catch (Exception ex)
-        {
-            Diag($"raw TCP connect to {host}:{port} EXCEPTION: {ex}");
-        }
-    }
-
-    private static async Task RawNpgsqlCheckAsync(string connectionString)
-    {
-        Diag("before raw Npgsql connection open");
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            await using var conn = new NpgsqlConnection(connectionString);
-            var openTask = conn.OpenAsync(cts.Token);
-            var winner = await Task.WhenAny(openTask, Task.Delay(TimeSpan.FromSeconds(12)));
-            if (winner != openTask)
-            {
-                Diag("raw Npgsql OpenAsync DID NOT COMPLETE within 12s (still pending)");
-                return;
-            }
-
-            if (openTask.IsFaulted)
-            {
-                Diag($"raw Npgsql OpenAsync FAILED: {openTask.Exception}");
-                return;
-            }
-
-            Diag($"raw Npgsql connection OPENED, State={conn.State}, ServerVersion={conn.PostgreSqlVersion}");
-
-            await using var cmd = new NpgsqlCommand("SELECT 1", conn);
-            var result = await cmd.ExecuteScalarAsync(cts.Token);
-            Diag($"raw Npgsql SELECT 1 returned: {result}");
-        }
-        catch (Exception ex)
-        {
-            Diag($"raw Npgsql EXCEPTION: {ex}");
-        }
-    }
-
-    private static async Task RawEfCoreCheckAsync(string connectionString)
-    {
-        Diag("before manual IdentityDbContext (bypassing DI) migrate");
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            var options = new DbContextOptionsBuilder<IdentityDbContext>()
-                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", IdentityDbContext.Schema))
-                .UseSnakeCaseNamingConvention()
-                .Options;
-            await using var db = new IdentityDbContext(options);
-            var migrateTask = db.Database.MigrateAsync(cts.Token);
-            var winner = await Task.WhenAny(migrateTask, Task.Delay(TimeSpan.FromSeconds(17)));
-            if (winner != migrateTask)
-            {
-                Diag("manual IdentityDbContext migrate DID NOT COMPLETE within 17s (still pending)");
-                return;
-            }
-
-            if (migrateTask.IsFaulted)
-            {
-                Diag($"manual IdentityDbContext migrate FAILED: {migrateTask.Exception}");
-                return;
-            }
-
-            Diag("manual IdentityDbContext migrate SUCCEEDED");
-        }
-        catch (Exception ex)
-        {
-            Diag($"manual IdentityDbContext migrate EXCEPTION: {ex}");
-        }
-    }
-
-    private static async Task MigrateWithDiagAsync(string label, Func<CancellationToken, Task> migrate)
-    {
-        Diag($"before {label} migrate");
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            await migrate(cts.Token);
-            Diag($"after {label} migrate");
-        }
-        catch (Exception ex)
-        {
-            Diag($"EXCEPTION during {label} migrate: {ex}");
-            throw;
-        }
-    }
-
     public async Task InitializeAsync()
     {
-        Diag("before postgres.StartAsync");
         await _postgres.StartAsync();
-        Diag("after postgres.StartAsync");
-        var connString = _postgres.GetConnectionString();
-        Diag($"connection string: {connString}");
-        Diag($"testcontainers Hostname={_postgres.Hostname}, MappedPort={_postgres.GetMappedPublicPort(5432)}");
+        SetTestEnvironmentVariables(_postgres.GetConnectionString());
 
-        await RawTcpCheckAsync(_postgres.Hostname, _postgres.GetMappedPublicPort(5432));
-        await RawNpgsqlCheckAsync(connString);
-        await RawEfCoreCheckAsync(connString);
-
-        SetTestEnvironmentVariables(connString);
-        Diag($"environment variables set; ConnectionStrings__Default now = {Environment.GetEnvironmentVariable("ConnectionStrings__Default")}");
-
-        Diag("before Services.CreateScope");
         using var scope = Services.CreateScope();
         var services = scope.ServiceProvider;
-        Diag("after Services.CreateScope");
 
-        await MigrateWithDiagAsync("Identity", ct => services.GetRequiredService<IdentityDbContext>().Database.MigrateAsync(ct));
-        await MigrateWithDiagAsync("AccessControl", ct => services.GetRequiredService<AccessControlDbContext>().Database.MigrateAsync(ct));
-        await MigrateWithDiagAsync("Organization", ct => services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync(ct));
-        await MigrateWithDiagAsync("Navigation", ct => services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync(ct));
-        await MigrateWithDiagAsync("Platform", ct => services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync(ct));
-        await MigrateWithDiagAsync("Customer", ct => services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync(ct));
+        await services.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<AccessControlDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<OrganizationDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<NavigationDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
 
-        Diag("before IdentitySeeder.SeedAsync");
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
-        Diag("after IdentitySeeder.SeedAsync, before FindByEmailAsync");
         var admin = await services.GetRequiredService<IUserLookupService>().FindByEmailAsync(AdminEmail, CancellationToken.None);
-        Diag("after FindByEmailAsync");
 
         IReadOnlyCollection<(string Code, string Description)> allPermissions =
         [
@@ -231,11 +88,8 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. NavigationPermissions.All,
             .. PlatformPermissions.All,
         ];
-        Diag("before AccessControlSeeder.SeedAsync");
         await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
-        Diag("after AccessControlSeeder.SeedAsync, before NavigationSeeder.SeedAsync");
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);
-        Diag("after NavigationSeeder.SeedAsync — InitializeAsync complete");
     }
 
     async Task IAsyncLifetime.DisposeAsync()

@@ -58,10 +58,6 @@ jobs:
         timeout-minutes: 4
         run: dotnet test tests/AdminPlatform.IntegrationTests/AdminPlatform.IntegrationTests.csproj --no-build -c Release --logger "trx;LogFileName=integration.trx" --results-directory TestResults
 
-      - name: Print diagnostic log (temporary — investigating a hang)
-        if: always()
-        run: cat tests/AdminPlatform.IntegrationTests/bin/Release/net8.0/diag.log || echo "diag.log not found"
-
       - name: Publish test results
         if: always()
         uses: actions/upload-artifact@v4
