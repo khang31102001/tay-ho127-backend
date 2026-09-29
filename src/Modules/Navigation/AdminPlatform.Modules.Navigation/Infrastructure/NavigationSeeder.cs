@@ -35,12 +35,12 @@ public static class NavigationSeeder
         new("sales.payments", "Thanh toán", "sales", "/admin/sales/payments", "CreditCard", 3, null),
 
         new("catalog", "Catalog", null, null, null, 20, null),
-        new("catalog.categories", "Danh mục", "catalog", "/admin/catalog/categories", "FolderTree", 1, null),
+        new("catalog.categories", "Danh mục", "catalog", "/admin/catalog/categories", "FolderTree", 1, "categories.view"),
         new("admin.media", "Media", "catalog", "/admin/catalog/media", "Images", 2, "media.view"),
-        new("catalog.products", "Sản phẩm", "catalog", "/admin/catalog/products", "Package", 3, null),
-        new("catalog.menus", "Thực đơn", "catalog", "/admin/catalog/menus", "BookOpen", 4, null),
-        new("catalog.menu-products", "Liên kết Menu-SP", "catalog", "/admin/catalog/menu-products", "ListChecks", 5, null),
-        new("catalog.modifier-groups", "Tùy chọn món (Modifier)", "catalog", "/admin/catalog/modifier-groups", "Tags", 6, null),
+        new("catalog.products", "Sản phẩm", "catalog", "/admin/catalog/products", "Package", 3, "products.view"),
+        new("catalog.menus", "Thực đơn", "catalog", "/admin/catalog/menus", "BookOpen", 4, "sales-menus.view"),
+        new("catalog.menu-products", "Liên kết Menu-SP", "catalog", "/admin/catalog/menu-products", "ListChecks", 5, "sales-menus.view"),
+        new("catalog.modifier-groups", "Tùy chọn món (Modifier)", "catalog", "/admin/catalog/modifier-groups", "Tags", 6, "modifier-groups.view"),
         new("catalog.promotions", "Mã giảm giá", "catalog", "/admin/catalog/promotions", "TicketPercent", 7, null),
 
         new("content", "Content", null, null, null, 30, null),
