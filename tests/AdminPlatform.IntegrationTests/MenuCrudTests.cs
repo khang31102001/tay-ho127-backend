@@ -53,14 +53,15 @@ public class MenuCrudTests
     }
 
     [Fact]
-    public async Task The_seeded_sidebar_includes_the_media_library_entry()
+    public async Task The_seeded_sidebar_links_the_media_library_to_its_admin_page()
     {
         using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
 
         var tree = await client.GetFromJsonAsync<List<MenuTreeNode>>("/api/v1/navigation/menus");
 
-        var admin = Assert.Single(tree!, n => n.Code == "admin");
-        Assert.Contains(admin.Children, c => c.Code == "admin.media");
+        var catalog = Assert.Single(tree!, n => n.Code == "catalog");
+        var media = Assert.Single(catalog.Children, c => c.Code == "admin.media");
+        Assert.Equal("/admin/catalog/media", media.Route);
     }
 
     private static async Task<MenuResponse> CreateMenuAsync(HttpClient client, Guid? parentId)

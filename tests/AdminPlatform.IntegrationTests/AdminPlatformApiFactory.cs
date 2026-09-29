@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using AdminPlatform.Modules.AccessControl.Api;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Customer.Api;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity.Api;
 using AdminPlatform.Modules.Identity.Application;
@@ -91,6 +92,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. NavigationPermissions.All,
             .. PlatformPermissions.All,
             .. MediaPermissions.All,
+            .. CustomerPermissions.All,
         ];
         await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);

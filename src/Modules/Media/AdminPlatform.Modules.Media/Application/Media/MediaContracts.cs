@@ -27,3 +27,12 @@ public sealed record MediaResponse(
     string Status,
     DateTime CreatedAtUtc,
     DateTime? UpdatedAtUtc);
+
+/// <summary>Public (anonymous) projection of an active media entry — only what a public page needs to
+/// render it. Status, size and audit timestamps stay admin-only.</summary>
+public sealed record PublicMediaResponse(
+    Guid Id,
+    string FileName,
+    string Url,
+    string Type,
+    string? AltText);

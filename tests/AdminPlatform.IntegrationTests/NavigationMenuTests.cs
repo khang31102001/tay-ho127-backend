@@ -29,12 +29,13 @@ public class NavigationMenuTests
         Assert.NotNull(tree);
 
         Assert.Contains(tree!, n => n.Code == "dashboard");
-        var admin = Assert.Single(tree!, n => n.Code == "admin");
-        Assert.Contains(admin.Children, c => c.Code == "admin.users");
+        Assert.Contains(tree!, n => n.Code == "admin.users");
+        var system = Assert.Single(tree!, n => n.Code == "system");
+        Assert.Contains(system.Children, c => c.Code == "admin.audit-logs");
     }
 
     [Fact]
-    public async Task A_user_with_no_permissions_only_sees_the_public_dashboard_entry()
+    public async Task A_user_with_no_permissions_sees_only_ungated_entries()
     {
         using var adminClient = _factory.CreateClient();
         var adminToken = await AuthTestHelper.LoginAndGetAccessTokenAsync(adminClient, _factory.AdminEmail, _factory.AdminPassword);
@@ -54,6 +55,9 @@ public class NavigationMenuTests
         var tree = await response.Content.ReadFromJsonAsync<List<MenuTreeNode>>();
 
         Assert.Contains(tree!, n => n.Code == "dashboard");
-        Assert.DoesNotContain(tree!, n => n.Code == "admin");
+        // Permission-gated entries are hidden, as are sections left with no visible child.
+        Assert.DoesNotContain(tree!, n => n.Code == "admin.users");
+        Assert.DoesNotContain(tree!, n => n.Code == "system");
+        Assert.DoesNotContain(tree!.SelectMany(n => n.Children), c => c.Code is "sales.customers" or "admin.media");
     }
 }

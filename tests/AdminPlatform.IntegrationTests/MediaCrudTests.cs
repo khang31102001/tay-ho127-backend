@@ -61,6 +61,26 @@ public class MediaCrudTests
     }
 
     [Fact]
+    public async Task The_public_listing_is_anonymous_and_only_returns_active_media()
+    {
+        using var adminClient = await AuthTestHelper.CreateAdminClientAsync(_factory);
+        var activeUrl = $"https://cdn.integration.test/{Guid.NewGuid():n}.png";
+        var inactiveUrl = $"https://cdn.integration.test/{Guid.NewGuid():n}.png";
+        await adminClient.PostAsJsonAsync("/api/v1/media", new CreateMediaRequest("active.png", activeUrl, "image", null, 1));
+        var inactive = (await (await adminClient.PostAsJsonAsync("/api/v1/media", new CreateMediaRequest("inactive.png", inactiveUrl, "image", null, 1)))
+            .Content.ReadFromJsonAsync<MediaResponse>())!;
+        await adminClient.DeleteAsync($"/api/v1/media/{inactive.Id}");
+
+        using var anonymousClient = _factory.CreateClient();
+        var response = await anonymousClient.GetAsync("/api/v1/media/public?pageSize=200");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var page = (await response.Content.ReadFromJsonAsync<PagedResultDto<PublicMediaResponse>>())!;
+        Assert.Contains(page.Items, m => m.Url == activeUrl);
+        Assert.DoesNotContain(page.Items, m => m.Url == inactiveUrl);
+    }
+
+    [Fact]
     public async Task Invalid_create_request_returns_400()
     {
         using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
