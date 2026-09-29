@@ -14,5 +14,6 @@ internal static class PermissionCatalog
         .. AdminPlatform.Modules.Platform.Api.PlatformPermissions.All,
         .. AdminPlatform.Modules.Media.Api.MediaPermissions.All,
         .. AdminPlatform.Modules.Customer.Api.CustomerPermissions.All,
+        .. AdminPlatform.Modules.Catalog.Api.CatalogPermissions.All,
     ];
 }

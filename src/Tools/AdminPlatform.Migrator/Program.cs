@@ -2,6 +2,8 @@ using AdminPlatform.Common;
 using AdminPlatform.Migrator;
 using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Catalog;
+using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Customer;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
@@ -49,6 +51,7 @@ appBuilder.Services.AddNavigationModule(appBuilder.Configuration);
 appBuilder.Services.AddPlatformModule(appBuilder.Configuration);
 appBuilder.Services.AddCustomerModule(appBuilder.Configuration);
 appBuilder.Services.AddMediaModule(appBuilder.Configuration);
+appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -114,6 +117,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Applying Media module migrations...");
     await services.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
 
+    logger.LogInformation("Applying Catalog module migrations...");
+    await services.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
+
     logger.LogInformation("All migrations applied.");
 }
 
@@ -144,6 +150,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
 
     logger.LogInformation("Seeding Platform module (sample fiscal year)...");
     await PlatformSeeder.SeedAsync(services, sampleOrganizationId, cancellationToken);
+
+    logger.LogInformation("Seeding Catalog module (initial restaurant menu, only into an empty catalog)...");
+    var catalogSeeded = await CatalogSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation(catalogSeeded ? "Catalog seeded." : "Catalog already has data - left untouched.");
 
     logger.LogInformation("Seed complete.");
 }

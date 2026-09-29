@@ -1,0 +1,1464 @@
+{
+  "categories": [
+    {
+      "key": "group-food",
+      "name": "Món ăn",
+      "parentKey": null,
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "group-drink",
+      "name": "Đồ uống",
+      "parentKey": null,
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "group-service",
+      "name": "Dịch vụ & phụ thu",
+      "parentKey": null,
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-banh-cuon",
+      "name": "Bánh cuốn",
+      "parentKey": "group-food",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-mon-chay",
+      "name": "Món chay",
+      "parentKey": "group-food",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-mon-them",
+      "name": "Món thêm",
+      "parentKey": "group-food",
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-phu-thu",
+      "name": "Phụ thu",
+      "parentKey": "group-food",
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-banh-ngot",
+      "name": "Bánh ngọt",
+      "parentKey": "group-food",
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-hang-dong-goi",
+      "name": "Hàng đóng gói",
+      "parentKey": "group-food",
+      "sortOrder": 6,
+      "isActive": true
+    },
+    {
+      "key": "cat-food-gia-vi",
+      "name": "Gia vị",
+      "parentKey": "group-food",
+      "sortOrder": 7,
+      "isActive": true
+    },
+    {
+      "key": "cat-drink-do-uong",
+      "name": "Đồ uống",
+      "parentKey": "group-drink",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "cat-service-phu-thu",
+      "name": "Phụ thu",
+      "parentKey": "group-service",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "name": "Bánh cuốn nhân",
+      "parentKey": "cat-food-banh-cuon",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-banh-cuon-banh-uot",
+      "name": "Bánh ướt",
+      "parentKey": "cat-food-banh-cuon",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-mon-chay-banh-cuon-chay",
+      "name": "Bánh cuốn chay",
+      "parentKey": "cat-food-mon-chay",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-mon-chay-banh-uot-chay",
+      "name": "Bánh ướt chay",
+      "parentKey": "cat-food-mon-chay",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-mon-chay-mon-chay-an-kem",
+      "name": "Món chay ăn kèm",
+      "parentKey": "cat-food-mon-chay",
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-mon-them-nem-cha",
+      "name": "Nem/Chả",
+      "parentKey": "cat-food-mon-them",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-mon-them-banh-an-kem",
+      "name": "Bánh ăn kèm",
+      "parentKey": "cat-food-mon-them",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-phu-thu-gia-vi-an-kem",
+      "name": "Gia vị/Ăn kèm",
+      "parentKey": "cat-food-phu-thu",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-banh-ngot-banh-ngot",
+      "name": "Bánh ngọt",
+      "parentKey": "cat-food-banh-ngot",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-hang-dong-goi-nem-cha-dong-goi",
+      "name": "Nem/Chả đóng gói",
+      "parentKey": "cat-food-hang-dong-goi",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-food-gia-vi-tinh-chat-gia-vi",
+      "name": "Tinh chất/Gia vị",
+      "parentKey": "cat-food-gia-vi",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-ca-phe",
+      "name": "Cà phê",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-sua",
+      "name": "Sữa",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-nuoc-ngot",
+      "name": "Nước ngọt",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-nuoc-tang-luc",
+      "name": "Nước tăng lực",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-nuoc-dong-chai",
+      "name": "Nước đóng chai",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-nuoc-ep",
+      "name": "Nước ép",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 6,
+      "isActive": true
+    },
+    {
+      "key": "subcat-drink-do-uong-bia",
+      "name": "Bia",
+      "parentKey": "cat-drink-do-uong",
+      "sortOrder": 7,
+      "isActive": true
+    },
+    {
+      "key": "subcat-service-phu-thu-tra-khan",
+      "name": "Trà/Khăn",
+      "parentKey": "cat-service-phu-thu",
+      "sortOrder": 1,
+      "isActive": true
+    }
+  ],
+  "modifierGroups": [
+    {
+      "key": "modgroup-nuoc-mam",
+      "name": "Nước mắm",
+      "selectionType": "single",
+      "isRequired": true,
+      "options": [
+        {
+          "label": "Không cay",
+          "priceAdjustment": 0,
+          "isDefault": false
+        },
+        {
+          "label": "Cay",
+          "priceAdjustment": 0,
+          "isDefault": true
+        },
+        {
+          "label": "Cay nhiều",
+          "priceAdjustment": 0,
+          "isDefault": false
+        },
+        {
+          "label": "Thêm nước mắm",
+          "priceAdjustment": 5000,
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "key": "modgroup-rau",
+      "name": "Rau",
+      "selectionType": "single",
+      "isRequired": true,
+      "options": [
+        {
+          "label": "Rau tiêu chuẩn",
+          "priceAdjustment": 0,
+          "isDefault": true
+        },
+        {
+          "label": "Thêm rau",
+          "priceAdjustment": 5000,
+          "isDefault": false
+        },
+        {
+          "label": "Không rau",
+          "priceAdjustment": 0,
+          "isDefault": false
+        }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "key": "product-bc001",
+      "name": "Bánh cuốn nhân thịt",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 56000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 4.8,
+      "ratingCount": 25,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc003",
+      "name": "Bánh cuốn nhân thịt đặc biệt",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 72000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": [
+        "modgroup-nuoc-mam",
+        "modgroup-rau"
+      ]
+    },
+    {
+      "key": "product-bc004",
+      "name": "Bánh cuốn nhân chà bông heo",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 50000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 4.1,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc005",
+      "name": "Bánh cuốn nhân chà bông tôm",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 50000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 4.2,
+      "ratingCount": 25,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc002",
+      "name": "Bánh ướt (không nhân)",
+      "categoryKey": "subcat-food-banh-cuon-banh-uot",
+      "price": 40000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 4,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc006",
+      "name": "Bánh ướt trứng vàng",
+      "categoryKey": "subcat-food-banh-cuon-banh-uot",
+      "price": 50000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 4.4,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc007",
+      "name": "Bánh cuốn nhân chay thập cẩm",
+      "categoryKey": "subcat-food-mon-chay-banh-cuon-chay",
+      "price": 50000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": 3.4,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc008",
+      "name": "Bánh cuốn chà bông chay",
+      "categoryKey": "subcat-food-mon-chay-banh-cuon-chay",
+      "price": 50000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc010",
+      "name": "Bánh cuốn lá dứa đậu hũ",
+      "categoryKey": "subcat-food-mon-chay-banh-cuon-chay",
+      "price": 44000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc011",
+      "name": "Bánh cuốn nấm linh chi",
+      "categoryKey": "subcat-food-mon-chay-banh-cuon-chay",
+      "price": 44000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-bc009",
+      "name": "Bánh ướt chay (không nhân)",
+      "categoryKey": "subcat-food-mon-chay-banh-uot-chay",
+      "price": 40000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp009",
+      "name": "Chả chay (2 miếng)",
+      "categoryKey": "subcat-food-mon-chay-mon-chay-an-kem",
+      "price": 10000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp010",
+      "name": "Nem chay (2 miếng)",
+      "categoryKey": "subcat-food-mon-chay-mon-chay-an-kem",
+      "price": 10000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "DISH",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp001",
+      "name": "Nem Huế (đĩa 2 miếng)",
+      "categoryKey": "subcat-food-mon-them-nem-cha",
+      "price": 24000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "ADD_ON",
+      "rating": 4.9,
+      "ratingCount": 25,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp002",
+      "name": "Chả quế / Chả lụa (đĩa 2 miếng)",
+      "categoryKey": "subcat-food-mon-them-nem-cha",
+      "price": 24000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "ADD_ON",
+      "rating": 4.7,
+      "ratingCount": 25,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp003",
+      "name": "Bánh đậu",
+      "categoryKey": "subcat-food-mon-them-banh-an-kem",
+      "price": 12000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "ADD_ON",
+      "rating": 4.3,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp004",
+      "name": "Hành phi (1 đĩa)",
+      "categoryKey": "subcat-food-phu-thu-gia-vi-an-kem",
+      "price": 5000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "ADD_ON",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp005",
+      "name": "Bánh cam",
+      "categoryKey": "subcat-food-banh-ngot-banh-ngot",
+      "price": 10000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "ADD_ON",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp006",
+      "name": "Nem Huế (1 cây 200 gram)",
+      "categoryKey": "subcat-food-hang-dong-goi-nem-cha-dong-goi",
+      "price": 60000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "PACKAGED_PRODUCT",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp007",
+      "name": "Tinh chất cà cuống (1 giọt)",
+      "categoryKey": "subcat-food-gia-vi-tinh-chat-gia-vi",
+      "price": 5000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "PACKAGED_PRODUCT",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-tp008",
+      "name": "Tinh chất cà cuống (1 chai)",
+      "categoryKey": "subcat-food-gia-vi-tinh-chat-gia-vi",
+      "price": 70000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "PACKAGED_PRODUCT",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du001",
+      "name": "Cà phê sữa đá/nóng",
+      "categoryKey": "subcat-drink-do-uong-ca-phe",
+      "price": 20000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du002",
+      "name": "Cà phê đá/nóng",
+      "categoryKey": "subcat-drink-do-uong-ca-phe",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du003",
+      "name": "Đậu nành",
+      "categoryKey": "subcat-drink-do-uong-sua",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du004",
+      "name": "Sữa tươi",
+      "categoryKey": "subcat-drink-do-uong-sua",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du005",
+      "name": "Coca-Cola",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du006",
+      "name": "Pepsi",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du007",
+      "name": "7 Up",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du008",
+      "name": "Sting dâu",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du009",
+      "name": "Soda",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du010",
+      "name": "Soda chanh đường",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 25000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du012",
+      "name": "Xá xị",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ngot",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du011",
+      "name": "Red Bull",
+      "categoryKey": "subcat-drink-do-uong-nuoc-tang-luc",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du013",
+      "name": "Nước suối",
+      "categoryKey": "subcat-drink-do-uong-nuoc-dong-chai",
+      "price": 10000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du014",
+      "name": "Nước cam",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du015",
+      "name": "Cam vắt",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 20000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du016",
+      "name": "Nước dừa",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 20000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du017",
+      "name": "Nước chanh",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du018",
+      "name": "Tắc ép",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du019",
+      "name": "Chanh dây",
+      "categoryKey": "subcat-drink-do-uong-nuoc-ep",
+      "price": 15000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du020",
+      "name": "Heineken",
+      "categoryKey": "subcat-drink-do-uong-bia",
+      "price": 25000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du021",
+      "name": "Tiger",
+      "categoryKey": "subcat-drink-do-uong-bia",
+      "price": 23000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-du022",
+      "name": "Bia 333",
+      "categoryKey": "subcat-drink-do-uong-bia",
+      "price": 18000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "BEVERAGE",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-dv001",
+      "name": "Trà đá",
+      "categoryKey": "subcat-service-phu-thu-tra-khan",
+      "price": 2000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "SERVICE_ITEM",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-dv002",
+      "name": "Trà nóng",
+      "categoryKey": "subcat-service-phu-thu-tra-khan",
+      "price": 1000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "SERVICE_ITEM",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-dv003",
+      "name": "Khăn lạnh",
+      "categoryKey": "subcat-service-phu-thu-tra-khan",
+      "price": 2000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "SERVICE_ITEM",
+      "rating": null,
+      "ratingCount": null,
+      "mediaIds": [],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-mi003",
+      "name": "Bánh cuốn lá dứa nhân rau củ, đậu hủ",
+      "categoryKey": "subcat-food-mon-chay-banh-cuon-chay",
+      "price": 35000,
+      "oldPrice": 44000,
+      "description": null,
+      "isActive": true,
+      "badge": "Món chay",
+      "rating": 3.4,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-mi006",
+      "name": "Bánh cuốn nhân thịt đặc biệt",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 65000,
+      "oldPrice": 72000,
+      "description": null,
+      "isActive": true,
+      "badge": "Món mặn",
+      "rating": 4.6,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    },
+    {
+      "key": "product-mi012",
+      "name": "Bánh cuốn nhân tôm thịt nấm",
+      "categoryKey": "subcat-food-banh-cuon-banh-cuon-nhan",
+      "price": 78000,
+      "oldPrice": null,
+      "description": null,
+      "isActive": true,
+      "badge": "Món mặn",
+      "rating": 4.5,
+      "ratingCount": 2,
+      "mediaIds": [
+        "media-banh-cuon-dish"
+      ],
+      "modifierGroupKeys": []
+    }
+  ],
+  "salesMenus": [
+    {
+      "key": "menu-thuc-don-chinh",
+      "code": "thuc-don-chinh",
+      "name": "Thực đơn chính",
+      "isActive": true
+    },
+    {
+      "key": "menu-mon-yeu-thich",
+      "code": "mon-yeu-thich",
+      "name": "Món yêu thích",
+      "isActive": true
+    },
+    {
+      "key": "menu-goi-y-them",
+      "code": "goi-y-them",
+      "name": "Gợi ý thêm món (Cross-sell)",
+      "isActive": true
+    },
+    {
+      "key": "menu-cuoi-tuan",
+      "code": "cuoi-tuan",
+      "name": "Thực đơn cuối tuần",
+      "isActive": true
+    },
+    {
+      "key": "menu-le-tet",
+      "code": "le-tet",
+      "name": "Thực đơn lễ Tết",
+      "isActive": false
+    }
+  ],
+  "salesMenuProducts": [
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc001",
+      "priceOverride": null,
+      "sortOrder": 1,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc003",
+      "priceOverride": null,
+      "sortOrder": 2,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc004",
+      "priceOverride": null,
+      "sortOrder": 3,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc005",
+      "priceOverride": null,
+      "sortOrder": 4,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc002",
+      "priceOverride": null,
+      "sortOrder": 5,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc006",
+      "priceOverride": null,
+      "sortOrder": 6,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc007",
+      "priceOverride": null,
+      "sortOrder": 7,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc008",
+      "priceOverride": null,
+      "sortOrder": 8,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc010",
+      "priceOverride": null,
+      "sortOrder": 9,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc011",
+      "priceOverride": null,
+      "sortOrder": 10,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-bc009",
+      "priceOverride": null,
+      "sortOrder": 11,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp009",
+      "priceOverride": null,
+      "sortOrder": 12,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp010",
+      "priceOverride": null,
+      "sortOrder": 13,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp001",
+      "priceOverride": null,
+      "sortOrder": 14,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp002",
+      "priceOverride": null,
+      "sortOrder": 15,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp003",
+      "priceOverride": null,
+      "sortOrder": 16,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp004",
+      "priceOverride": null,
+      "sortOrder": 17,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp005",
+      "priceOverride": null,
+      "sortOrder": 18,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp006",
+      "priceOverride": null,
+      "sortOrder": 19,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp007",
+      "priceOverride": null,
+      "sortOrder": 20,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-tp008",
+      "priceOverride": null,
+      "sortOrder": 21,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du001",
+      "priceOverride": null,
+      "sortOrder": 22,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du002",
+      "priceOverride": null,
+      "sortOrder": 23,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du003",
+      "priceOverride": null,
+      "sortOrder": 24,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du004",
+      "priceOverride": null,
+      "sortOrder": 25,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du005",
+      "priceOverride": null,
+      "sortOrder": 26,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du006",
+      "priceOverride": null,
+      "sortOrder": 27,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du007",
+      "priceOverride": null,
+      "sortOrder": 28,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du008",
+      "priceOverride": null,
+      "sortOrder": 29,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du009",
+      "priceOverride": null,
+      "sortOrder": 30,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du010",
+      "priceOverride": null,
+      "sortOrder": 31,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du012",
+      "priceOverride": null,
+      "sortOrder": 32,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du011",
+      "priceOverride": null,
+      "sortOrder": 33,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du013",
+      "priceOverride": null,
+      "sortOrder": 34,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du014",
+      "priceOverride": null,
+      "sortOrder": 35,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du015",
+      "priceOverride": null,
+      "sortOrder": 36,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du016",
+      "priceOverride": null,
+      "sortOrder": 37,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du017",
+      "priceOverride": null,
+      "sortOrder": 38,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du018",
+      "priceOverride": null,
+      "sortOrder": 39,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du019",
+      "priceOverride": null,
+      "sortOrder": 40,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du020",
+      "priceOverride": null,
+      "sortOrder": 41,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du021",
+      "priceOverride": null,
+      "sortOrder": 42,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-du022",
+      "priceOverride": null,
+      "sortOrder": 43,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-dv001",
+      "priceOverride": null,
+      "sortOrder": 44,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-dv002",
+      "priceOverride": null,
+      "sortOrder": 45,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-thuc-don-chinh",
+      "productKey": "product-dv003",
+      "priceOverride": null,
+      "sortOrder": 46,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc005",
+      "priceOverride": null,
+      "sortOrder": 1,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc007",
+      "priceOverride": null,
+      "sortOrder": 2,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-mi003",
+      "priceOverride": null,
+      "sortOrder": 3,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc001",
+      "priceOverride": null,
+      "sortOrder": 4,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc002",
+      "priceOverride": null,
+      "sortOrder": 5,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-mi006",
+      "priceOverride": null,
+      "sortOrder": 6,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-tp001",
+      "priceOverride": null,
+      "sortOrder": 7,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-tp002",
+      "priceOverride": null,
+      "sortOrder": 8,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-tp003",
+      "priceOverride": null,
+      "sortOrder": 9,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc004",
+      "priceOverride": null,
+      "sortOrder": 10,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-bc006",
+      "priceOverride": null,
+      "sortOrder": 11,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-mon-yeu-thich",
+      "productKey": "product-mi012",
+      "priceOverride": null,
+      "sortOrder": 12,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-goi-y-them",
+      "productKey": "product-tp001",
+      "priceOverride": null,
+      "sortOrder": 1,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-goi-y-them",
+      "productKey": "product-tp002",
+      "priceOverride": null,
+      "sortOrder": 2,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-goi-y-them",
+      "productKey": "product-tp003",
+      "priceOverride": null,
+      "sortOrder": 3,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-goi-y-them",
+      "productKey": "product-du001",
+      "priceOverride": null,
+      "sortOrder": 4,
+      "isAvailable": true
+    },
+    {
+      "menuKey": "menu-goi-y-them",
+      "productKey": "product-du005",
+      "priceOverride": null,
+      "sortOrder": 5,
+      "isAvailable": true
+    }
+  ]
+}
