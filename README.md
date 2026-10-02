@@ -155,6 +155,10 @@ idempotent — safe to run on every deploy:
 - The base Dashboard + Administration menu tree, including Media (upserted by code)
 - Global system settings (`site.name`, `site.default-locale`, `site.default-time-zone`,
   `paging.default-page-size`) — added when missing, existing values never overwritten
+- The initial restaurant catalog (categories, products, sales menus `thuc-don-chinh` /
+  `mon-yeu-thich` / `goi-y-them` / ..., their products, modifier groups) from
+  `Catalog/Infrastructure/Seed/catalog-seed.json` — **only while the catalog is completely
+  empty**, so data admins edit or delete is never re-created
 
 ### Demo data (test/dev databases only — never production)
 
@@ -177,6 +181,14 @@ idempotent. Demo admin users and customers share the password in `SEED_DEMO_PASS
 dotnet test tests/AdminPlatform.UnitTests            # 43 tests, no external dependencies
 dotnet test tests/AdminPlatform.ArchitectureTests     # 20 tests, no external dependencies
 dotnet test tests/AdminPlatform.IntegrationTests      # needs Docker (Testcontainers.PostgreSql)
+```
+
+Without Docker, point the integration tests at a disposable, dedicated Postgres
+database instead (never a shared/production one — tests write data):
+
+```bash
+export INTEGRATION_TESTS_CONNECTION_STRING="Host=localhost;Database=adminplatform_it;Username=postgres;Password=..."
+dotnet test tests/AdminPlatform.IntegrationTests
 ```
 
 ## Known limitations

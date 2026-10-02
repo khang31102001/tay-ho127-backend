@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Catalog module (`catalog` schema): categories (3-level tree), products (unique slug,
+  ordered images and modifier groups), sales menus (immutable code) and their product
+  placements (price override, order, availability), modifier groups with options.
+  Admin CRUD under `/api/v1/catalog/*` gated by `categories.*`, `products.*`,
+  `sales-menus.*`, `modifier-groups.*`; anonymous `GET /api/v1/catalog/public` snapshot
+  of the active catalog for the website.
+- `CatalogSeeder` (part of `seed`): the initial restaurant catalog, only into an empty catalog.
+- Integration tests can target an existing Postgres via `INTEGRATION_TESTS_CONNECTION_STRING`.
+
+### Changed
+
+- Admin sidebar catalog entries are now gated by the new catalog permissions.
+
 ## [0.1.0] - 2026-08-26
 
 ### Added

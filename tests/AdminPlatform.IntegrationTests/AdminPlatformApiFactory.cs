@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using AdminPlatform.Modules.AccessControl.Api;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
+using AdminPlatform.Modules.Catalog.Api;
+using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Customer.Api;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity.Api;
@@ -28,12 +30,8 @@ namespace AdminPlatform.IntegrationTests;
 /// NOTE: requires Docker; see README "Known limitations" — not executable in a Docker-less sandbox.</summary>
 public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("adminplatform_test")
-        .WithUsername("postgres")
-        .WithPassword("postgres")
-        .Build();
+    /// <summary>Created only when no external database is configured: Build() itself fails without Docker.</summary>
+    private PostgreSqlContainer? _postgres;
 
     public string AdminEmail { get; } = "admin@integration.test";
     public string AdminPassword { get; } = "Integration-Test-Passw0rd!";
@@ -65,10 +63,29 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "100000");
     }
 
+    /// <summary>Optional: run the suite against an existing, disposable Postgres database instead of a
+    /// Testcontainers one (machines without Docker). The database must be empty or a previous test database —
+    /// tests only add uniquely named data. CI leaves it unset.</summary>
+    public const string ExternalConnectionStringVariable = "INTEGRATION_TESTS_CONNECTION_STRING";
+
+    private static readonly string? ExternalConnectionString = Environment.GetEnvironmentVariable(ExternalConnectionStringVariable);
+
     public async Task InitializeAsync()
     {
-        await _postgres.StartAsync();
-        SetTestEnvironmentVariables(_postgres.GetConnectionString());
+        var connectionString = ExternalConnectionString;
+        if (connectionString is null)
+        {
+            _postgres = new PostgreSqlBuilder()
+                .WithImage("postgres:16-alpine")
+                .WithDatabase("adminplatform_test")
+                .WithUsername("postgres")
+                .WithPassword("postgres")
+                .Build();
+            await _postgres.StartAsync();
+            connectionString = _postgres.GetConnectionString();
+        }
+
+        SetTestEnvironmentVariables(connectionString);
 
         using var scope = Services.CreateScope();
         var services = scope.ServiceProvider;
@@ -80,6 +97,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         await services.GetRequiredService<PlatformDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<CustomerDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
 
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
         var admin = await services.GetRequiredService<IUserLookupService>().FindByEmailAsync(AdminEmail, CancellationToken.None);
@@ -93,6 +111,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. PlatformPermissions.All,
             .. MediaPermissions.All,
             .. CustomerPermissions.All,
+            .. CatalogPermissions.All,
         ];
         await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);
@@ -100,6 +119,9 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        await _postgres.DisposeAsync();
+        if (_postgres is not null)
+        {
+            await _postgres.DisposeAsync();
+        }
     }
 }

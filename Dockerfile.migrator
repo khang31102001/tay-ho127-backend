@@ -19,6 +19,7 @@ COPY src/Modules/Navigation/AdminPlatform.Modules.Navigation/AdminPlatform.Modul
 COPY src/Modules/Platform/AdminPlatform.Modules.Platform/AdminPlatform.Modules.Platform.csproj src/Modules/Platform/AdminPlatform.Modules.Platform/
 COPY src/Modules/Customer/AdminPlatform.Modules.Customer/AdminPlatform.Modules.Customer.csproj src/Modules/Customer/AdminPlatform.Modules.Customer/
 COPY src/Modules/Media/AdminPlatform.Modules.Media/AdminPlatform.Modules.Media.csproj src/Modules/Media/AdminPlatform.Modules.Media/
+COPY src/Modules/Catalog/AdminPlatform.Modules.Catalog/AdminPlatform.Modules.Catalog.csproj src/Modules/Catalog/AdminPlatform.Modules.Catalog/
 COPY src/Tools/AdminPlatform.Migrator/AdminPlatform.Migrator.csproj src/Tools/AdminPlatform.Migrator/
 
 RUN dotnet restore src/Tools/AdminPlatform.Migrator/AdminPlatform.Migrator.csproj
