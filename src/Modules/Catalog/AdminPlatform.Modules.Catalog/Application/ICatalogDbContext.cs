@@ -12,6 +12,7 @@ public interface ICatalogDbContext
     DbSet<SalesMenu> SalesMenus { get; }
     DbSet<SalesMenuProduct> SalesMenuProducts { get; }
     DbSet<ModifierGroup> ModifierGroups { get; }
+    DbSet<Promotion> Promotions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

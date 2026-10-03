@@ -41,7 +41,7 @@ public static class NavigationSeeder
         new("catalog.menus", "Thực đơn", "catalog", "/admin/catalog/menus", "BookOpen", 4, "sales-menus.view"),
         new("catalog.menu-products", "Liên kết Menu-SP", "catalog", "/admin/catalog/menu-products", "ListChecks", 5, "sales-menus.view"),
         new("catalog.modifier-groups", "Tùy chọn món (Modifier)", "catalog", "/admin/catalog/modifier-groups", "Tags", 6, "modifier-groups.view"),
-        new("catalog.promotions", "Mã giảm giá", "catalog", "/admin/catalog/promotions", "TicketPercent", 7, null),
+        new("catalog.promotions", "Mã giảm giá", "catalog", "/admin/catalog/promotions", "TicketPercent", 7, "promotions.view"),
 
         new("content", "Content", null, null, null, 30, null),
         new("content.pages", "Page", "content", "/admin/content/pages", "FileText", 1, null),

@@ -8,6 +8,7 @@ using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Application;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
 using AdminPlatform.Modules.Catalog;
+using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Customer;
 using AdminPlatform.Modules.Customer.Infrastructure;
@@ -136,6 +137,16 @@ try
             {
                 limiterOptions.PermitLimit = authLimits.GetValue("PermitLimit", 10);
                 limiterOptions.Window = TimeSpan.FromSeconds(authLimits.GetValue("WindowSeconds", 60));
+                limiterOptions.QueueLimit = 0;
+            });
+
+            // Anonymous checkout code validation: a generous server-wide cap (the website's server makes
+            // these calls, so every shopper shares one client address) that stops code-guessing floods.
+            var validateLimits = configuration.GetSection("RateLimiting:PromotionValidate");
+            options.AddFixedWindowLimiter(PromotionsController.ValidateRateLimitPolicy, limiterOptions =>
+            {
+                limiterOptions.PermitLimit = validateLimits.GetValue("PermitLimit", 120);
+                limiterOptions.Window = TimeSpan.FromSeconds(validateLimits.GetValue("WindowSeconds", 60));
                 limiterOptions.QueueLimit = 0;
             });
         });
