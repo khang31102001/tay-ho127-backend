@@ -12,6 +12,7 @@ public sealed record PublicArticleSummaryResponse(
     IReadOnlyList<Guid> TagIds,
     string AuthorName,
     DateTime PublishedAt,
+    DateTime UpdatedAt,
     int ReadingTimeMinutes);
 
 /// <summary>A published article with its (sanitized) HTML body.</summary>
@@ -26,6 +27,7 @@ public sealed record PublicArticleResponse(
     IReadOnlyList<Guid> TagIds,
     string AuthorName,
     DateTime PublishedAt,
+    DateTime UpdatedAt,
     int ReadingTimeMinutes);
 
 public sealed record PublicArticleCategoryResponse(Guid Id, string Name, string Slug, Guid? ParentId, int SortOrder);

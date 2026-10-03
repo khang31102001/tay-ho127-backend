@@ -25,7 +25,7 @@ public sealed partial class PublicContentService : IPublicContentService
             .OrderByDescending(a => a.PublishedAtUtc)
             .Select(a => new
             {
-                a.Id, a.Slug, a.Title, a.Summary, a.FeaturedMediaId, a.CategoryId, a.AuthorName, a.PublishedAtUtc, a.Content,
+                a.Id, a.Slug, a.Title, a.Summary, a.FeaturedMediaId, a.CategoryId, a.AuthorName, a.PublishedAtUtc, a.UpdatedAtUtc, a.Content,
             })
             .ToPagedResultAsync(request, cancellationToken);
 
@@ -39,7 +39,8 @@ public sealed partial class PublicContentService : IPublicContentService
 
         var items = page.Items.Select(a => new PublicArticleSummaryResponse(
             a.Id, a.Slug, a.Title, a.Summary, a.FeaturedMediaId, a.CategoryId, tagsByArticle.GetValueOrDefault(a.Id, []),
-            a.AuthorName, a.PublishedAtUtc ?? DateTime.MinValue, EstimateReadingTimeMinutes(a.Content))).ToList();
+            a.AuthorName, a.PublishedAtUtc ?? DateTime.MinValue, a.UpdatedAtUtc ?? a.PublishedAtUtc ?? DateTime.MinValue,
+            EstimateReadingTimeMinutes(a.Content))).ToList();
         return new PagedResult<PublicArticleSummaryResponse>(items, page.Page, page.PageSize, page.TotalItems);
     }
 
@@ -53,7 +54,7 @@ public sealed partial class PublicContentService : IPublicContentService
         return new PublicArticleResponse(
             article.Id, article.Slug, article.Title, article.Summary, article.Content, article.FeaturedMediaId, article.CategoryId,
             article.Tags.Select(link => link.TagId).ToList(), article.AuthorName, article.PublishedAtUtc ?? DateTime.MinValue,
-            EstimateReadingTimeMinutes(article.Content));
+            article.UpdatedAtUtc ?? article.PublishedAtUtc ?? DateTime.MinValue, EstimateReadingTimeMinutes(article.Content));
     }
 
     public async Task<PublicTaxonomyResponse> GetTaxonomyAsync(CancellationToken cancellationToken)
