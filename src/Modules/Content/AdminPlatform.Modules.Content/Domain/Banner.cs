@@ -24,7 +24,7 @@ public sealed class Banner : AuditableEntity
     public string? Subheading { get; private set; }
     public string? CtaLabel { get; private set; }
 
-    /// <summary>A site-relative path ("/thuc-don") or an absolute http(s) URL — never any other scheme.</summary>
+    /// <summary>A site-relative path or an absolute http(s) URL — see <see cref="SafeUrl"/>.</summary>
     public string? CtaUrl { get; private set; }
 
     public BannerPlacement Placement { get; private set; }
@@ -47,7 +47,7 @@ public sealed class Banner : AuditableEntity
 
     public void Update(BannerDetails details)
     {
-        if (!string.IsNullOrWhiteSpace(details.CtaUrl) && !IsSafeUrl(details.CtaUrl))
+        if (!string.IsNullOrWhiteSpace(details.CtaUrl) && !SafeUrl.IsSafe(details.CtaUrl))
         {
             throw new BusinessRuleValidationException("The call-to-action URL must be a site path (/...) or an http(s) URL.");
         }
@@ -77,18 +77,6 @@ public sealed class Banner : AuditableEntity
     /// <summary>Live = switched on and inside the optional start/end window (both ends inclusive).</summary>
     public bool IsLiveAt(DateTime nowUtc) =>
         IsActive && (StartAtUtc is not { } start || nowUtc >= start) && (EndAtUtc is not { } end || nowUtc <= end);
-
-    /// <summary>Blocks "javascript:", "data:" and protocol-relative ("//host") URLs: the CTA is rendered as a link.</summary>
-    public static bool IsSafeUrl(string url)
-    {
-        var value = url.Trim();
-        if (value.StartsWith('/'))
-        {
-            return !value.StartsWith("//", StringComparison.Ordinal) && !value.StartsWith("/\\", StringComparison.Ordinal);
-        }
-
-        return Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https";
-    }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

@@ -47,7 +47,7 @@ public class BannerTests
     [InlineData("ftp://host/file", false)]
     public void Cta_url_must_be_a_site_path_or_http_url(string url, bool expectedSafe)
     {
-        Assert.Equal(expectedSafe, Banner.IsSafeUrl(url));
+        Assert.Equal(expectedSafe, SafeUrl.IsSafe(url));
         if (expectedSafe)
         {
             Assert.Equal(url, Banner.Create(Details(ctaUrl: url)).CtaUrl);

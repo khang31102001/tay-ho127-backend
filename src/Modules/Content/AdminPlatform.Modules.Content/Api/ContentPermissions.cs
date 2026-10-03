@@ -22,6 +22,12 @@ public static class ContentPermissions
     public const string BannersUpdate = "banners.update";
     public const string BannersDelete = "banners.delete";
 
+    /// <summary>Also cover the sections of a page.</summary>
+    public const string PagesView = "pages.view";
+    public const string PagesCreate = "pages.create";
+    public const string PagesUpdate = "pages.update";
+    public const string PagesDelete = "pages.delete";
+
     public static IReadOnlyList<(string Code, string Description)> All { get; } =
     [
         (ArticlesView, "View articles"),
@@ -40,5 +46,9 @@ public static class ContentPermissions
         (BannersCreate, "Create banners"),
         (BannersUpdate, "Update banners"),
         (BannersDelete, "Delete banners"),
+        (PagesView, "View pages and their sections"),
+        (PagesCreate, "Create pages and sections"),
+        (PagesUpdate, "Update pages and sections"),
+        (PagesDelete, "Delete pages and sections"),
     ];
 }

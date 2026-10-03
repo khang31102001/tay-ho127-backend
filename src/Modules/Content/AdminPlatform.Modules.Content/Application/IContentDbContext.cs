@@ -11,6 +11,8 @@ public interface IContentDbContext
     DbSet<ArticleTag> ArticleTags { get; }
     DbSet<Article> Articles { get; }
     DbSet<Banner> Banners { get; }
+    DbSet<Page> Pages { get; }
+    DbSet<PageSection> PageSections { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

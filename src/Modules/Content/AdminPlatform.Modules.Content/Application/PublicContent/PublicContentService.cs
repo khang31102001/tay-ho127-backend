@@ -86,6 +86,15 @@ public sealed partial class PublicContentService : IPublicContentService
         return new PublicTaxonomyResponse(categories, tags);
     }
 
+    public async Task<IReadOnlyList<PublicPageResponse>> ListPublishedPagesAsync(CancellationToken cancellationToken)
+    {
+        return await _db.Pages.AsNoTracking()
+            .Where(p => p.Status == PublishStatus.Published)
+            .OrderBy(p => p.Slug)
+            .Select(p => new PublicPageResponse(p.Id, p.Name, p.Slug))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken)
     {
         var query = _db.Banners.AsNoTracking().Where(b => b.IsActive);
