@@ -4,6 +4,8 @@ using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
 using AdminPlatform.Modules.Catalog;
 using AdminPlatform.Modules.Catalog.Infrastructure;
+using AdminPlatform.Modules.Content;
+using AdminPlatform.Modules.Content.Infrastructure;
 using AdminPlatform.Modules.Customer;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
@@ -52,6 +54,7 @@ appBuilder.Services.AddPlatformModule(appBuilder.Configuration);
 appBuilder.Services.AddCustomerModule(appBuilder.Configuration);
 appBuilder.Services.AddMediaModule(appBuilder.Configuration);
 appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
+appBuilder.Services.AddContentModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -120,6 +123,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Applying Catalog module migrations...");
     await services.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
 
+    logger.LogInformation("Applying Content module migrations...");
+    await services.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
+
     logger.LogInformation("All migrations applied.");
 }
 
@@ -154,6 +160,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding Catalog module (initial restaurant menu, only into an empty catalog)...");
     var catalogSeeded = await CatalogSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation(catalogSeeded ? "Catalog seeded." : "Catalog already has data - left untouched.");
+
+    logger.LogInformation("Seeding Content module (initial articles, categories and tags, only into empty tables)...");
+    var contentSeeded = await ContentSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation(contentSeeded ? "Content seeded." : "Content already has data - left untouched.");
 
     logger.LogInformation("Seed complete.");
 }

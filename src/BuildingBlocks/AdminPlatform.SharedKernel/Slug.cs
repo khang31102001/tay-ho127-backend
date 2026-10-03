@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace AdminPlatform.Modules.Catalog.Domain;
+namespace AdminPlatform.SharedKernel;
 
-/// <summary>URL slug rules for public catalog pages (/thuc-don/{slug}): lowercase ASCII words joined by
+/// <summary>URL slug rules for public pages (/thuc-don/{slug}, /bai-viet/{slug}): lowercase ASCII words joined by
 /// single hyphens. Vietnamese text is transliterated ("Bánh cuốn đặc biệt" → "banh-cuon-dac-biet").</summary>
 public static partial class Slug
 {
