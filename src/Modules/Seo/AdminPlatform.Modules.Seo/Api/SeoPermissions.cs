@@ -12,6 +12,11 @@ public static class SeoPermissions
 
     public const string SeoMetadataDelete = "seo-metadata.delete";
 
+    public const string RedirectsView = "redirects.view";
+    public const string RedirectsCreate = "redirects.create";
+    public const string RedirectsUpdate = "redirects.update";
+    public const string RedirectsDelete = "redirects.delete";
+
     public static IReadOnlyList<(string Code, string Description)> All { get; } =
     [
         (SeoSettingsView, "View SEO settings"),
@@ -19,5 +24,9 @@ public static class SeoPermissions
         (SeoMetadataView, "View SEO metadata overrides"),
         (SeoMetadataUpdate, "Create or update SEO metadata overrides"),
         (SeoMetadataDelete, "Reset (delete) SEO metadata overrides"),
+        (RedirectsView, "View redirects"),
+        (RedirectsCreate, "Create redirects"),
+        (RedirectsUpdate, "Update redirects"),
+        (RedirectsDelete, "Delete redirects"),
     ];
 }

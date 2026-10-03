@@ -10,6 +10,7 @@ public sealed class SeoDbContext : DbContext, ISeoDbContext
 
     public DbSet<SeoSettings> SeoSettings => Set<SeoSettings>();
     public DbSet<SeoMetadata> SeoMetadata => Set<SeoMetadata>();
+    public DbSet<Redirect> Redirects => Set<Redirect>();
 
     public SeoDbContext(DbContextOptions<SeoDbContext> options) : base(options)
     {

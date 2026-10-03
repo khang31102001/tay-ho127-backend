@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Seo module, step 2: per-entity SEO metadata overrides (product/category/article/page/homepage; one row per
   entity, homepage singleton). Admin `GET /api/v1/seo/metadata`, `GET .../lookup`, upsert `PUT`, reset `DELETE`
   gated by `seo-metadata.view|update|delete`; anonymous `GET /api/v1/seo/public/metadata` and `/public/noindex`.
+- Seo module, step 3: redirects (exact old path → site path or http(s) URL, 301/302). Admin CRUD under
+  `/api/v1/seo/redirects` gated by `redirects.*`; the source path is normalized and unique, `/admin`, `/api`,
+  `/_next` and the root are rejected, and a redirect that loops back to itself (directly or through other
+  active redirects) is refused. Anonymous `GET /api/v1/seo/public/redirects` lists the active ones for the website.
 - Catalog module (`catalog` schema): categories (3-level tree), products (unique slug,
   ordered images and modifier groups), sales menus (immutable code) and their product
   placements (price override, order, availability), modifier groups with options.

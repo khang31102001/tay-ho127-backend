@@ -1,4 +1,5 @@
 using AdminPlatform.Modules.Seo.Application.Metadata;
+using AdminPlatform.Modules.Seo.Application.Redirects;
 using AdminPlatform.Modules.Seo.Application.Settings;
 using AdminPlatform.SharedKernel;
 using Microsoft.AspNetCore.Authorization;
@@ -14,11 +15,14 @@ public sealed class PublicSeoController : ControllerBase
 {
     private readonly ISeoSettingsService _seoSettingsService;
     private readonly ISeoMetadataService _seoMetadataService;
+    private readonly IRedirectService _redirectService;
 
-    public PublicSeoController(ISeoSettingsService seoSettingsService, ISeoMetadataService seoMetadataService)
+    public PublicSeoController(
+        ISeoSettingsService seoSettingsService, ISeoMetadataService seoMetadataService, IRedirectService redirectService)
     {
         _seoSettingsService = seoSettingsService;
         _seoMetadataService = seoMetadataService;
+        _redirectService = redirectService;
     }
 
     /// <summary>404 only when the seed has never run — the website then falls back to built-in defaults.</summary>
@@ -46,5 +50,13 @@ public sealed class PublicSeoController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<NoIndexEntityResponse>>> ListNoIndex(CancellationToken cancellationToken)
     {
         return Ok(await _seoMetadataService.ListNoIndexAsync(cancellationToken));
+    }
+
+    /// <summary>Active redirects (exact source path → destination, 301/302) — the website's middleware applies them.</summary>
+    [HttpGet("redirects")]
+    [ProducesResponseType<IReadOnlyList<PublicRedirectResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PublicRedirectResponse>>> ListRedirects(CancellationToken cancellationToken)
+    {
+        return Ok(await _redirectService.ListActiveAsync(cancellationToken));
     }
 }

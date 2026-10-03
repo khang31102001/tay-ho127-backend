@@ -57,7 +57,7 @@ public static class NavigationSeeder
         new("seo.dashboard", "Tổng quan", "seo", "/admin/seo", "Gauge", 1, null),
         new("seo.metadata", "SEO Metadata", "seo", "/admin/seo/metadata", "Search", 2, "seo-metadata.view"),
         new("seo.settings", "Cài đặt SEO", "seo", "/admin/seo/settings", "Settings2", 3, "seo-settings.view"),
-        new("seo.redirects", "Chuyển hướng (Redirects)", "seo", "/admin/seo/redirects", "ArrowRightLeft", 4, null),
+        new("seo.redirects", "Chuyển hướng (Redirects)", "seo", "/admin/seo/redirects", "ArrowRightLeft", 4, "redirects.view"),
 
         new("organization", "Tổ chức", null, null, null, 60, null),
         new("admin.organizations", "Tổ chức", "organization", "/admin/organization/organizations", "Building2", 1, "organizations.view"),
