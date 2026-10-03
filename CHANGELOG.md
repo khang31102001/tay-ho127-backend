@@ -32,11 +32,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `sales-menus.*`, `modifier-groups.*`; anonymous `GET /api/v1/catalog/public` snapshot
   of the active catalog for the website.
 - `CatalogSeeder` (part of `seed`): the initial restaurant catalog, only into an empty catalog.
+- Sales module (`sales` schema) — orders, payments and the configuration they depend on, in ONE module so an order, its
+  payment and the discount bookkeeping share a database transaction:
+  - Delivery methods, payment methods and general order options (CRUD under `/api/v1/sales/delivery-methods|payment-methods|
+    order-option-groups`, gated by `delivery-methods.*`, `payment-methods.*`, `order-option-groups.*`), plus a one-row
+    order settings table (`/api/v1/sales/order-settings`: order code prefix / date part / sequence length, payment session
+    minutes). Anonymous `GET /api/v1/sales/public/delivery-methods|payment-methods|order-options` show only what is enabled
+    and never the gateway name or bank account.
+  - Orders: `POST /api/v1/sales/public/orders` (guest or signed-in customer) prices EVERYTHING on the server — dish prices and
+    modifiers from the Catalog, the delivery fee from the delivery method, the discount from the promotion rules; the browser
+    sends no price, fee or discount amount. Idempotent by `idempotencyKey`; the order code comes from an atomic per-day counter;
+    the discount code's use is taken atomically in Catalog (`usage_limit` cannot be overrun) and given back on cancel. Order
+    state machine (pickup skips "delivering"), history, admin list/detail/status change (`orders.view|update-status|cancel`).
+    Guests track an order with order code + phone (`POST .../public/orders/lookup`, same 404 for any mismatch); a signed-in
+    customer lists their own orders under `/api/v1/sales/customer/orders`.
+  - Payments: one payment per order with an append-only transaction trail and its own state machine
+    (`payments.view|manage`). QR / wallet orders go through a payment session
+    (`POST .../public/payment-sessions`): no order exists until staff confirm the money arrived
+    (`POST /api/v1/sales/payment-sessions/{id}/confirm`), which re-prices the request, creates the order with a PAID
+    payment and closes the session; unconfirmed sessions expire. A `IOrderNotifier` port (logging by default) is the hook for
+    e-mail/SMS later.
+  - Ports to other modules (adapters in the Host): `ICatalogPricingProvider`, `IPromotionPricing`, `ICustomerDirectory`.
+    Catalog gained `ICatalogPricingQueryService` and an atomic `IPromotionRedemptionService`; Customer gained
+    `ICustomerLookupService`.
+  - `SalesSeeder` (part of `seed`, also `migrator seed-sales`): the mock's delivery/payment methods and order options, each
+    only into an empty table; only cash on delivery starts enabled (the transfer/wallet methods carry placeholder bank details).
+    `SalesDemoSeeder` (part of `seed-demo`): orders, payments and payment sessions in every status.
+  - New rate-limit policies `RateLimiting:SalesOrders` and `RateLimiting:SalesLookup`.
 - Integration tests can target an existing Postgres via `INTEGRATION_TESTS_CONNECTION_STRING`.
 
 ### Changed
 
 - Admin sidebar catalog entries are now gated by the new catalog permissions.
+- Admin sidebar: Orders, Payments, Payment methods, Delivery methods and Order options entries are now gated by the new Sales
+  permissions; a new "Cấu hình đơn hàng" entry opens the order settings.
 
 ## [0.1.0] - 2026-08-26
 

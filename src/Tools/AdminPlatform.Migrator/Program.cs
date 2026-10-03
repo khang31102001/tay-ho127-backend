@@ -3,6 +3,7 @@ using AdminPlatform.Migrator;
 using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
 using AdminPlatform.Modules.Catalog;
+using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
@@ -241,6 +242,19 @@ static async Task SeedDemoAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding demo promotions (discount codes)...");
     var promotionsCreated = await PromotionDemoSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation("{Count} demo promotion(s) created.", promotionsCreated);
+
+    logger.LogInformation("Seeding demo sales (orders, payments and payment sessions in every status)...");
+    var demoProducts = await services.GetRequiredService<ICatalogDbContext>().Products.AsNoTracking()
+        .Where(p => p.IsActive)
+        .Include(p => p.Media)
+        .OrderBy(p => p.Name)
+        .Take(4)
+        .ToListAsync(cancellationToken);
+    var demoOrders = await SalesDemoSeeder.SeedAsync(
+        services,
+        demoProducts.Select(p => new DemoProduct(p.Id, p.Name, p.Price, p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).FirstOrDefault())).ToList(),
+        cancellationToken);
+    logger.LogInformation("{Count} demo order(s) created.", demoOrders);
 
     logger.LogInformation("Demo seed complete.");
 }
