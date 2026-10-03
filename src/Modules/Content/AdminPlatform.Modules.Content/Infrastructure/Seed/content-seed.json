@@ -1,0 +1,99 @@
+{
+  "categories": [
+    {
+      "key": "artcat-cong-thuc",
+      "name": "Công thức",
+      "slug": "cong-thuc",
+      "parentKey": null,
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "artcat-cau-chuyen",
+      "name": "Câu chuyện thương hiệu",
+      "slug": "cau-chuyen-thuong-hieu",
+      "parentKey": null,
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "key": "artcat-tin-tuc",
+      "name": "Tin tức & Khuyến mãi",
+      "slug": "tin-tuc-khuyen-mai",
+      "parentKey": null,
+      "sortOrder": 3,
+      "isActive": true
+    }
+  ],
+  "tags": [
+    {
+      "key": "arttag-truyen-thong",
+      "name": "Truyền thống",
+      "slug": "truyen-thong"
+    },
+    {
+      "key": "arttag-cong-thuc",
+      "name": "Công thức",
+      "slug": "cong-thuc"
+    },
+    {
+      "key": "arttag-uu-dai",
+      "name": "Ưu đãi",
+      "slug": "uu-dai"
+    },
+    {
+      "key": "arttag-cau-chuyen",
+      "name": "Câu chuyện",
+      "slug": "cau-chuyen"
+    }
+  ],
+  "articles": [
+    {
+      "key": "article-cong-thuc-banh-cuon-truyen-thong",
+      "title": "Bí quyết tráng bánh cuốn mỏng tang chuẩn vị Bắc",
+      "slug": "bi-quyet-trang-banh-cuon-mong-tang-chuan-vi-bac",
+      "summary": "Chia sẻ từ bếp Tây Hồ 127: cách pha bột, canh lửa và tráng bánh để có lớp bánh cuốn mỏng, dai nhẹ, không rách.",
+      "content": "<p>Bánh cuốn ngon bắt đầu từ khâu pha bột — tỷ lệ bột gạo, bột năng và nước phải vừa đủ để lớp bánh vừa mỏng vừa dai.</p><h2>Ba bước không thể bỏ qua</h2><ul><li>Ngâm gạo qua đêm rồi xay mịn</li><li>Tráng bánh trên lửa vừa, không quá to</li><li>Cuốn nhân ngay khi bánh còn nóng để không bị rách</li></ul><p>Tại Tây Hồ 127, mỗi mẻ bột đều được pha thủ công mỗi sáng để đảm bảo độ tươi.</p>",
+      "featuredMediaId": "media-hero-cooking",
+      "categoryKey": "artcat-cong-thuc",
+      "tagKeys": [
+        "arttag-truyen-thong",
+        "arttag-cong-thuc"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "published",
+      "publishedAt": "2026-01-15T00:00:00.000Z"
+    },
+    {
+      "key": "article-cau-chuyen-nua-the-ky",
+      "title": "Nửa thế kỷ giữ lửa hương vị bánh cuốn Hà Nội",
+      "slug": "nua-the-ky-giu-lua-huong-vi-banh-cuon-ha-noi",
+      "summary": "Từ một quán nhỏ ở phố cổ năm 1972 đến chuỗi nhà hàng hôm nay — hành trình giữ trọn công thức gia truyền của Tây Hồ 127.",
+      "content": "<p>Năm 1972, một quán bánh cuốn nhỏ mở cửa tại phố cổ Hà Nội — khởi đầu cho hành trình hơn 50 năm của Tây Hồ 127.</p><blockquote>Chúng tôi tin rằng hương vị truyền thống là thứ không thể vội vàng.</blockquote><p>Ngày nay, dù đã phát triển thành chuỗi nhà hàng, mỗi chi nhánh vẫn tráng bánh thủ công mỗi ngày theo đúng công thức ban đầu.</p>",
+      "featuredMediaId": "media-banh-cuon-dish",
+      "categoryKey": "artcat-cau-chuyen",
+      "tagKeys": [
+        "arttag-truyen-thong",
+        "arttag-cau-chuyen"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "published",
+      "publishedAt": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "key": "article-uu-dai-thang-nay-nhap",
+      "title": "Ưu đãi tháng này: giảm 10% cho đơn từ 200.000đ",
+      "slug": "uu-dai-thang-nay-giam-10-cho-don-tu-200000d",
+      "summary": "Đặt hàng qua website trong tháng để nhận ưu đãi giảm giá trực tiếp trên hoá đơn.",
+      "content": "<p>Trong tháng này, mọi đơn hàng từ 200.000đ đặt qua website sẽ được giảm 10% trực tiếp.</p><p>Áp dụng cho mọi món trong thực đơn, không giới hạn số lần sử dụng.</p>",
+      "featuredMediaId": "media-review-card",
+      "categoryKey": "artcat-tin-tuc",
+      "tagKeys": [
+        "arttag-uu-dai"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "draft",
+      "publishedAt": null
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Domain;
+using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

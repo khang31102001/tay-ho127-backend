@@ -1,3 +1,4 @@
+using AdminPlatform.SharedKernel;
 using AdminPlatform.Modules.Catalog.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

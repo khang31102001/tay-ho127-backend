@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\Modules\Customer\AdminPlatform.Modules.Customer\AdminPlatform.Modules.Customer.csproj" />
     <ProjectReference Include="..\..\src\Modules\Media\AdminPlatform.Modules.Media\AdminPlatform.Modules.Media.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\AdminPlatform.Modules.Catalog\AdminPlatform.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Content\AdminPlatform.Modules.Content\AdminPlatform.Modules.Content.csproj" />
   </ItemGroup>
 
 </Project>

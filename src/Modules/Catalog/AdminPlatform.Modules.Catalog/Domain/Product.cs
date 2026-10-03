@@ -47,7 +47,7 @@ public sealed class Product : AuditableEntity
 
     public void Update(string name, string slug, Guid categoryId, ProductDetails details)
     {
-        if (!Domain.Slug.IsValid(slug))
+        if (!SharedKernel.Slug.IsValid(slug))
         {
             throw new BusinessRuleValidationException($"'{slug}' is not a valid slug.");
         }
