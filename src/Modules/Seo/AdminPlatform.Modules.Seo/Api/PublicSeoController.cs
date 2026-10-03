@@ -1,5 +1,6 @@
 using AdminPlatform.Modules.Seo.Application.Metadata;
 using AdminPlatform.Modules.Seo.Application.Redirects;
+using AdminPlatform.Modules.Seo.Application.Schemas;
 using AdminPlatform.Modules.Seo.Application.Settings;
 using AdminPlatform.SharedKernel;
 using Microsoft.AspNetCore.Authorization;
@@ -16,10 +17,13 @@ public sealed class PublicSeoController : ControllerBase
     private readonly ISeoSettingsService _seoSettingsService;
     private readonly ISeoMetadataService _seoMetadataService;
     private readonly IRedirectService _redirectService;
+    private readonly ISeoSchemaService _seoSchemaService;
 
     public PublicSeoController(
-        ISeoSettingsService seoSettingsService, ISeoMetadataService seoMetadataService, IRedirectService redirectService)
+        ISeoSettingsService seoSettingsService, ISeoMetadataService seoMetadataService, IRedirectService redirectService,
+        ISeoSchemaService seoSchemaService)
     {
+        _seoSchemaService = seoSchemaService;
         _seoSettingsService = seoSettingsService;
         _seoMetadataService = seoMetadataService;
         _redirectService = redirectService;
@@ -58,5 +62,16 @@ public sealed class PublicSeoController : ControllerBase
     public async Task<ActionResult<IReadOnlyList<PublicRedirectResponse>>> ListRedirects(CancellationToken cancellationToken)
     {
         return Ok(await _redirectService.ListActiveAsync(cancellationToken));
+    }
+
+    /// <summary>The ACTIVE schema row of one entity and type (EntityId is omitted for "homepage"); 404 when there is none
+    /// or it is switched off — the website then generates the schema itself.</summary>
+    [HttpGet("schema")]
+    [ProducesResponseType<SeoSchemaResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<SeoSchemaResponse>> GetSchema(
+        [FromQuery] string entityType, [FromQuery] string? entityId, [FromQuery] string schemaType, CancellationToken cancellationToken)
+    {
+        return Ok(await _seoSchemaService.FindActiveAsync(entityType, entityId, schemaType, cancellationToken)
+            ?? throw new NotFoundException("SeoSchema", $"{entityType}:{entityId}:{schemaType}"));
     }
 }

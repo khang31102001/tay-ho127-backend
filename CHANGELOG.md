@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/api/v1/seo/redirects` gated by `redirects.*`; the source path is normalized and unique, `/admin`, `/api`,
   `/_next` and the root are rejected, and a redirect that loops back to itself (directly or through other
   active redirects) is refused. Anonymous `GET /api/v1/seo/public/redirects` lists the active ones for the website.
+- Seo module, step 4: Schema.org / JSON-LD overrides per (entity, schema type) — extra fields the entity lacks (`config`,
+  e.g. product SKU/brand) or an Advanced-Mode custom JSON-LD (must be a JSON object/array). Admin `GET .../lookup`,
+  `PUT`, `DELETE` under `/api/v1/seo/schemas` gated by `seo-schemas.view|update|delete`; anonymous
+  `GET /api/v1/seo/public/schema` returns only active rows.
 - Catalog module (`catalog` schema): categories (3-level tree), products (unique slug,
   ordered images and modifier groups), sales menus (immutable code) and their product
   placements (price override, order, availability), modifier groups with options.

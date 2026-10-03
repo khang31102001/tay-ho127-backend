@@ -11,6 +11,7 @@ public sealed class SeoDbContext : DbContext, ISeoDbContext
     public DbSet<SeoSettings> SeoSettings => Set<SeoSettings>();
     public DbSet<SeoMetadata> SeoMetadata => Set<SeoMetadata>();
     public DbSet<Redirect> Redirects => Set<Redirect>();
+    public DbSet<SeoSchema> SeoSchemas => Set<SeoSchema>();
 
     public SeoDbContext(DbContextOptions<SeoDbContext> options) : base(options)
     {

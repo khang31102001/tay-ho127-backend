@@ -12,6 +12,13 @@ public static class SeoPermissions
 
     public const string SeoMetadataDelete = "seo-metadata.delete";
 
+    public const string SeoSchemasView = "seo-schemas.view";
+
+    /// <summary>Saving a schema row (create or replace) — upserted per entity and schema type, so there is no separate create.</summary>
+    public const string SeoSchemasUpdate = "seo-schemas.update";
+
+    public const string SeoSchemasDelete = "seo-schemas.delete";
+
     public const string RedirectsView = "redirects.view";
     public const string RedirectsCreate = "redirects.create";
     public const string RedirectsUpdate = "redirects.update";
@@ -24,6 +31,9 @@ public static class SeoPermissions
         (SeoMetadataView, "View SEO metadata overrides"),
         (SeoMetadataUpdate, "Create or update SEO metadata overrides"),
         (SeoMetadataDelete, "Reset (delete) SEO metadata overrides"),
+        (SeoSchemasView, "View SEO schema (JSON-LD) overrides"),
+        (SeoSchemasUpdate, "Create or update SEO schema (JSON-LD) overrides"),
+        (SeoSchemasDelete, "Reset (delete) SEO schema (JSON-LD) overrides"),
         (RedirectsView, "View redirects"),
         (RedirectsCreate, "Create redirects"),
         (RedirectsUpdate, "Update redirects"),

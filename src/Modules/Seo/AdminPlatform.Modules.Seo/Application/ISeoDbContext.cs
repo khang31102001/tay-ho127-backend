@@ -10,6 +10,7 @@ public interface ISeoDbContext
     DbSet<SeoSettings> SeoSettings { get; }
     DbSet<SeoMetadata> SeoMetadata { get; }
     DbSet<Redirect> Redirects { get; }
+    DbSet<SeoSchema> SeoSchemas { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
