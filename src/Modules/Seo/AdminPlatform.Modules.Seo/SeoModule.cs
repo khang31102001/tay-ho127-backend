@@ -1,5 +1,6 @@
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Seo.Application;
+using AdminPlatform.Modules.Seo.Application.Metadata;
 using AdminPlatform.Modules.Seo.Application.Settings;
 using AdminPlatform.Modules.Seo.Infrastructure;
 using FluentValidation;
@@ -9,8 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AdminPlatform.Modules.Seo;
 
-/// <summary>Composition entry point for the Seo module (site-wide SEO settings; metadata, redirects and schema
-/// follow). The Host calls AddSeoModule() once — see ContentModule for the pattern.</summary>
+/// <summary>Composition entry point for the Seo module (site-wide SEO settings and per-entity metadata overrides; redirects and
+/// schema follow). The Host calls AddSeoModule() once — see ContentModule for the pattern.</summary>
 public static class SeoModule
 {
     public static IServiceCollection AddSeoModule(this IServiceCollection services, IConfiguration configuration)
@@ -30,6 +31,7 @@ public static class SeoModule
         services.AddScoped<ISeoDbContext>(sp => sp.GetRequiredService<SeoDbContext>());
 
         services.AddScoped<ISeoSettingsService, SeoSettingsService>();
+        services.AddScoped<ISeoMetadataService, SeoMetadataService>();
 
         services.AddValidatorsFromAssembly(typeof(SeoModule).Assembly);
 

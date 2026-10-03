@@ -8,6 +8,7 @@ namespace AdminPlatform.Modules.Seo.Application;
 public interface ISeoDbContext
 {
     DbSet<SeoSettings> SeoSettings { get; }
+    DbSet<SeoMetadata> SeoMetadata { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

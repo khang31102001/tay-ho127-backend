@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GET/PUT /api/v1/seo/settings` gated by `seo-settings.view|update`; anonymous `GET /api/v1/seo/public/settings`
   for the website. `SeoSeeder` (part of `seed`) creates the defaults only when absent. Metadata, redirects and
   schema follow in later steps.
+- Seo module, step 2: per-entity SEO metadata overrides (product/category/article/page/homepage; one row per
+  entity, homepage singleton). Admin `GET /api/v1/seo/metadata`, `GET .../lookup`, upsert `PUT`, reset `DELETE`
+  gated by `seo-metadata.view|update|delete`; anonymous `GET /api/v1/seo/public/metadata` and `/public/noindex`.
 - Catalog module (`catalog` schema): categories (3-level tree), products (unique slug,
   ordered images and modifier groups), sales menus (immutable code) and their product
   placements (price override, order, availability), modifier groups with options.

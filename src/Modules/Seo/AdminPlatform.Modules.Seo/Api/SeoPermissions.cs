@@ -5,9 +5,19 @@ public static class SeoPermissions
     public const string SeoSettingsView = "seo-settings.view";
     public const string SeoSettingsUpdate = "seo-settings.update";
 
+    public const string SeoMetadataView = "seo-metadata.view";
+
+    /// <summary>Saving an override (create or replace) — an override is upserted per entity, so there is no separate create.</summary>
+    public const string SeoMetadataUpdate = "seo-metadata.update";
+
+    public const string SeoMetadataDelete = "seo-metadata.delete";
+
     public static IReadOnlyList<(string Code, string Description)> All { get; } =
     [
         (SeoSettingsView, "View SEO settings"),
         (SeoSettingsUpdate, "Update SEO settings"),
+        (SeoMetadataView, "View SEO metadata overrides"),
+        (SeoMetadataUpdate, "Create or update SEO metadata overrides"),
+        (SeoMetadataDelete, "Reset (delete) SEO metadata overrides"),
     ];
 }

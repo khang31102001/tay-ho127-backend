@@ -9,6 +9,7 @@ public sealed class SeoDbContext : DbContext, ISeoDbContext
     public const string Schema = "seo";
 
     public DbSet<SeoSettings> SeoSettings => Set<SeoSettings>();
+    public DbSet<SeoMetadata> SeoMetadata => Set<SeoMetadata>();
 
     public SeoDbContext(DbContextOptions<SeoDbContext> options) : base(options)
     {
