@@ -52,3 +52,6 @@ public sealed record PublicBannerResponse(
     string? CtaUrl,
     string Placement,
     int DisplayOrder);
+
+/// <summary>A published page's identity — enough for the navigation to turn a page reference into its URL (Slug is the page's URL path).</summary>
+public sealed record PublicPageResponse(Guid Id, string Name, string Slug);

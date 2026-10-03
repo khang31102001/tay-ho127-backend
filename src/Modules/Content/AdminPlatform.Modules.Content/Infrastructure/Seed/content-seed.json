@@ -129,5 +129,114 @@
       "displayOrder": 1,
       "isActive": false
     }
+  ],
+  "pages": [
+    {
+      "key": "page-home",
+      "name": "Trang chủ",
+      "slug": "/",
+      "status": "published",
+      "publishedAt": "2026-01-05T00:00:00.000Z"
+    },
+    {
+      "key": "page-thuc-don",
+      "name": "Thực đơn",
+      "slug": "/thuc-don",
+      "status": "published",
+      "publishedAt": "2026-01-05T00:00:00.000Z"
+    },
+    {
+      "key": "page-lien-he",
+      "name": "Liên hệ",
+      "slug": "/lien-he",
+      "status": "draft",
+      "publishedAt": null
+    }
+  ],
+  "pageSections": [
+    {
+      "key": "section-home-hero",
+      "pageKey": "page-home",
+      "sectionKind": "hero",
+      "eyebrow": "Bánh cuốn",
+      "heading": "TÂY HỒ",
+      "subheading": "Từ bàn tay khéo léo, mỗi phần bánh là một câu chuyện Việt.",
+      "body": null,
+      "mediaId": "media-hero-platter",
+      "ctaLabel": "Đặt ngay",
+      "ctaUrl": "/menu",
+      "displayOrder": 1,
+      "isVisible": true
+    },
+    {
+      "key": "section-home-story",
+      "pageKey": "page-home",
+      "sectionKind": "introduction",
+      "eyebrow": null,
+      "heading": "Hương vị gia đình Bắc giữa Sài Gòn",
+      "subheading": null,
+      "body": "Bánh Cuốn Tây Hồ 127 giữ nguyên công thức truyền thống, tráng bánh thủ công mỗi ngày để mang đến hương vị chuẩn vị Bắc cho thực khách Sài Gòn.",
+      "mediaId": "media-hero-cooking",
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 2,
+      "isVisible": true
+    },
+    {
+      "key": "section-home-promotion",
+      "pageKey": "page-home",
+      "sectionKind": "promotion",
+      "eyebrow": null,
+      "heading": "Ưu đãi tuần này",
+      "subheading": null,
+      "body": "Giảm 10% cho hoá đơn từ 200.000đ khi đặt qua website.",
+      "mediaId": null,
+      "ctaLabel": "Xem thực đơn",
+      "ctaUrl": "/thuc-don",
+      "displayOrder": 3,
+      "isVisible": true
+    },
+    {
+      "key": "section-home-favorites",
+      "pageKey": "page-home",
+      "sectionKind": "highlight",
+      "eyebrow": null,
+      "heading": "Những lựa chọn được yêu thích nhất",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": "Xem thực đơn",
+      "ctaUrl": "/menu",
+      "displayOrder": 4,
+      "isVisible": true
+    },
+    {
+      "key": "section-home-experience",
+      "pageKey": "page-home",
+      "sectionKind": "introduction",
+      "eyebrow": null,
+      "heading": "Trải nghiệm tại Tây Hồ 127",
+      "subheading": null,
+      "body": "Không gian ấm cúng, phục vụ nhanh, phù hợp cho bữa sáng lẫn buổi họp mặt gia đình.",
+      "mediaId": "media-banh-cuon-dish",
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 5,
+      "isVisible": true
+    },
+    {
+      "key": "section-home-testimonials",
+      "pageKey": "page-home",
+      "sectionKind": "testimonial",
+      "eyebrow": null,
+      "heading": "Khách hàng nói gì về chúng tôi",
+      "subheading": null,
+      "body": null,
+      "mediaId": "media-review-card",
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 6,
+      "isVisible": true
+    }
   ]
 }

@@ -35,6 +35,14 @@ public sealed class PublicContentController : ControllerBase
         return Ok(await _publicContentService.GetArticleBySlugAsync(slug, cancellationToken));
     }
 
+    /// <summary>Published pages (id, name, URL path) — used to resolve navigation links to pages.</summary>
+    [HttpGet("pages")]
+    [ProducesResponseType<IReadOnlyList<PublicPageResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PublicPageResponse>>> ListPages(CancellationToken cancellationToken)
+    {
+        return Ok(await _publicContentService.ListPublishedPagesAsync(cancellationToken));
+    }
+
     /// <summary>Banners live right now, optionally for one placement (HOME_HERO, HOME_PROMOTION, MENU_HERO, ARTICLE_BANNER).</summary>
     [HttpGet("banners")]
     [ProducesResponseType<IReadOnlyList<PublicBannerResponse>>(StatusCodes.Status200OK)]

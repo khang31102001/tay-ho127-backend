@@ -27,7 +27,8 @@ public static class ContentSeeder
 
         var seededArticles = await SeedArticlesAsync(db, seed, cancellationToken);
         var seededBanners = await SeedBannersAsync(db, seed, cancellationToken);
-        return seededArticles || seededBanners;
+        var seededPages = await SeedPagesAsync(db, seed, cancellationToken);
+        return seededArticles || seededBanners || seededPages;
     }
 
     private static async Task<bool> SeedArticlesAsync(IContentDbContext db, ContentSeed seed, CancellationToken cancellationToken)
@@ -96,6 +97,36 @@ public static class ContentSeeder
         return true;
     }
 
+    private static async Task<bool> SeedPagesAsync(IContentDbContext db, ContentSeed seed, CancellationToken cancellationToken)
+    {
+        if (await db.Pages.AnyAsync(cancellationToken) || await db.PageSections.AnyAsync(cancellationToken))
+        {
+            return false;
+        }
+
+        var seededAtUtc = DateTime.UtcNow;
+        var pageIds = new Dictionary<string, Guid>();
+        foreach (var seedPage in seed.Pages)
+        {
+            var status = Enum.Parse<PublishStatus>(seedPage.Status, ignoreCase: true);
+            var page = Page.Create(seedPage.Name, seedPage.Slug, status, seededAtUtc);
+            page.SetPublishedAt(status == PublishStatus.Published ? seedPage.PublishedAt : null);
+            pageIds[seedPage.Key] = page.Id;
+            db.Pages.Add(page);
+        }
+
+        foreach (var seedSection in seed.PageSections)
+        {
+            ContentWireFormat.TryParseSectionKind(seedSection.SectionKind, out var kind);
+            db.PageSections.Add(PageSection.Create(pageIds[seedSection.PageKey], new SectionDetails(kind, seedSection.Eyebrow,
+                seedSection.Heading, seedSection.Subheading, seedSection.Body, seedSection.MediaId, seedSection.CtaLabel, seedSection.CtaUrl,
+                seedSection.DisplayOrder, seedSection.IsVisible)));
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static ContentSeed LoadSeed()
     {
         using var stream = typeof(ContentSeeder).Assembly.GetManifestResourceStream(SeedResourceName)
@@ -108,11 +139,29 @@ public static class ContentSeeder
         IReadOnlyList<SeedCategory> Categories,
         IReadOnlyList<SeedTag> Tags,
         IReadOnlyList<SeedArticle> Articles,
-        IReadOnlyList<SeedBanner> Banners);
+        IReadOnlyList<SeedBanner> Banners,
+        IReadOnlyList<SeedPage> Pages,
+        IReadOnlyList<SeedPageSection> PageSections);
 
     private sealed record SeedCategory(string Key, string Name, string Slug, string? ParentKey, int SortOrder, bool IsActive);
 
     private sealed record SeedTag(string Key, string Name, string Slug);
+
+    private sealed record SeedPage(string Key, string Name, string Slug, string Status, DateTime? PublishedAt);
+
+    private sealed record SeedPageSection(
+        string Key,
+        string PageKey,
+        string SectionKind,
+        string? Eyebrow,
+        string? Heading,
+        string? Subheading,
+        string? Body,
+        string? MediaId,
+        string? CtaLabel,
+        string? CtaUrl,
+        int DisplayOrder,
+        bool IsVisible);
 
     private sealed record SeedBanner(
         string Key,
