@@ -5,6 +5,8 @@ using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content.Api;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Seo.Api;
+using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer.Api;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity.Api;
@@ -101,6 +103,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         await services.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
         await services.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
+        await services.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
 
         await IdentitySeeder.SeedAsync(services, CancellationToken.None);
         var admin = await services.GetRequiredService<IUserLookupService>().FindByEmailAsync(AdminEmail, CancellationToken.None);
@@ -116,6 +119,7 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. CustomerPermissions.All,
             .. CatalogPermissions.All,
             .. ContentPermissions.All,
+            .. SeoPermissions.All,
         ];
         await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);

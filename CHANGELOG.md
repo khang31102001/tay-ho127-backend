@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Seo module (`seo` schema), step 1: the site-wide SEO settings singleton (title template with `%s`, default
+  description / share image, default robots index/follow, Twitter handles, robots.txt disallow paths). Admin
+  `GET/PUT /api/v1/seo/settings` gated by `seo-settings.view|update`; anonymous `GET /api/v1/seo/public/settings`
+  for the website. `SeoSeeder` (part of `seed`) creates the defaults only when absent. Metadata, redirects and
+  schema follow in later steps.
 - Catalog module (`catalog` schema): categories (3-level tree), products (unique slug,
   ordered images and modifier groups), sales menus (immutable code) and their product
   placements (price override, order, availability), modifier groups with options.

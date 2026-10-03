@@ -33,6 +33,7 @@
     <ProjectReference Include="..\..\Modules\Media\AdminPlatform.Modules.Media\AdminPlatform.Modules.Media.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\AdminPlatform.Modules.Catalog\AdminPlatform.Modules.Catalog.csproj" />
     <ProjectReference Include="..\..\Modules\Content\AdminPlatform.Modules.Content\AdminPlatform.Modules.Content.csproj" />
+    <ProjectReference Include="..\..\Modules\Seo\AdminPlatform.Modules.Seo\AdminPlatform.Modules.Seo.csproj" />
   </ItemGroup>
 
 </Project>
