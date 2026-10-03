@@ -38,3 +38,17 @@ public sealed record PublicArticleTagResponse(Guid Id, string Name, string Slug)
 public sealed record PublicTaxonomyResponse(
     IReadOnlyList<PublicArticleCategoryResponse> Categories,
     IReadOnlyList<PublicArticleTagResponse> Tags);
+
+/// <summary>A live banner as the website shows it (no admin-only fields). Placement is the wire name, e.g. "HOME_HERO".</summary>
+public sealed record PublicBannerResponse(
+    Guid Id,
+    string Name,
+    string? DesktopMediaId,
+    string? MobileMediaId,
+    string AltText,
+    string? Heading,
+    string? Subheading,
+    string? CtaLabel,
+    string? CtaUrl,
+    string Placement,
+    int DisplayOrder);

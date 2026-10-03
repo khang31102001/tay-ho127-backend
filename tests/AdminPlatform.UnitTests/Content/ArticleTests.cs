@@ -177,7 +177,7 @@ public class ArticleTests
         await articles.CreateAsync(NewArticle(title: "Bản nháp", status: "draft"), None);
         await articles.CreateAsync(NewArticle(title: "Đã lưu trữ", status: "archived"), None);
 
-        var sut = new PublicContentService(db);
+        var sut = new PublicContentService(db, new FixedClock(Now));
         var list = await sut.ListArticlesAsync(new PagedRequest(), None);
 
         Assert.Equal([published.Slug], list.Items.Select(a => a.Slug));
@@ -195,7 +195,7 @@ public class ArticleTests
         await categories.CreateAsync(new CreateArticleCategoryRequest("Ẩn", null, null, 2, false), None);
         await new ArticleTagService(db).CreateAsync(new CreateArticleTagRequest("Ưu đãi", null), None);
 
-        var taxonomy = await new PublicContentService(db).GetTaxonomyAsync(None);
+        var taxonomy = await new PublicContentService(db, new FixedClock(Now)).GetTaxonomyAsync(None);
 
         Assert.Equal(["Hiện"], taxonomy.Categories.Select(c => c.Name));
         Assert.Equal(["Ưu đãi"], taxonomy.Tags.Select(t => t.Name));

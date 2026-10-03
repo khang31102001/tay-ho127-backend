@@ -3,6 +3,7 @@ using AdminPlatform.Modules.Content.Application;
 using AdminPlatform.Modules.Content.Application.ArticleCategories;
 using AdminPlatform.Modules.Content.Application.ArticleTags;
 using AdminPlatform.Modules.Content.Application.Articles;
+using AdminPlatform.Modules.Content.Application.Banners;
 using AdminPlatform.Modules.Content.Application.PublicContent;
 using AdminPlatform.Modules.Content.Infrastructure;
 using FluentValidation;
@@ -38,6 +39,7 @@ public static class ContentModule
         services.AddScoped<IArticleCategoryService, ArticleCategoryService>();
         services.AddScoped<IArticleTagService, ArticleTagService>();
         services.AddScoped<IArticleService, ArticleService>();
+        services.AddScoped<IBannerService, BannerService>();
         services.AddScoped<IPublicContentService, PublicContentService>();
 
         services.AddValidatorsFromAssembly(typeof(ContentModule).Assembly);

@@ -35,6 +35,15 @@ public sealed class PublicContentController : ControllerBase
         return Ok(await _publicContentService.GetArticleBySlugAsync(slug, cancellationToken));
     }
 
+    /// <summary>Banners live right now, optionally for one placement (HOME_HERO, HOME_PROMOTION, MENU_HERO, ARTICLE_BANNER).</summary>
+    [HttpGet("banners")]
+    [ProducesResponseType<IReadOnlyList<PublicBannerResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PublicBannerResponse>>> ListBanners(
+        [FromQuery] string? placement, CancellationToken cancellationToken)
+    {
+        return Ok(await _publicContentService.ListBannersAsync(placement, cancellationToken));
+    }
+
     /// <summary>Active article categories and all tags.</summary>
     [HttpGet("taxonomy")]
     [ProducesResponseType<PublicTaxonomyResponse>(StatusCodes.Status200OK)]

@@ -10,6 +10,7 @@ public interface IContentDbContext
     DbSet<ArticleCategory> ArticleCategories { get; }
     DbSet<ArticleTag> ArticleTags { get; }
     DbSet<Article> Articles { get; }
+    DbSet<Banner> Banners { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
