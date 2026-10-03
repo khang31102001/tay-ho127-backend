@@ -11,6 +11,7 @@ public sealed class ContentDbContext : DbContext, IContentDbContext
     public DbSet<ArticleCategory> ArticleCategories => Set<ArticleCategory>();
     public DbSet<ArticleTag> ArticleTags => Set<ArticleTag>();
     public DbSet<Article> Articles => Set<Article>();
+    public DbSet<Banner> Banners => Set<Banner>();
 
     public ContentDbContext(DbContextOptions<ContentDbContext> options) : base(options)
     {

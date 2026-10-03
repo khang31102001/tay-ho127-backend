@@ -95,5 +95,39 @@
       "status": "draft",
       "publishedAt": null
     }
+  ],
+  "banners": [
+    {
+      "key": "banner-home-promotion",
+      "name": "Khuyến mãi trang chủ",
+      "desktopMediaId": "media-promotion-zone-3",
+      "mobileMediaId": "media-promotion-zone-2",
+      "altText": "Ưu đãi bánh cuốn Tây Hồ",
+      "heading": "Hương vị truyền thống",
+      "subheading": null,
+      "ctaLabel": "Xem ưu đãi",
+      "ctaUrl": "/menu",
+      "placement": "HOME_PROMOTION",
+      "startAt": null,
+      "endAt": null,
+      "displayOrder": 1,
+      "isActive": true
+    },
+    {
+      "key": "banner-menu-hero-tet",
+      "name": "Ưu đãi Tết (nháp)",
+      "desktopMediaId": null,
+      "mobileMediaId": null,
+      "altText": "Ưu đãi Tết Nguyên Đán",
+      "heading": "Ưu đãi Tết Nguyên Đán",
+      "subheading": "Giảm 15% toàn thực đơn",
+      "ctaLabel": "Xem thực đơn",
+      "ctaUrl": "/thuc-don",
+      "placement": "MENU_HERO",
+      "startAt": "2026-02-01T00:00:00.000Z",
+      "endAt": "2026-02-20T00:00:00.000Z",
+      "displayOrder": 1,
+      "isActive": false
+    }
   ]
 }

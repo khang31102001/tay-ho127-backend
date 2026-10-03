@@ -45,7 +45,7 @@ public static class NavigationSeeder
 
         new("content", "Content", null, null, null, 30, null),
         new("content.pages", "Page", "content", "/admin/content/pages", "FileText", 1, null),
-        new("content.banners", "Banner", "content", "/admin/content/banners", "GalleryHorizontal", 2, null),
+        new("content.banners", "Banner", "content", "/admin/content/banners", "GalleryHorizontal", 2, "banners.view"),
         new("content.articles", "Bài viết", "content", "/admin/content/articles", "Newspaper", 3, "articles.view"),
         new("content.article-categories", "Danh mục bài viết", "content", "/admin/content/article-categories", "FolderTree", 4, "article-categories.view"),
         new("content.article-tags", "Thẻ bài viết", "content", "/admin/content/article-tags", "Tags", 5, "article-tags.view"),

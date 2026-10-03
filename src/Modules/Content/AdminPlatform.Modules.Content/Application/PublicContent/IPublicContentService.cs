@@ -13,4 +13,8 @@ public interface IPublicContentService
     Task<PublicArticleResponse> GetArticleBySlugAsync(string slug, CancellationToken cancellationToken);
 
     Task<PublicTaxonomyResponse> GetTaxonomyAsync(CancellationToken cancellationToken);
+
+    /// <summary>Banners that are live right now (active and inside their start/end window), by display order.
+    /// <paramref name="placement"/> narrows to one placement wire name (e.g. "HOME_HERO"); null returns all.</summary>
+    Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken);
 }

@@ -1,5 +1,7 @@
 using System.Text.RegularExpressions;
+using AdminPlatform.Common.Abstractions;
 using AdminPlatform.Common.Pagination;
+using AdminPlatform.Modules.Content.Application.Banners;
 using AdminPlatform.Modules.Content.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -11,10 +13,12 @@ public sealed partial class PublicContentService : IPublicContentService
     private const int WordsPerMinute = 200;
 
     private readonly IContentDbContext _db;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public PublicContentService(IContentDbContext db)
+    public PublicContentService(IContentDbContext db, IDateTimeProvider dateTimeProvider)
     {
         _db = db;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async Task<PagedResult<PublicArticleSummaryResponse>> ListArticlesAsync(PagedRequest request, CancellationToken cancellationToken)
@@ -80,6 +84,32 @@ public sealed partial class PublicContentService : IPublicContentService
             .ToListAsync(cancellationToken);
 
         return new PublicTaxonomyResponse(categories, tags);
+    }
+
+    public async Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken)
+    {
+        var query = _db.Banners.AsNoTracking().Where(b => b.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(placement))
+        {
+            if (!BannerWireFormat.TryParsePlacement(placement, out var parsedPlacement))
+            {
+                throw new BusinessRuleValidationException("Placement must be HOME_HERO, HOME_PROMOTION, MENU_HERO or ARTICLE_BANNER.");
+            }
+
+            query = query.Where(b => b.Placement == parsedPlacement);
+        }
+
+        // The time window is applied in memory through Banner.IsLiveAt (one rule, one place); the set of
+        // active banners is small (a handful per placement).
+        var now = _dateTimeProvider.UtcNow;
+        var banners = await query.OrderBy(b => b.DisplayOrder).ThenBy(b => b.Name).ToListAsync(cancellationToken);
+
+        return banners
+            .Where(b => b.IsLiveAt(now))
+            .Select(b => new PublicBannerResponse(b.Id, b.Name, b.DesktopMediaId, b.MobileMediaId, b.AltText, b.Heading, b.Subheading,
+                b.CtaLabel, b.CtaUrl, BannerWireFormat.ToWire(b.Placement), b.DisplayOrder))
+            .ToList();
     }
 
     [GeneratedRegex("<[^>]+>")]

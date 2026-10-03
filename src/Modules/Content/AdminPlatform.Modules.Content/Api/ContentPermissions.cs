@@ -17,6 +17,11 @@ public static class ContentPermissions
     public const string ArticleTagsUpdate = "article-tags.update";
     public const string ArticleTagsDelete = "article-tags.delete";
 
+    public const string BannersView = "banners.view";
+    public const string BannersCreate = "banners.create";
+    public const string BannersUpdate = "banners.update";
+    public const string BannersDelete = "banners.delete";
+
     public static IReadOnlyList<(string Code, string Description)> All { get; } =
     [
         (ArticlesView, "View articles"),
@@ -31,5 +36,9 @@ public static class ContentPermissions
         (ArticleTagsCreate, "Create article tags"),
         (ArticleTagsUpdate, "Update article tags"),
         (ArticleTagsDelete, "Delete article tags"),
+        (BannersView, "View banners"),
+        (BannersCreate, "Create banners"),
+        (BannersUpdate, "Update banners"),
+        (BannersDelete, "Delete banners"),
     ];
 }
