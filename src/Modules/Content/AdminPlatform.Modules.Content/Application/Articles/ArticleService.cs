@@ -52,8 +52,17 @@ public sealed class ArticleService : IArticleService
         var page = await query
             .Select(a => new
             {
-                a.Id, a.Title, a.Slug, a.Summary, a.FeaturedMediaId, a.CategoryId, a.AuthorName, a.Status,
-                a.PublishedAtUtc, a.CreatedAtUtc, a.UpdatedAtUtc,
+                a.Id,
+                a.Title,
+                a.Slug,
+                a.Summary,
+                a.FeaturedMediaId,
+                a.CategoryId,
+                a.AuthorName,
+                a.Status,
+                a.PublishedAtUtc,
+                a.CreatedAtUtc,
+                a.UpdatedAtUtc,
             })
             .ToPagedResultAsync(request, cancellationToken);
 

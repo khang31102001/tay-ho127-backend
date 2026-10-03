@@ -25,7 +25,16 @@ public sealed partial class PublicContentService : IPublicContentService
             .OrderByDescending(a => a.PublishedAtUtc)
             .Select(a => new
             {
-                a.Id, a.Slug, a.Title, a.Summary, a.FeaturedMediaId, a.CategoryId, a.AuthorName, a.PublishedAtUtc, a.UpdatedAtUtc, a.Content,
+                a.Id,
+                a.Slug,
+                a.Title,
+                a.Summary,
+                a.FeaturedMediaId,
+                a.CategoryId,
+                a.AuthorName,
+                a.PublishedAtUtc,
+                a.UpdatedAtUtc,
+                a.Content,
             })
             .ToPagedResultAsync(request, cancellationToken);
 
