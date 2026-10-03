@@ -84,9 +84,18 @@ try
         await SeedDemoAsync(services, logger);
     }
 
-    if (command is not ("migrate" or "seed" or "all" or "seed-demo"))
+    // Seeds only the Seo module — for filling SEO defaults on an already-provisioned database without
+    // touching other modules' data.
+    if (command is "seed-seo")
     {
-        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo", command);
+        logger.LogInformation("Seeding Seo module (default SEO settings, only when absent)...");
+        var seoOnlySeeded = await SeoSeeder.SeedAsync(services, CancellationToken.None);
+        logger.LogInformation(seoOnlySeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
+    }
+
+    if (command is not ("migrate" or "seed" or "all" or "seed-demo" or "seed-seo"))
+    {
+        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo | seed-seo", command);
         return 1;
     }
 }
