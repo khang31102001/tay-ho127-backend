@@ -17,6 +17,7 @@ COPY src/Modules/Customer/AdminPlatform.Modules.Customer/AdminPlatform.Modules.C
 COPY src/Modules/Media/AdminPlatform.Modules.Media/AdminPlatform.Modules.Media.csproj src/Modules/Media/AdminPlatform.Modules.Media/
 COPY src/Modules/Catalog/AdminPlatform.Modules.Catalog/AdminPlatform.Modules.Catalog.csproj src/Modules/Catalog/AdminPlatform.Modules.Catalog/
 COPY src/Modules/Content/AdminPlatform.Modules.Content/AdminPlatform.Modules.Content.csproj src/Modules/Content/AdminPlatform.Modules.Content/
+COPY src/Modules/Seo/AdminPlatform.Modules.Seo/AdminPlatform.Modules.Seo.csproj src/Modules/Seo/AdminPlatform.Modules.Seo/
 COPY src/Host/AdminPlatform.Api/AdminPlatform.Api.csproj src/Host/AdminPlatform.Api/
 COPY src/Tools/AdminPlatform.Migrator/AdminPlatform.Migrator.csproj src/Tools/AdminPlatform.Migrator/
 

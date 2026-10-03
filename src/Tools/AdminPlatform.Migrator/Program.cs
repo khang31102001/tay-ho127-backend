@@ -6,6 +6,8 @@ using AdminPlatform.Modules.Catalog;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Seo;
+using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
@@ -55,6 +57,7 @@ appBuilder.Services.AddCustomerModule(appBuilder.Configuration);
 appBuilder.Services.AddMediaModule(appBuilder.Configuration);
 appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
 appBuilder.Services.AddContentModule(appBuilder.Configuration);
+appBuilder.Services.AddSeoModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -126,6 +129,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Applying Content module migrations...");
     await services.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
 
+    logger.LogInformation("Applying Seo module migrations...");
+    await services.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
+
     logger.LogInformation("All migrations applied.");
 }
 
@@ -164,6 +170,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding Content module (initial articles, categories and tags, only into empty tables)...");
     var contentSeeded = await ContentSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation(contentSeeded ? "Content seeded." : "Content already has data - left untouched.");
+
+    logger.LogInformation("Seeding Seo module (default SEO settings, only when absent)...");
+    var seoSeeded = await SeoSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation(seoSeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
 
     logger.LogInformation("Seed complete.");
 }

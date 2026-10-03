@@ -12,6 +12,8 @@ using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Seo;
+using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer;
 using AdminPlatform.Modules.Customer.Infrastructure;
 using AdminPlatform.Modules.Identity;
@@ -68,6 +70,7 @@ try
     builder.Services.AddMediaModule(builder.Configuration);
     builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddContentModule(builder.Configuration);
+    builder.Services.AddSeoModule(builder.Configuration);
 
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
@@ -241,6 +244,7 @@ static async Task MigrateDevelopmentDatabaseAsync(IServiceProvider services)
     await provider.GetRequiredService<MediaDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
 }
 
 public partial class Program;
