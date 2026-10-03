@@ -42,6 +42,7 @@ public static class CustomerModule
         services.AddScoped<IGoogleIdTokenVerifier, GoogleIdTokenVerifier>();
         services.AddScoped<ICustomerAuthService, CustomerAuthService>();
         services.AddScoped<ICustomerProfileService, CustomerProfileService>();
+        services.AddScoped<ICustomerLookupService, CustomerLookupService>();
         services.AddScoped<ICustomerAddressService, CustomerAddressService>();
 
         services.AddValidatorsFromAssembly(typeof(CustomerModule).Assembly);

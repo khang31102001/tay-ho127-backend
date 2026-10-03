@@ -30,9 +30,9 @@ public static class NavigationSeeder
         new("admin.permissions", "Quyền", null, "/admin/permissions", "KeyRound", 4, "permissions.view"),
 
         new("sales", "Sales", null, null, null, 10, null),
-        new("sales.orders", "Đơn hàng", "sales", "/admin/sales/orders", "ClipboardList", 1, null),
+        new("sales.orders", "Đơn hàng", "sales", "/admin/sales/orders", "ClipboardList", 1, "orders.view"),
         new("sales.customers", "Khách hàng", "sales", "/admin/sales/customers", "Contact", 2, "customers.view"),
-        new("sales.payments", "Thanh toán", "sales", "/admin/sales/payments", "CreditCard", 3, null),
+        new("sales.payments", "Thanh toán", "sales", "/admin/sales/payments", "CreditCard", 3, "payments.view"),
 
         new("catalog", "Catalog", null, null, null, 20, null),
         new("catalog.categories", "Danh mục", "catalog", "/admin/catalog/categories", "FolderTree", 1, "categories.view"),
@@ -71,10 +71,11 @@ public static class NavigationSeeder
         new("admin.audit-logs", "Nhật ký thay đổi", "system", "/admin/system/audit-logs", "History", 4, "audit-logs.view"),
 
         new("config", "Cấu hình", null, null, null, 80, null),
-        new("config.payment-methods", "Phương thức thanh toán", "config", "/admin/settings/payment-methods", "Wallet", 1, null),
-        new("config.delivery-methods", "Phương thức giao hàng", "config", "/admin/settings/delivery-methods", "Truck", 2, null),
+        new("config.payment-methods", "Phương thức thanh toán", "config", "/admin/settings/payment-methods", "Wallet", 1, "payment-methods.view"),
+        new("config.delivery-methods", "Phương thức giao hàng", "config", "/admin/settings/delivery-methods", "Truck", 2, "delivery-methods.view"),
         new("config.navigation", "Navigation website", "config", "/admin/settings/navigation", "Route", 3, null),
-        new("config.order-options", "Tùy chọn chung đơn hàng", "config", "/admin/settings/order-options", "Utensils", 4, null),
+        new("config.order-options", "Tùy chọn chung đơn hàng", "config", "/admin/settings/order-options", "Utensils", 4, "order-option-groups.view"),
+        new("config.order-settings", "Cấu hình đơn hàng", "config", "/admin/settings/order-settings", "Settings2", 5, "order-settings.view"),
     ];
 
     /// <summary>English names an earlier version of this seeder used. An entry still carrying its old

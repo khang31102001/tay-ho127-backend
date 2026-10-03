@@ -12,6 +12,10 @@ using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Sales;
+using AdminPlatform.Modules.Sales.Api;
+using AdminPlatform.Modules.Sales.Application.Ports;
+using AdminPlatform.Modules.Sales.Infrastructure;
 using AdminPlatform.Modules.Seo;
 using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer;
@@ -59,6 +63,9 @@ try
     // ---- Cross-module ports, implemented at the composition root only (architecture assumption #6) ----
     builder.Services.AddScoped<IUserPermissionsProvider, IdentityPermissionsAdapter>();
     builder.Services.AddScoped<IUserScopeValidator, IdentityUserScopeAdapter>();
+    builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
+    builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
+    builder.Services.AddScoped<ICustomerDirectory, SalesCustomerDirectoryAdapter>();
 
     // ---- Modules ----
     builder.Services.AddIdentityModule(builder.Configuration);
@@ -71,6 +78,7 @@ try
     builder.Services.AddCatalogModule(builder.Configuration);
     builder.Services.AddContentModule(builder.Configuration);
     builder.Services.AddSeoModule(builder.Configuration);
+    builder.Services.AddSalesModule(builder.Configuration);
 
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
@@ -153,6 +161,25 @@ try
             {
                 limiterOptions.PermitLimit = validateLimits.GetValue("PermitLimit", 120);
                 limiterOptions.Window = TimeSpan.FromSeconds(validateLimits.GetValue("WindowSeconds", 60));
+                limiterOptions.QueueLimit = 0;
+            });
+
+            // Guest ordering and order lookup (code + phone): capped server-wide for the same shared-address reason.
+            // Placing an order costs real work and money; lookups reveal personal data, so a code-guessing flood is
+            // stopped by the lookup cap.
+            var orderLimits = configuration.GetSection("RateLimiting:SalesOrders");
+            options.AddFixedWindowLimiter(PublicSalesController.OrderRateLimitPolicy, limiterOptions =>
+            {
+                limiterOptions.PermitLimit = orderLimits.GetValue("PermitLimit", 120);
+                limiterOptions.Window = TimeSpan.FromSeconds(orderLimits.GetValue("WindowSeconds", 60));
+                limiterOptions.QueueLimit = 0;
+            });
+
+            var lookupLimits = configuration.GetSection("RateLimiting:SalesLookup");
+            options.AddFixedWindowLimiter(PublicSalesController.LookupRateLimitPolicy, limiterOptions =>
+            {
+                limiterOptions.PermitLimit = lookupLimits.GetValue("PermitLimit", 120);
+                limiterOptions.Window = TimeSpan.FromSeconds(lookupLimits.GetValue("WindowSeconds", 60));
                 limiterOptions.QueueLimit = 0;
             });
         });
@@ -245,6 +272,7 @@ static async Task MigrateDevelopmentDatabaseAsync(IServiceProvider services)
     await provider.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
 }
 
 public partial class Program;

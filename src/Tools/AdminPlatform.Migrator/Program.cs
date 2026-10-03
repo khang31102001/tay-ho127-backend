@@ -6,6 +6,8 @@ using AdminPlatform.Modules.Catalog;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Sales;
+using AdminPlatform.Modules.Sales.Infrastructure;
 using AdminPlatform.Modules.Seo;
 using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer;
@@ -58,6 +60,7 @@ appBuilder.Services.AddMediaModule(appBuilder.Configuration);
 appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
 appBuilder.Services.AddContentModule(appBuilder.Configuration);
 appBuilder.Services.AddSeoModule(appBuilder.Configuration);
+appBuilder.Services.AddSalesModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -93,9 +96,17 @@ try
         logger.LogInformation(seoOnlySeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
     }
 
-    if (command is not ("migrate" or "seed" or "all" or "seed-demo" or "seed-seo"))
+    // Seeds only the Sales module — for filling the order configuration on an already-provisioned database.
+    if (command is "seed-sales")
     {
-        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo | seed-seo", command);
+        logger.LogInformation("Seeding Sales module (only into empty tables)...");
+        var salesOnlySeeded = await SalesSeeder.SeedAsync(services, CancellationToken.None);
+        logger.LogInformation(salesOnlySeeded ? "Sales configuration seeded." : "Sales configuration already exists - left untouched.");
+    }
+
+    if (command is not ("migrate" or "seed" or "all" or "seed-demo" or "seed-seo" or "seed-sales"))
+    {
+        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo | seed-seo | seed-sales", command);
         return 1;
     }
 }
@@ -141,6 +152,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Applying Seo module migrations...");
     await services.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
 
+    logger.LogInformation("Applying Sales module migrations...");
+    await services.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
+
     logger.LogInformation("All migrations applied.");
 }
 
@@ -183,6 +197,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding Seo module (default SEO settings, only when absent)...");
     var seoSeeded = await SeoSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation(seoSeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
+
+    logger.LogInformation("Seeding Sales module (delivery/payment methods, order options, order settings, only into empty tables)...");
+    var salesSeeded = await SalesSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation(salesSeeded ? "Sales configuration seeded." : "Sales configuration already exists - left untouched.");
 
     logger.LogInformation("Seed complete.");
 }
