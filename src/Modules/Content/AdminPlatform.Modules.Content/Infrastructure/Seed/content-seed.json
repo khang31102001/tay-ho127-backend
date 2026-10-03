@@ -23,6 +23,14 @@
       "parentKey": null,
       "sortOrder": 3,
       "isActive": true
+    },
+    {
+      "key": "artcat-meo-bep",
+      "name": "Mẹo nhà bếp",
+      "slug": "meo-nha-bep",
+      "parentKey": "artcat-cong-thuc",
+      "sortOrder": 1,
+      "isActive": true
     }
   ],
   "tags": [
@@ -45,6 +53,11 @@
       "key": "arttag-cau-chuyen",
       "name": "Câu chuyện",
       "slug": "cau-chuyen"
+    },
+    {
+      "key": "arttag-meo-hay",
+      "name": "Mẹo hay",
+      "slug": "meo-hay"
     }
   ],
   "articles": [
@@ -94,6 +107,53 @@
       "authorName": "Đội ngũ Tây Hồ 127",
       "status": "draft",
       "publishedAt": null
+    },
+    {
+      "key": "article-nuoc-cham-chuan-vi",
+      "title": "Bí quyết pha nước chấm bánh cuốn đậm đà, không bị gắt",
+      "slug": "bi-quyet-pha-nuoc-cham-banh-cuon-dam-da-khong-bi-gat",
+      "summary": "Tỷ lệ nước mắm, đường, chanh và tỏi ớt để có bát nước chấm chua ngọt cân bằng, ăn kèm bánh cuốn nóng.",
+      "content": "<p>Nước chấm là linh hồn của đĩa bánh cuốn. Một bát nước chấm ngon phải cân bằng giữa mặn, ngọt, chua và cay.</p><h2>Công thức cho 4 người ăn</h2><ul><li>4 muỗng canh nước mắm ngon</li><li>3 muỗng canh đường</li><li>2 muỗng canh nước cốt chanh</li><li>150ml nước lọc ấm</li><li>Tỏi, ớt băm nhỏ</li></ul><p>Hòa tan đường với nước ấm, cho nước mắm và chanh vào khuấy đều, nếm lại rồi thêm tỏi ớt ngay trước khi dọn để giữ được mùi thơm.</p>",
+      "featuredMediaId": "media-hero-platter",
+      "categoryKey": "artcat-meo-bep",
+      "tagKeys": [
+        "arttag-cong-thuc",
+        "arttag-meo-hay"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "published",
+      "publishedAt": "2026-03-05T00:00:00.000Z"
+    },
+    {
+      "key": "article-chi-nhanh-moi",
+      "title": "Tây Hồ 127 khai trương chi nhánh mới: tặng bánh cuốn cho 100 khách đầu tiên",
+      "slug": "tay-ho-127-khai-truong-chi-nhanh-moi-tang-banh-cuon-cho-100-khach-dau-tien",
+      "summary": "Chào đón chi nhánh mới, nhà hàng gửi tặng một phần bánh cuốn nóng cho 100 khách đến sớm nhất trong ngày khai trương.",
+      "content": "<p>Nhằm đưa hương vị bánh cuốn Hà Nội đến gần hơn với thực khách, Tây Hồ 127 chính thức khai trương chi nhánh mới.</p><p>Trong ngày khai trương, <strong>100 khách đầu tiên</strong> sẽ được tặng một phần bánh cuốn nóng. Ngoài ra, mọi hóa đơn đều được giảm 10% khi đặt qua website.</p><blockquote>Cảm ơn quý khách đã đồng hành cùng chúng tôi hơn 50 năm qua.</blockquote>",
+      "featuredMediaId": "media-promotion-zone-1",
+      "categoryKey": "artcat-tin-tuc",
+      "tagKeys": [
+        "arttag-uu-dai",
+        "arttag-cau-chuyen"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "published",
+      "publishedAt": "2026-03-20T00:00:00.000Z"
+    },
+    {
+      "key": "article-uu-dai-het-han",
+      "title": "Chương trình ưu đãi mùa hè đã kết thúc",
+      "slug": "chuong-trinh-uu-dai-mua-he-da-ket-thuc",
+      "summary": "Cảm ơn quý khách đã tham gia chương trình ưu đãi mùa hè; chương trình hiện đã được lưu trữ.",
+      "content": "<p>Chương trình ưu đãi mùa hè đã kết thúc. Mời quý khách theo dõi các chương trình mới trong thời gian tới.</p>",
+      "featuredMediaId": null,
+      "categoryKey": "artcat-tin-tuc",
+      "tagKeys": [
+        "arttag-uu-dai"
+      ],
+      "authorName": "Đội ngũ Tây Hồ 127",
+      "status": "archived",
+      "publishedAt": "2025-08-31T00:00:00.000Z"
     }
   ]
 }
