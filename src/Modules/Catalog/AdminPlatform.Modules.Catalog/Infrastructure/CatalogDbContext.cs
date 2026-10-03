@@ -13,6 +13,7 @@ public sealed class CatalogDbContext : DbContext, ICatalogDbContext
     public DbSet<SalesMenu> SalesMenus => Set<SalesMenu>();
     public DbSet<SalesMenuProduct> SalesMenuProducts => Set<SalesMenuProduct>();
     public DbSet<ModifierGroup> ModifierGroups => Set<ModifierGroup>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
 
     public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options)
     {

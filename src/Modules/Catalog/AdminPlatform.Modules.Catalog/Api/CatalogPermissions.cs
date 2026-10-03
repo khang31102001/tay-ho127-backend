@@ -23,6 +23,11 @@ public static class CatalogPermissions
     public const string ModifierGroupsUpdate = "modifier-groups.update";
     public const string ModifierGroupsDelete = "modifier-groups.delete";
 
+    public const string PromotionsView = "promotions.view";
+    public const string PromotionsCreate = "promotions.create";
+    public const string PromotionsUpdate = "promotions.update";
+    public const string PromotionsDelete = "promotions.delete";
+
     public static IReadOnlyList<(string Code, string Description)> All { get; } =
     [
         (CategoriesView, "View catalog categories"),
@@ -41,5 +46,9 @@ public static class CatalogPermissions
         (ModifierGroupsCreate, "Create modifier groups"),
         (ModifierGroupsUpdate, "Update modifier groups"),
         (ModifierGroupsDelete, "Delete modifier groups"),
+        (PromotionsView, "View promotions (discount codes)"),
+        (PromotionsCreate, "Create promotions"),
+        (PromotionsUpdate, "Update promotions"),
+        (PromotionsDelete, "Delete promotions"),
     ];
 }

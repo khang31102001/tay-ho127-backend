@@ -3,6 +3,7 @@ using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Application.Categories;
 using AdminPlatform.Modules.Catalog.Application.ModifierGroups;
 using AdminPlatform.Modules.Catalog.Application.Products;
+using AdminPlatform.Modules.Catalog.Application.Promotions;
 using AdminPlatform.Modules.Catalog.Application.PublicCatalog;
 using AdminPlatform.Modules.Catalog.Application.SalesMenuProducts;
 using AdminPlatform.Modules.Catalog.Application.SalesMenus;
@@ -40,6 +41,8 @@ public static class CatalogModule
         services.AddScoped<ISalesMenuProductService, SalesMenuProductService>();
         services.AddScoped<IModifierGroupService, ModifierGroupService>();
         services.AddScoped<IPublicCatalogService, PublicCatalogService>();
+        services.AddScoped<IPromotionService, PromotionService>();
+        services.AddScoped<IPromotionValidationService, PromotionValidationService>();
 
         services.AddValidatorsFromAssembly(typeof(CatalogModule).Assembly);
 

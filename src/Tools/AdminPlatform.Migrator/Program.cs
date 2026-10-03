@@ -191,5 +191,9 @@ static async Task SeedDemoAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding demo media...");
     await MediaDemoSeeder.SeedAsync(services, cancellationToken);
 
+    logger.LogInformation("Seeding demo promotions (discount codes)...");
+    var promotionsCreated = await PromotionDemoSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation("{Count} demo promotion(s) created.", promotionsCreated);
+
     logger.LogInformation("Demo seed complete.");
 }
