@@ -8,6 +8,7 @@ public interface IOrganizationDbContext
     DbSet<Domain.Organization> Organizations { get; }
     DbSet<Department> Departments { get; }
     DbSet<Brand> Brands { get; }
+    DbSet<BrandProfile> BrandProfiles { get; }
     DbSet<UserDepartment> UserDepartments { get; }
     DbSet<UserBrand> UserBrands { get; }
 

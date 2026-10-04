@@ -34,11 +34,44 @@ public static class OrganizationSeeder
             db.Departments.Add(Department.Create(organization.Id, SampleDepartmentCode, "General", null));
         }
 
-        var brandExists = await db.Brands.AnyAsync(
+        var mainBranch = await db.Brands.SingleOrDefaultAsync(
             b => b.OrganizationId == organization.Id && b.Code == SampleBrandCode, cancellationToken);
-        if (!brandExists)
+        if (mainBranch is null)
         {
-            db.Brands.Add(Brand.Create(organization.Id, SampleBrandCode, "Main Brand"));
+            mainBranch = Brand.Create(organization.Id, SampleBrandCode, "Chi nhánh chính");
+            db.Brands.Add(mainBranch);
+        }
+
+        // Contact of the real restaurant (from the website's former static data) so the site has an address from day one —
+        // only while the branch has none, so an admin's edit is never overwritten.
+        if (mainBranch.AddressLine is null)
+        {
+            mainBranch.UpdateContact(new BrandContact(
+                "0900 127 127", null, null, "127 Đinh Tiên Hoàng", "Đa Kao", "Quận 1", "TP. Hồ Chí Minh", "06:00", "21:30",
+                "Mở cửa tất cả các ngày trong tuần."));
+        }
+
+        // The website needs a primary branch: only when none exists yet, so an admin choice is never overridden.
+        if (!await db.Brands.AnyAsync(b => b.IsPrimary, cancellationToken))
+        {
+            mainBranch.SetPrimary(true);
+        }
+
+        // The brand-wide identity (one row), created with the defaults only while absent.
+        if (!await db.BrandProfiles.AnyAsync(cancellationToken))
+        {
+            db.BrandProfiles.Add(BrandProfile.Create(new BrandProfileDetails(
+                "Bánh Cuốn Tây Hồ 127",
+                "Bánh cuốn truyền thống, phục vụ nhanh, hương vị gia đình Bắc giữa Sài Gòn.",
+                null, null, null,
+                [
+                    new SocialLink("website", "https://tayho127.com", 1, true),
+                    new SocialLink("facebook", "https://www.facebook.com/tayho127", 2, true),
+                    new SocialLink("instagram", "https://www.instagram.com/tayho127", 3, true),
+                    new SocialLink("tiktok", "https://www.tiktok.com/@tayho127", 4, true),
+                    new SocialLink("shopee", "https://shopee.vn/tayho127", 5, true),
+                ],
+                null, null, null, null, null)));
         }
 
         await db.SaveChangesAsync(cancellationToken);

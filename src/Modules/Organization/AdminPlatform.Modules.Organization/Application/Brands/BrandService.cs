@@ -31,8 +31,8 @@ public sealed class BrandService : IBrandService
 
         query = request.IsDescending ? query.OrderByDescending(b => b.Name) : query.OrderBy(b => b.Name);
 
-        var projected = query.Select(b => new BrandResponse(b.Id, b.OrganizationId, b.Code, b.Name, b.IsActive, b.CreatedAtUtc));
-        return await projected.ToPagedResultAsync(request, cancellationToken);
+        var page = await query.ToPagedResultAsync(request, cancellationToken);
+        return new PagedResult<BrandResponse>(page.Items.Select(ToResponse).ToList(), page.Page, page.PageSize, page.TotalItems);
     }
 
     public async Task<BrandResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -60,6 +60,35 @@ public sealed class BrandService : IBrandService
     {
         var brand = await FindOrThrowAsync(id, cancellationToken);
         brand.Update(request.Name, request.IsActive);
+
+        if (request.Contact is { } contact)
+        {
+            brand.UpdateContact(new BrandContact(
+                contact.Phone, contact.Hotline, contact.Email, contact.AddressLine, contact.Ward, contact.District,
+                contact.Province, contact.OpenTime, contact.CloseTime, contact.BusinessHoursNote));
+        }
+
+        if (request.IsPrimary is { } isPrimary)
+        {
+            if (isPrimary)
+            {
+                // The website presents exactly one branch. The old primary is cleared and saved FIRST: the unique index on the
+                // flag would reject two primaries inside one batched save.
+                var others = await _db.Brands.Where(b => b.IsPrimary && b.Id != brand.Id).ToListAsync(cancellationToken);
+                if (others.Count > 0)
+                {
+                    foreach (var other in others)
+                    {
+                        other.SetPrimary(false);
+                    }
+
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
+            }
+
+            brand.SetPrimary(isPrimary);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(brand);
     }
@@ -68,6 +97,9 @@ public sealed class BrandService : IBrandService
         await _db.Brands.SingleOrDefaultAsync(b => b.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(Brand), id);
 
-    private static BrandResponse ToResponse(Brand brand) =>
-        new(brand.Id, brand.OrganizationId, brand.Code, brand.Name, brand.IsActive, brand.CreatedAtUtc);
+    internal static BrandContactDto ToContact(Brand b) =>
+        new(b.Phone, b.Hotline, b.Email, b.AddressLine, b.Ward, b.District, b.Province, b.OpenTime, b.CloseTime, b.BusinessHoursNote);
+
+    private static BrandResponse ToResponse(Brand b) =>
+        new(b.Id, b.OrganizationId, b.Code, b.Name, b.IsActive, b.CreatedAtUtc, b.IsPrimary, ToContact(b));
 }

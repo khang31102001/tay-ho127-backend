@@ -1,5 +1,6 @@
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Organization.Application;
+using AdminPlatform.Modules.Organization.Application.BrandProfiles;
 using AdminPlatform.Modules.Organization.Application.Brands;
 using AdminPlatform.Modules.Organization.Application.Departments;
 using AdminPlatform.Modules.Organization.Application.Organizations;
@@ -33,6 +34,7 @@ public static class OrganizationModule
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IBrandService, BrandService>();
+        services.AddScoped<IBrandProfileService, BrandProfileService>();
         services.AddScoped<UserScopeService>();
         services.AddScoped<IUserScopeService>(sp => sp.GetRequiredService<UserScopeService>());
         services.AddScoped<IUserScopeQueryService>(sp => sp.GetRequiredService<UserScopeService>());
