@@ -2,6 +2,7 @@ using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Application.Categories;
 using AdminPlatform.Modules.Catalog.Application.ModifierGroups;
+using AdminPlatform.Modules.Catalog.Application.Pricing;
 using AdminPlatform.Modules.Catalog.Application.Products;
 using AdminPlatform.Modules.Catalog.Application.Promotions;
 using AdminPlatform.Modules.Catalog.Application.PublicCatalog;
@@ -43,6 +44,8 @@ public static class CatalogModule
         services.AddScoped<IPublicCatalogService, PublicCatalogService>();
         services.AddScoped<IPromotionService, PromotionService>();
         services.AddScoped<IPromotionValidationService, PromotionValidationService>();
+        services.AddScoped<IPromotionRedemptionService, PromotionRedemptionService>();
+        services.AddScoped<ICatalogPricingQueryService, CatalogPricingQueryService>();
 
         services.AddValidatorsFromAssembly(typeof(CatalogModule).Assembly);
 

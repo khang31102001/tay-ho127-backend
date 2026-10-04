@@ -3,9 +3,12 @@ using AdminPlatform.Migrator;
 using AdminPlatform.Modules.AccessControl;
 using AdminPlatform.Modules.AccessControl.Infrastructure;
 using AdminPlatform.Modules.Catalog;
+using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Sales;
+using AdminPlatform.Modules.Sales.Infrastructure;
 using AdminPlatform.Modules.Seo;
 using AdminPlatform.Modules.Seo.Infrastructure;
 using AdminPlatform.Modules.Customer;
@@ -58,6 +61,7 @@ appBuilder.Services.AddMediaModule(appBuilder.Configuration);
 appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
 appBuilder.Services.AddContentModule(appBuilder.Configuration);
 appBuilder.Services.AddSeoModule(appBuilder.Configuration);
+appBuilder.Services.AddSalesModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -84,9 +88,26 @@ try
         await SeedDemoAsync(services, logger);
     }
 
-    if (command is not ("migrate" or "seed" or "all" or "seed-demo"))
+    // Seeds only the Seo module — for filling SEO defaults on an already-provisioned database without
+    // touching other modules' data.
+    if (command is "seed-seo")
     {
-        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo", command);
+        logger.LogInformation("Seeding Seo module (default SEO settings, only when absent)...");
+        var seoOnlySeeded = await SeoSeeder.SeedAsync(services, CancellationToken.None);
+        logger.LogInformation(seoOnlySeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
+    }
+
+    // Seeds only the Sales module — for filling the order configuration on an already-provisioned database.
+    if (command is "seed-sales")
+    {
+        logger.LogInformation("Seeding Sales module (only into empty tables)...");
+        var salesOnlySeeded = await SalesSeeder.SeedAsync(services, CancellationToken.None);
+        logger.LogInformation(salesOnlySeeded ? "Sales configuration seeded." : "Sales configuration already exists - left untouched.");
+    }
+
+    if (command is not ("migrate" or "seed" or "all" or "seed-demo" or "seed-seo" or "seed-sales"))
+    {
+        logger.LogError("Unknown command '{Command}'. Expected: migrate | seed | all | seed-demo | seed-seo | seed-sales", command);
         return 1;
     }
 }
@@ -132,6 +153,9 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Applying Seo module migrations...");
     await services.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
 
+    logger.LogInformation("Applying Sales module migrations...");
+    await services.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
+
     logger.LogInformation("All migrations applied.");
 }
 
@@ -175,6 +199,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     var seoSeeded = await SeoSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation(seoSeeded ? "SEO settings seeded." : "SEO settings already exist - left untouched.");
 
+    logger.LogInformation("Seeding Sales module (delivery/payment methods, order options, order settings, only into empty tables)...");
+    var salesSeeded = await SalesSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation(salesSeeded ? "Sales configuration seeded." : "Sales configuration already exists - left untouched.");
+
     logger.LogInformation("Seed complete.");
 }
 
@@ -214,6 +242,19 @@ static async Task SeedDemoAsync(IServiceProvider services, ILogger logger)
     logger.LogInformation("Seeding demo promotions (discount codes)...");
     var promotionsCreated = await PromotionDemoSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation("{Count} demo promotion(s) created.", promotionsCreated);
+
+    logger.LogInformation("Seeding demo sales (orders, payments and payment sessions in every status)...");
+    var demoProducts = await services.GetRequiredService<ICatalogDbContext>().Products.AsNoTracking()
+        .Where(p => p.IsActive)
+        .Include(p => p.Media)
+        .OrderBy(p => p.Name)
+        .Take(4)
+        .ToListAsync(cancellationToken);
+    var demoOrders = await SalesDemoSeeder.SeedAsync(
+        services,
+        demoProducts.Select(p => new DemoProduct(p.Id, p.Name, p.Price, p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).FirstOrDefault())).ToList(),
+        cancellationToken);
+    logger.LogInformation("{Count} demo order(s) created.", demoOrders);
 
     logger.LogInformation("Demo seed complete.");
 }
