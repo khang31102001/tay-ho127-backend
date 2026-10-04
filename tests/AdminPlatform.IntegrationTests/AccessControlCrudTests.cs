@@ -91,10 +91,10 @@ public class AccessControlCrudTests
         using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
         var permission = await CreatePermissionAsync(client);
 
-        var duplicateResponse = await client.PostAsJsonAsync("/api/v1/permissions", new CreatePermissionRequest(permission.Code, "Duplicate"));
+        var duplicateResponse = await client.PostAsJsonAsync("/api/v1/permissions", new CreatePermissionRequest(permission.Code, "Duplicate", permission.ParentId, false, 0));
         Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
 
-        var updateResponse = await client.PutAsJsonAsync($"/api/v1/permissions/{permission.Id}", new UpdatePermissionRequest("Renamed", true));
+        var updateResponse = await client.PutAsJsonAsync($"/api/v1/permissions/{permission.Id}", new UpdatePermissionRequest("Renamed", true, permission.ParentId, false, 0));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
 
         var role = await CreateRoleAsync(client);
@@ -124,9 +124,8 @@ public class AccessControlCrudTests
 
     private static async Task<PermissionResponse> CreatePermissionAsync(HttpClient client)
     {
-        var response = await client.PostAsJsonAsync("/api/v1/permissions", new CreatePermissionRequest($"test.{Guid.NewGuid():n}", "Test Permission"));
-        response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<PermissionResponse>())!;
+        var group = await PermissionHierarchyTests.CreateGroupAsync(client, null);
+        return await PermissionHierarchyTests.CreateLeafAsync(client, group.Id);
     }
 
     private static async Task<UserDetailsResponse> CreateUserAsync(HttpClient client)

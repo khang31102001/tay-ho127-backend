@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- AccessControl: hierarchical permissions. `permissions` gains `parent_id` (self FK, restrict), `is_group` and `sort_order`
+  (migration `AddPermissionHierarchy`). A GROUP (code `group:*`) only organises leaves — it is never stored in
+  `role_permissions` nor put in a JWT, so authorization still matches exact leaf codes. Rules: only groups have children,
+  a leaf needs a parent group, no cycles, depth ≤ 5 (seeded tree: Module → Resource group → leaf). New
+  `GET /api/v1/permissions/tree` (active nodes, nested). `PUT /roles/{id}/permissions` expands a selected group to the
+  active leaves below it (a snapshot — leaves added later are not granted automatically) and stores only leaves.
+  `AccessControlSeeder` builds the group tree from `DefaultPermissionTree` and re-places catalog leaves under their
+  resource group (structure only; admin-edited names are kept). Sample data: `docs/seed-data-permission-navigation.md`.
+  **Breaking contract:** `Create/UpdatePermissionRequest` now carry `parentId`, `isGroup`, `sortOrder` — deploy the
+  matching frontend together; run `seed` after `migrate` so existing leaves get a parent.
+
 - Seo module (`seo` schema), step 1: the site-wide SEO settings singleton (title template with `%s`, default
   description / share image, default robots index/follow, Twitter handles, robots.txt disallow paths). Admin
   `GET/PUT /api/v1/seo/settings` gated by `seo-settings.view|update`; anonymous `GET /api/v1/seo/public/settings`

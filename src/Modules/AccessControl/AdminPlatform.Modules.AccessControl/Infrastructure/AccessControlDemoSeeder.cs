@@ -51,7 +51,7 @@ public static class AccessControlDemoSeeder
                 .Select(rp => rp.PermissionId)
                 .ToListAsync(cancellationToken)).ToHashSet();
 
-            foreach (var permission in permissions.Where(p => demoRole.Grants(p.Code) && !grantedIds.Contains(p.Id)))
+            foreach (var permission in permissions.Where(p => !p.IsGroup && demoRole.Grants(p.Code) && !grantedIds.Contains(p.Id)))
             {
                 db.RolePermissions.Add(RolePermission.Create(role.Id, permission.Id));
             }

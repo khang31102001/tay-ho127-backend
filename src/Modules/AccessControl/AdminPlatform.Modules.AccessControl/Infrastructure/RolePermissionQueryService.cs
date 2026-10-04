@@ -26,7 +26,7 @@ internal sealed class RolePermissionQueryService : IRolePermissionQueryService
         var permissionIds = _db.RolePermissions.Where(rp => activeRoleIds.Contains(rp.RoleId)).Select(rp => rp.PermissionId);
 
         var permissions = await _db.Permissions
-            .Where(p => permissionIds.Contains(p.Id) && p.IsActive)
+            .Where(p => permissionIds.Contains(p.Id) && p.IsActive && !p.IsGroup)
             .Select(p => p.Code)
             .Distinct()
             .ToListAsync(cancellationToken);

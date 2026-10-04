@@ -176,7 +176,8 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     }
 
     logger.LogInformation("Seeding AccessControl module (permission catalog, SuperAdmin role)...");
-    await AccessControlSeeder.SeedAsync(services, PermissionCatalog.All, adminUserId, cancellationToken);
+    await AccessControlSeeder.SeedAsync(
+        services, PermissionCatalog.All, adminUserId, cancellationToken, DefaultPermissionTree.Value);
 
     logger.LogInformation("Seeding Organization module (sample org/department/brand)...");
     var sampleOrganizationId = await OrganizationSeeder.SeedAsync(services, cancellationToken);
