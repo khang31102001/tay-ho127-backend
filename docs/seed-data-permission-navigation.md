@@ -5,7 +5,7 @@ Mục đích: bản kê **dữ liệu chuẩn** của 2 nghiệp vụ nền tả
 Nguồn sự thật trong code: `DefaultPermissionTree.cs`, `*Permissions.All`, `NavigationSeeder.cs`.
 Thiết kế: `fontend/docs/proposals/permission-navigation-foundation.md`.
 
-Trạng thái: **Phần 1 (Permission) — đã triển khai**. **Phần 2 (Navigation) — dữ liệu chuẩn bị sẵn, chưa triển khai (Bước B).**
+Trạng thái: **Phần 1 (Permission) và Phần 2 (Navigation) — đã triển khai** (Bước A + Bước B).
 
 ## Cách nạp lại toàn bộ dữ liệu mẫu (DB test/dev)
 
@@ -58,21 +58,20 @@ Lá có resource chưa khai báo → nhóm `group:other` (Khác).
 | | `group:config.order-options` Tùy chọn chung đơn hàng | order-option-groups.view/create/update/delete |
 | | `group:config.order-settings` Cấu hình đơn hàng | order-settings.view, order-settings.update |
 | `group:system` Hệ thống (80) | `group:system.menus` Menu quản trị | menus.view/create/update/delete, menus.permissions.manage |
+| | `group:system.site-navigation` Menu website | site-navigation.view/create/update/delete |
 | | `group:system.fiscal-years` Năm tài chính | fiscal-years.view/create/update |
 | | `group:system.settings` Cài đặt hệ thống | system-settings.view/create/update/delete |
 | | `group:system.audit-logs` Nhật ký thay đổi | audit-logs.view |
 | `group:other` Khác (99) | — | (lá chưa khai báo resource) |
 
-Số liệu kỳ vọng sau `seed` trên DB trống: **42 nhóm** (8 module + 33 nhóm tài nguyên + 1 "Khác"),
-**119 quyền lá** (đếm từ các `*Permissions.All`), `group:other` rỗng; mọi lá có `parent_id` khác NULL; `super-admin` có đủ **mọi lá, không có nhóm**.
-Khi Bước B thêm `site-navigation.view|create|update|delete`, bổ sung resource `site-navigation` → nhóm
-`group:system.site-navigation` ("Menu website") và cập nhật bảng này.
+Số liệu kỳ vọng sau `seed` trên DB trống: **43 nhóm** (8 module + 34 nhóm tài nguyên + 1 "Khác"),
+**123 quyền lá** (đếm từ các `*Permissions.All`, gồm 4 quyền `site-navigation.*`), `group:other` rỗng; mọi lá có `parent_id` khác NULL; `super-admin` có đủ **mọi lá, không có nhóm**.
 
 Role demo (`seed-demo`): `demo-manager`, `demo-staff`, `demo-viewer` — chỉ được gán **lá** (đã lọc `!is_group`).
 
 ---
 
-## PHẦN 2 — Navigation (dữ liệu chuẩn bị cho Bước B)
+## PHẦN 2 — Navigation (đã triển khai — Bước B)
 
 ### Container (`navigation_menus`)
 
@@ -83,7 +82,9 @@ Role demo (`seed-demo`): `demo-manager`, `demo-staff`, `demo-viewer` — chỉ �
 | `site-footer` | Website Footer | SITE | footer |
 | `site-mobile` | Mobile Navigation | SITE | mobile |
 
-Giới hạn độ sâu menu SITE: **3 cấp**. Mỗi `(scope, location)` đúng 1 menu.
+Giới hạn độ sâu mọi menu: **3 cấp**. Mỗi `(scope, location)` đúng 1 menu. Container do seed tạo; Admin chỉ sửa được tên và bật/tắt.
+Item `is_group = true` ⇔ tiêu đề không có link (`url` NULL). Một item dạng link vẫn có thể có mục con (vd. "Thực đơn" → "Bánh cuốn").
+Migration `UnifyNavigation` chuyển dữ liệu `menus`/`menu_permissions` cũ vào container `admin-sidebar` (id cố định `5c1d6a50-0000-4000-8000-000000000001`).
 
 ### Item ADMIN — `admin-sidebar` (nguồn: `NavigationSeeder.cs`, hiện tại)
 `is_group = true` khi không có route. Quyền = `navigation_item_permissions` (any-of).
@@ -130,14 +131,16 @@ Giới hạn độ sâu menu SITE: **3 cấp**. Mỗi `(scope, location)` đúng
 | config *(group)* | Cấu hình | — | — | — | 80 | — |
 | config.payment-methods | Phương thức thanh toán | config | /admin/settings/payment-methods | Wallet | 1 | payment-methods.view |
 | config.delivery-methods | Phương thức giao hàng | config | /admin/settings/delivery-methods | Truck | 2 | delivery-methods.view |
-| config.navigation | Navigation website | config | /admin/settings/navigation | Route | 3 | *(Bước B: site-navigation.view)* |
+| config.navigation | Navigation website | config | /admin/settings/navigation | Route | 3 | site-navigation.view |
 | config.order-options | Tùy chọn chung đơn hàng | config | /admin/settings/order-options | Utensils | 4 | order-option-groups.view |
 | config.order-settings | Cấu hình đơn hàng | config | /admin/settings/order-settings | Settings2 | 5 | order-settings.view |
 
 Mục đã ngừng (seed tắt `is_active`, không xóa): `brand`, `brand.settings`.
 
-### Item SITE — nguồn: `features/navigation/mocks/navigation.mock.ts` (sẽ bị xóa ở Bước B)
-Ghi chú: mock đang trỏ Thực đơn về `/menu` (redirect 301 sang `/thuc-don`) → **seed dùng `/thuc-don`**.
+### Item SITE — nguồn: `NavigationSeeder.SiteItems` (lấy từ mock cũ đã xóa)
+Chỉ seed vào menu **chưa có mục nào** — menu do biên tập viên sửa thì seed không đụng tới nữa.
+Ghi chú: mock cũ trỏ Thực đơn về `/menu` (redirect 301 sang `/thuc-don`) → **seed dùng `/thuc-don`**.
+Mock cũ còn mục footer "Liên hệ" (`/lien-he`, trỏ Page CMS) nhưng Site **không có route `/lien-he`** (và chưa có route hiển thị Page CMS) → **không seed** để khỏi tạo link chết; thêm lại bằng Admin khi trang đó có.
 `target_type`: ROUTE = đường dẫn nội bộ, PAGE = trỏ Page CMS (URL lấy theo Page đã xuất bản), EXTERNAL = URL ngoài.
 
 **`site-header`**
@@ -162,10 +165,9 @@ Ghi chú: mock đang trỏ Thực đơn về `/menu` (redirect 301 sang `/thuc-d
 | footer.menu.them.nem | Nem | footer.menu.them | ROUTE | /thuc-don | 2 |
 | footer.menu.do-uong | Đồ uống | footer.menu | ROUTE | /thuc-don | 3 |
 | footer.news | Tin tức | — | ROUTE | /tin-tuc | 3 |
-| footer.contact | Liên hệ | — | PAGE (target_id = Page "lien-he" nếu có; nếu chưa có thì dùng url dự phòng) | /lien-he | 4 |
 | footer.facebook | Theo dõi Facebook | — | EXTERNAL, mở tab mới | https://www.facebook.com/tayho127 *(link Facebook thật cần chủ site xác nhận — xem plan, mục 5)* | 5 |
 
-Footer có 3 cấp (Thực đơn → Món thêm → Chả/Nem) — đúng giới hạn tối đa của menu SITE.
+Footer: 9 mục, 3 cấp (Thực đơn → Món thêm → Chả/Nem) — đúng giới hạn tối đa. Header/mobile: 3 mục mỗi menu.
 
 ---
 
@@ -186,4 +188,27 @@ JOIN access_control.permissions p ON p.id = rp.permission_id WHERE p.is_group;  
 SELECT (SELECT count(*) FROM access_control.permissions WHERE NOT is_group) AS leaves,
        (SELECT count(*) FROM access_control.role_permissions rp
           JOIN access_control.roles r ON r.id = rp.role_id AND r.code = 'super-admin') AS granted;  -- bằng nhau
+```
+
+```sql
+-- Navigation: đủ 4 container, mỗi (scope, location) một menu
+SELECT scope, location, code, is_active FROM navigation.navigation_menus ORDER BY scope, location;   -- kỳ vọng 4 dòng
+
+-- Không còn mục mồ côi / nhóm có link / mục vượt 3 cấp (kỳ vọng 0 cho cả hai truy vấn)
+SELECT count(*) FROM navigation.navigation_items WHERE is_group AND url IS NOT NULL;
+SELECT count(*) FROM navigation.navigation_items i
+  JOIN navigation.navigation_items p ON p.id = i.parent_id
+  JOIN navigation.navigation_items g ON g.id = p.parent_id
+  JOIN navigation.navigation_items x ON x.id = g.parent_id;                                        -- cấp 4
+
+-- Mục Website không bao giờ gắn quyền (AllowSitePermissions = false)
+SELECT count(*) FROM navigation.navigation_item_permissions ip
+  JOIN navigation.navigation_items i ON i.id = ip.item_id
+  JOIN navigation.navigation_menus m ON m.id = i.menu_id WHERE m.scope = 'Site';                    -- kỳ vọng 0
+
+-- Mục Website dạng link luôn có chi tiết đích
+SELECT count(*) FROM navigation.navigation_items i
+  JOIN navigation.navigation_menus m ON m.id = i.menu_id
+  LEFT JOIN navigation.navigation_item_site_details d ON d.item_id = i.id
+ WHERE m.scope = 'Site' AND NOT i.is_group AND d.item_id IS NULL;                                   -- kỳ vọng 0
 ```

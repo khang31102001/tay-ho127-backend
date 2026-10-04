@@ -58,6 +58,7 @@ public static class DefaultPermissionTree
             new("group:system.fiscal-years", "Năm tài chính", "group:system", 2),
             new("group:system.settings", "Cài đặt hệ thống", "group:system", 3),
             new("group:system.audit-logs", "Nhật ký thay đổi", "group:system", 4),
+            new("group:system.site-navigation", "Menu website", "group:system", 5),
 
             new(FallbackGroupCode, "Khác", null, 99),
         ],
@@ -103,6 +104,7 @@ public static class DefaultPermissionTree
             ["fiscal-years"] = "group:system.fiscal-years",
             ["system-settings"] = "group:system.settings",
             ["audit-logs"] = "group:system.audit-logs",
+            ["site-navigation"] = "group:system.site-navigation",
         },
         FallbackGroupCode: FallbackGroupCode);
 }

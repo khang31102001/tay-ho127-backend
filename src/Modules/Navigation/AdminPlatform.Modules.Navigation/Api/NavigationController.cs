@@ -1,5 +1,4 @@
 using AdminPlatform.Common.Abstractions;
-using AdminPlatform.Modules.Navigation.Application.Menus;
 using AdminPlatform.Modules.Navigation.Application.MyNavigation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +19,13 @@ public sealed class NavigationController : ControllerBase
         _currentUser = currentUser;
     }
 
-    /// <summary>The menu tree for the caller, pre-filtered by their own permissions — the frontend renders
-    /// this directly without needing to know any permission codes itself.</summary>
+    /// <summary>The admin sidebar tree for the caller, pre-filtered by their own permissions — the frontend renders
+    /// this directly without needing to know any permission codes itself. `menus` is the original path, kept so an
+    /// older frontend keeps working during a staggered deploy.</summary>
+    [HttpGet("me")]
     [HttpGet("menus")]
     [ProducesResponseType<IReadOnlyList<MenuTreeNode>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<MenuTreeNode>>> GetMyMenus(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<MenuTreeNode>>> GetMySidebar(CancellationToken cancellationToken)
     {
         return Ok(await _myNavigationService.GetVisibleMenuTreeAsync(_currentUser.Permissions, cancellationToken));
     }
