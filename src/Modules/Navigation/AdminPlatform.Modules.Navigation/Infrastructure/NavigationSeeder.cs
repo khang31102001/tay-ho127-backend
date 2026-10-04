@@ -50,8 +50,6 @@ public static class NavigationSeeder
         new("content.article-categories", "Danh mục bài viết", "content", "/admin/content/article-categories", "FolderTree", 4, "article-categories.view"),
         new("content.article-tags", "Thẻ bài viết", "content", "/admin/content/article-tags", "Tags", 5, "article-tags.view"),
 
-        new("brand", "Brand", null, null, null, 40, null),
-        new("brand.settings", "Cài đặt thương hiệu", "brand", "/admin/brand/settings", "Store", 1, null),
 
         new("seo", "SEO", null, null, null, 50, null),
         new("seo.dashboard", "Tổng quan", "seo", "/admin/seo", "Gauge", 1, null),
@@ -62,7 +60,8 @@ public static class NavigationSeeder
         new("organization", "Tổ chức", null, null, null, 60, null),
         new("admin.organizations", "Tổ chức", "organization", "/admin/organization/organizations", "Building2", 1, "organizations.view"),
         new("admin.departments", "Phòng ban", "organization", "/admin/organization/departments", "Network", 2, "departments.view"),
-        new("admin.brands", "Chi nhánh / Brand", "organization", "/admin/organization/brands", "BadgeCheck", 3, "brands.view"),
+        new("admin.brand-profile", "Thông tin thương hiệu", "organization", "/admin/organization/brand-profile", "Store", 0, "brand-profile.view"),
+        new("admin.brands", "Chi nhánh", "organization", "/admin/organization/brands", "BadgeCheck", 3, "brands.view"),
 
         new("system", "Hệ thống", null, null, null, 70, null),
         new("admin.menus", "Menu quản trị", "system", "/admin/system/menus", "PanelLeft", 1, "menus.view"),
@@ -80,6 +79,10 @@ public static class NavigationSeeder
 
     /// <summary>English names an earlier version of this seeder used. An entry still carrying its old
     /// default name was never renamed by an admin, so it is safe to move it to the current name.</summary>
+    /// <summary>Entries that no longer exist in the sidebar (the old "Brand → Cài đặt thương hiệu" group became
+    /// "Tổ chức → Thông tin thương hiệu"). Switched off rather than deleted, so an admin can still see them.</summary>
+    private static readonly string[] RetiredMenuCodes = ["brand.settings", "brand"];
+
     private static readonly Dictionary<string, string> PreviousDefaultNames = new()
     {
         ["admin.users"] = "Users",
@@ -87,7 +90,7 @@ public static class NavigationSeeder
         ["admin.permissions"] = "Permissions",
         ["admin.organizations"] = "Organizations",
         ["admin.departments"] = "Departments",
-        ["admin.brands"] = "Brands",
+        ["admin.brands"] = "Chi nhánh / Brand",
         ["admin.menus"] = "Menus",
         ["admin.fiscal-years"] = "Fiscal Years",
         ["admin.system-settings"] = "System Settings",
@@ -121,6 +124,14 @@ public static class NavigationSeeder
 
             // Saved per entry: a new parent must be persisted before a child can reference its id.
             await db.SaveChangesAsync(cancellationToken);
+        }
+
+        foreach (var code in RetiredMenuCodes)
+        {
+            if (existing.TryGetValue(code, out var retired) && retired.IsActive)
+            {
+                retired.Update(retired.Name, false, retired.ParentId, retired.Route, retired.Icon, retired.SortOrder);
+            }
         }
 
         var existingLinks = await db.MenuPermissions.ToListAsync(cancellationToken);

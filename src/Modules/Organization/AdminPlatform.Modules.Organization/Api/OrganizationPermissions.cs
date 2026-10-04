@@ -14,6 +14,9 @@ public static class OrganizationPermissions
     public const string BrandsCreate = "brands.create";
     public const string BrandsUpdate = "brands.update";
 
+    public const string BrandProfileView = "brand-profile.view";
+    public const string BrandProfileUpdate = "brand-profile.update";
+
     public const string UsersManageDepartments = "users.departments.manage";
     public const string UsersManageBrands = "users.brands.manage";
 
@@ -28,6 +31,8 @@ public static class OrganizationPermissions
         (BrandsView, "View brands"),
         (BrandsCreate, "Create brands"),
         (BrandsUpdate, "Update brands"),
+        (BrandProfileView, "View the brand profile (brand-wide identity shown on the website)"),
+        (BrandProfileUpdate, "Update the brand profile"),
         (UsersManageDepartments, "Assign departments to a user"),
         (UsersManageBrands, "Assign brands to a user"),
     ];

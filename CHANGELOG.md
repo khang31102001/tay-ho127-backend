@@ -59,6 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     only into an empty table; only cash on delivery starts enabled (the transfer/wallet methods carry placeholder bank details).
     `SalesDemoSeeder` (part of `seed-demo`): orders, payments and payment sessions in every status.
   - New rate-limit policies `RateLimiting:SalesOrders` and `RateLimiting:SalesLookup`.
+- Organization module: the business meaning of "Brand" is now explicit — a BRANCH (chi nhánh). A branch owns its contact
+  details (phone, hotline, e-mail, address, opening hours) and one active branch can be the PRIMARY one (`IsPrimary`, unique,
+  the website's address/phone/hours). The brand-wide identity (name, tagline, description, logos, tax code/legal name, social
+  links) is a new singleton `BrandProfile` (`GET/PUT /api/v1/organization/brand-profile`, `brand-profile.view|update`); anonymous
+  `GET /api/v1/organization/public/brand` returns the profile plus the primary branch. `PUT /api/v1/brands/{id}` accepts optional
+  `contact` and `isPrimary` (omitted = untouched). Sidebar: "Tổ chức → Thông tin thương hiệu" and "Chi nhánh" replace the old
+  "Brand → Cài đặt thương hiệu" group (switched off, not deleted). The seeder fills the main branch contact and the default
+  profile only while empty.
 - Integration tests can target an existing Postgres via `INTEGRATION_TESTS_CONNECTION_STRING`.
 
 ### Changed

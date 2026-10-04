@@ -12,6 +12,7 @@ public sealed class OrganizationDbContext : DbContext, IOrganizationDbContext
     public DbSet<OrganizationEntity> Organizations => Set<OrganizationEntity>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<BrandProfile> BrandProfiles => Set<BrandProfile>();
     public DbSet<UserDepartment> UserDepartments => Set<UserDepartment>();
     public DbSet<UserBrand> UserBrands => Set<UserBrand>();
 
