@@ -8,8 +8,10 @@ public sealed class NavigationDbContext : DbContext, INavigationDbContext
 {
     public const string Schema = "navigation";
 
-    public DbSet<Menu> Menus => Set<Menu>();
-    public DbSet<MenuPermission> MenuPermissions => Set<MenuPermission>();
+    public DbSet<NavigationMenu> NavigationMenus => Set<NavigationMenu>();
+    public DbSet<NavigationItem> NavigationItems => Set<NavigationItem>();
+    public DbSet<NavigationItemSiteDetail> NavigationItemSiteDetails => Set<NavigationItemSiteDetail>();
+    public DbSet<NavigationItemPermission> NavigationItemPermissions => Set<NavigationItemPermission>();
 
     public NavigationDbContext(DbContextOptions<NavigationDbContext> options) : base(options)
     {

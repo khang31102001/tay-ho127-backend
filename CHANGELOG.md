@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Navigation: one model for the admin sidebar and the website menus (migration `UnifyNavigation`, data-preserving rename of
+  `menus`/`menu_permissions`). Tables: `navigation_menus` (containers, scope Admin|Site, one per location),
+  `navigation_items` (shared tree, max 3 levels, `is_group` headings), `navigation_item_site_details` (website-only target),
+  `navigation_item_permissions` (permission leaf codes). New endpoints: `GET /navigation/me` (`/navigation/menus` kept as alias),
+  `/navigation/containers`, `/navigation/items` (+ `reorder`, `{id}/permissions`), anonymous `GET /navigation/public/{header|footer|mobile}`
+  (never returns the admin sidebar, inactive or gated items). New permissions `site-navigation.view|create|update|delete`;
+  `menus.*` keeps managing the admin sidebar. Assigning permissions to website items is off (`Navigation:AllowSitePermissions`).
+  **Breaking:** the old `/api/v1/menus*` CRUD is removed — deploy together with the matching frontend.
+
 - AccessControl: hierarchical permissions. `permissions` gains `parent_id` (self FK, restrict), `is_group` and `sort_order`
   (migration `AddPermissionHierarchy`). A GROUP (code `group:*`) only organises leaves — it is never stored in
   `role_permissions` nor put in a JWT, so authorization still matches exact leaf codes. Rules: only groups have children,

@@ -1,7 +1,9 @@
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Navigation.Application;
-using AdminPlatform.Modules.Navigation.Application.Menus;
+using AdminPlatform.Modules.Navigation.Application.Containers;
+using AdminPlatform.Modules.Navigation.Application.Items;
 using AdminPlatform.Modules.Navigation.Application.MyNavigation;
+using AdminPlatform.Modules.Navigation.Application.Public;
 using AdminPlatform.Modules.Navigation.Infrastructure;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -28,8 +30,12 @@ public static class NavigationModule
         });
         services.AddScoped<INavigationDbContext>(sp => sp.GetRequiredService<NavigationDbContext>());
 
-        services.AddScoped<IMenuService, MenuService>();
+        services.Configure<NavigationOptions>(configuration.GetSection(NavigationOptions.SectionName));
+
+        services.AddScoped<INavigationMenuService, NavigationMenuService>();
+        services.AddScoped<INavigationItemService, NavigationItemService>();
         services.AddScoped<IMyNavigationService, MyNavigationService>();
+        services.AddScoped<IPublicNavigationService, PublicNavigationService>();
 
         services.AddValidatorsFromAssembly(typeof(NavigationModule).Assembly);
 

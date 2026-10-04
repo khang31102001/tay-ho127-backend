@@ -5,8 +5,10 @@ namespace AdminPlatform.Modules.Navigation.Application;
 
 public interface INavigationDbContext
 {
-    DbSet<Menu> Menus { get; }
-    DbSet<MenuPermission> MenuPermissions { get; }
+    DbSet<NavigationMenu> NavigationMenus { get; }
+    DbSet<NavigationItem> NavigationItems { get; }
+    DbSet<NavigationItemSiteDetail> NavigationItemSiteDetails { get; }
+    DbSet<NavigationItemPermission> NavigationItemPermissions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
