@@ -1,4 +1,5 @@
 using AdminPlatform.Common.Pagination;
+using AdminPlatform.Modules.AccessControl.Application.Permissions;
 using AdminPlatform.Modules.AccessControl.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -91,15 +92,27 @@ public sealed class RoleService : IRoleService
     {
         await FindOrThrowAsync(roleId, cancellationToken);
 
-        var requested = request.PermissionIds.Distinct().ToHashSet();
-        var validPermissionIds = await _db.Permissions
-            .Where(p => requested.Contains(p.Id))
-            .Select(p => p.Id)
+        var requestedIds = request.PermissionIds.Distinct().ToHashSet();
+        var found = await _db.Permissions
+            .Where(p => requestedIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.IsGroup })
             .ToListAsync(cancellationToken);
 
-        if (validPermissionIds.Count != requested.Count)
+        if (found.Count != requestedIds.Count)
         {
             throw new BusinessRuleValidationException("One or more permission ids do not exist.");
+        }
+
+        // A group is never stored: selecting one grants every active leaf below it at this moment (a snapshot —
+        // leaves added to the group later are not granted automatically).
+        var requested = found.Where(p => !p.IsGroup).Select(p => p.Id).ToHashSet();
+        var groupIds = found.Where(p => p.IsGroup).Select(p => p.Id).ToList();
+        if (groupIds.Count > 0)
+        {
+            var all = await _db.Permissions.AsNoTracking()
+                .Select(p => new PermissionNodeInfo(p.Id, p.ParentId, p.IsGroup, p.IsActive))
+                .ToListAsync(cancellationToken);
+            requested.UnionWith(PermissionTreeRules.ActiveLeavesUnder(groupIds, all));
         }
 
         var current = await _db.RolePermissions.Where(rp => rp.RoleId == roleId).ToListAsync(cancellationToken);

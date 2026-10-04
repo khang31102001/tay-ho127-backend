@@ -24,6 +24,15 @@ public sealed class PermissionsController : ControllerBase
         return Ok(await _permissionService.ListAsync(request, cancellationToken));
     }
 
+    /// <summary>Active permissions as a nested tree (Module → Resource group → permission), for pickers.</summary>
+    [HttpGet("tree")]
+    [RequirePermission(AccessControlPermissions.PermissionsView)]
+    [ProducesResponseType<IReadOnlyList<PermissionTreeNode>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PermissionTreeNode>>> GetTree(CancellationToken cancellationToken)
+    {
+        return Ok(await _permissionService.GetTreeAsync(cancellationToken));
+    }
+
     [HttpGet("{id:guid}")]
     [RequirePermission(AccessControlPermissions.PermissionsView)]
     [ProducesResponseType<PermissionResponse>(StatusCodes.Status200OK)]

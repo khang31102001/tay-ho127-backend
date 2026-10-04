@@ -125,7 +125,8 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. SeoPermissions.All,
             .. SalesPermissions.All,
         ];
-        await AccessControlSeeder.SeedAsync(services, allPermissions, admin!.Id, CancellationToken.None);
+        await AccessControlSeeder.SeedAsync(
+            services, allPermissions, admin!.Id, CancellationToken.None, DefaultPermissionTree.Value);
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);
     }
 
