@@ -74,6 +74,10 @@ namespace AdminPlatform.Modules.Customer.Infrastructure.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("phone");
 
+                    b.Property<DateTime?>("PhoneVerifiedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("phone_verified_at_utc");
+
                     b.Property<uint>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()

@@ -38,6 +38,7 @@ public static class CustomerModule
         // infrastructure hiện tại"), distinguished only by the account_type claim (§7).
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
+        services.Configure<PhoneVerificationOptions>(configuration.GetSection(PhoneVerificationOptions.SectionName));
 
         services.AddScoped<IGoogleIdTokenVerifier, GoogleIdTokenVerifier>();
         services.AddScoped<ICustomerAuthService, CustomerAuthService>();

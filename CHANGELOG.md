@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Customer sign-up phone verification (one-time code over Zalo, SMS fallback via eSMS). New modules **Integration**
+  (`integration.integration_connections`: per-provider on/off, sandbox|live and non-secret settings; secrets come from the
+  environment, never the database; `GET/PUT /api/v1/integrations`, permissions `integrations.view|update`) and **Notification**
+  (`notification.otp_challenges`, `notification.delivery_logs`; codes are stored only as an HMAC; limits per phone, per address
+  and per day; 429 with `Retry-After`, 503 when the provider refuses). New `POST /api/v1/customer/auth/register/otp`;
+  `POST /customer/auth/register` accepts optional `otpChallengeId` + `otpCode`. Guarded by `Customer:PhoneVerification:Required`
+  (**off by default** — until it is switched on, register behaves exactly as before). `customers.phone_verified_at_utc`
+  (migration `AddCustomerPhoneVerifiedAt`, one nullable column); `phoneVerified` added to `GET /customers/me` and the admin
+  customer response. Customer phones are now stored in the canonical `0xxxxxxxxx` form and a changed phone loses its
+  verification. New env vars: `ESMS_API_KEY`, `ESMS_SECRET_KEY`, `NOTIFICATION_OTP_HMAC_KEY`,
+  `CUSTOMER_PHONE_VERIFICATION_REQUIRED`. See `docs/phone-otp-register-handoff.md`.
+
 - Navigation: one model for the admin sidebar and the website menus (migration `UnifyNavigation`, data-preserving rename of
   `menus`/`menu_permissions`). Tables: `navigation_menus` (containers, scope Admin|Site, one per location),
   `navigation_items` (shared tree, max 3 levels, `is_group` headings), `navigation_item_site_details` (website-only target),

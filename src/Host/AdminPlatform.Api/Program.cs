@@ -73,6 +73,7 @@ try
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
     builder.Services.AddScoped<ICustomerDirectory, SalesCustomerDirectoryAdapter>();
     builder.Services.AddScoped<AdminPlatform.Modules.Notification.Application.Ports.IIntegrationConnectionProvider, NotificationIntegrationConnectionAdapter>();
+    builder.Services.AddScoped<AdminPlatform.Modules.Customer.Application.Auth.ICustomerPhoneVerifier, CustomerPhoneVerifierAdapter>();
 
     // ---- Modules ----
     builder.Services.AddIdentityModule(builder.Configuration);
@@ -189,6 +190,16 @@ try
             {
                 limiterOptions.PermitLimit = lookupLimits.GetValue("PermitLimit", 120);
                 limiterOptions.Window = TimeSpan.FromSeconds(lookupLimits.GetValue("WindowSeconds", 60));
+                limiterOptions.QueueLimit = 0;
+            });
+
+            // Sending a one-time code costs real money. This is only a server-wide ceiling (every shopper shares the
+            // website server's address); the real brakes are the per-phone, per-address and daily limits of the OTP service.
+            var otpLimits = configuration.GetSection("RateLimiting:CustomerOtpRequest");
+            options.AddFixedWindowLimiter(AdminPlatform.Modules.Customer.Api.CustomerAuthController.OtpRequestRateLimitPolicy, limiterOptions =>
+            {
+                limiterOptions.PermitLimit = otpLimits.GetValue("PermitLimit", 30);
+                limiterOptions.Window = TimeSpan.FromSeconds(otpLimits.GetValue("WindowSeconds", 60));
                 limiterOptions.QueueLimit = 0;
             });
         });

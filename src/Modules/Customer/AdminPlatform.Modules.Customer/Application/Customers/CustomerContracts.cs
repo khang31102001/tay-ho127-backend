@@ -40,4 +40,5 @@ public sealed record CustomerProfileResponse(
     string? Gender,
     string Status,
     DateTime CreatedAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    bool PhoneVerified);
