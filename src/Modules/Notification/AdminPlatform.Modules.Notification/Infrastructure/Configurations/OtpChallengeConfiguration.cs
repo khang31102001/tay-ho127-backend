@@ -10,6 +10,7 @@ internal sealed class OtpChallengeConfiguration : IEntityTypeConfiguration<OtpCh
     {
         builder.ToTable("otp_challenges");
         builder.HasKey(c => c.Id);
+        builder.Property(c => c.RowVersion).IsRowVersion();
 
         builder.Property(c => c.Purpose).HasMaxLength(OtpChallenge.MaxPurposeLength).IsRequired();
         builder.Property(c => c.Phone).HasMaxLength(OtpChallenge.MaxPhoneLength).IsRequired();

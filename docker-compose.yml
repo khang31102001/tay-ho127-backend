@@ -51,6 +51,7 @@ services:
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
       Integrations__Esms__ApiKey: ${ESMS_API_KEY:-}
       Integrations__Esms__SecretKey: ${ESMS_SECRET_KEY:-}
+      Notification__Otp__HmacKey: ${NOTIFICATION_OTP_HMAC_KEY:-}
     depends_on:
       db:
         condition: service_healthy

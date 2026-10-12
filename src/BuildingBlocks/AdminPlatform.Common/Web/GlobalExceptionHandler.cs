@@ -53,6 +53,11 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         }
 
         httpContext.Response.StatusCode = statusCode;
+        if (exception is TooManyRequestsException tooManyRequests)
+        {
+            httpContext.Response.Headers.RetryAfter = tooManyRequests.RetryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
         return true;
     }
@@ -72,6 +77,8 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             ConflictException => (StatusCodes.Status409Conflict, "conflict", "Conflict", null),
             ForbiddenException => (StatusCodes.Status403Forbidden, "forbidden", "Forbidden", null),
             BusinessRuleValidationException => (StatusCodes.Status400BadRequest, "business_rule_violation", "Business rule violation", null),
+            TooManyRequestsException => (StatusCodes.Status429TooManyRequests, "too_many_requests", "Too many requests", null),
+            ServiceUnavailableException => (StatusCodes.Status503ServiceUnavailable, "service_unavailable", "Service unavailable", null),
             PostgresException { SqlState: "23503" } => (StatusCodes.Status400BadRequest, "invalid_reference", "One of the referenced ids does not exist.", null),
             PostgresException { SqlState: "23505" } => (StatusCodes.Status409Conflict, "duplicate", "A record with the same unique value already exists.", null),
             DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "concurrency_conflict", "The resource was modified by someone else. Reload and try again.", null),

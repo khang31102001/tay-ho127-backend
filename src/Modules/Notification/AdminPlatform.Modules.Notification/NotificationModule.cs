@@ -1,8 +1,11 @@
 using AdminPlatform.Modules.Notification.Application;
+using AdminPlatform.Modules.Notification.Application.Otp;
+using AdminPlatform.Modules.Notification.Application.Ports;
 using AdminPlatform.Modules.Notification.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AdminPlatform.Modules.Notification;
 
@@ -24,6 +27,14 @@ public static class NotificationModule
             options.UseSnakeCaseNamingConvention();
         });
         services.AddScoped<INotificationDbContext>(sp => sp.GetRequiredService<NotificationDbContext>());
+
+        services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.Configure<LoggingMessageSenderOptions>(configuration.GetSection(LoggingMessageSenderOptions.SectionName));
+        services.AddScoped<IOtpService, OtpService>();
+
+        // The default sender delivers nothing. A host that wires a real provider registers its IMessageSender first
+        // and this is skipped.
+        services.TryAddScoped<IMessageSender, LoggingMessageSender>();
 
         return services;
     }

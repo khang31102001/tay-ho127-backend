@@ -25,16 +25,27 @@ public sealed class OtpChallenge : Entity
     public DateTime? ConsumedAtUtc { get; private set; }
     public string? RequestIp { get; private set; }
 
+    /// <summary>Mapped to Postgres `xmin`: two simultaneous guesses cannot both be recorded as one attempt, which
+    /// would let parallel requests get more tries than the limit allows.</summary>
+    public uint RowVersion { get; private set; }
+
+    public bool IsConsumed => ConsumedAtUtc is not null;
+
+    public bool IsExpired(DateTime nowUtc) => nowUtc >= ExpiresAtUtc;
+
+    public bool IsOutOfAttempts(int maxAttempts) => AttemptCount >= maxAttempts;
+
     private OtpChallenge()
     {
         // EF Core
     }
 
-    public static OtpChallenge Issue(string purpose, string phone, string codeHash, DateTime nowUtc, TimeSpan lifetime, string? requestIp)
+    /// <param name="id">Chosen by the caller because the code hash is bound to it, so it must exist before the hash does.</param>
+    public static OtpChallenge Issue(Guid id, string purpose, string phone, string codeHash, DateTime nowUtc, TimeSpan lifetime, string? requestIp)
     {
         return new OtpChallenge
         {
-            Id = Guid.NewGuid(),
+            Id = Guard.NotEmpty(id, nameof(id)),
             Purpose = Guard.NotNullOrWhiteSpace(purpose, nameof(purpose)).Trim(),
             Phone = Guard.NotNullOrWhiteSpace(phone, nameof(phone)).Trim(),
             CodeHash = Guard.NotNullOrWhiteSpace(codeHash, nameof(codeHash)),
@@ -43,4 +54,10 @@ public sealed class OtpChallenge : Entity
             RequestIp = string.IsNullOrWhiteSpace(requestIp) ? null : requestIp.Trim(),
         };
     }
+
+    /// <summary>Counts one guess. Every guess is counted, right or wrong, before it is compared.</summary>
+    public void RegisterAttempt() => AttemptCount++;
+
+    /// <summary>Uses the code up (or withdraws it): it can never verify again.</summary>
+    public void Consume(DateTime nowUtc) => ConsumedAtUtc ??= nowUtc;
 }

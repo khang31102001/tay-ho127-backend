@@ -41,6 +41,25 @@ public sealed class ForbiddenException : DomainException
     }
 }
 
+/// <summary>The caller (or the whole system) hit a sending/usage limit. Maps to HTTP 429 with a Retry-After header.</summary>
+public sealed class TooManyRequestsException : DomainException
+{
+    public TooManyRequestsException(string message, int retryAfterSeconds) : base(message)
+    {
+        RetryAfterSeconds = Math.Max(1, retryAfterSeconds);
+    }
+
+    public int RetryAfterSeconds { get; }
+}
+
+/// <summary>A dependency outside our control (e.g. a message provider) could not do its job right now. Maps to HTTP 503.</summary>
+public sealed class ServiceUnavailableException : DomainException
+{
+    public ServiceUnavailableException(string message) : base(message)
+    {
+    }
+}
+
 /// <summary>Credentials or token could not be authenticated (bad password, expired/revoked/reused refresh
 /// token). Deliberately generic — never reveals which part was wrong. Maps to HTTP 401.</summary>
 public sealed class AuthenticationFailedException : DomainException

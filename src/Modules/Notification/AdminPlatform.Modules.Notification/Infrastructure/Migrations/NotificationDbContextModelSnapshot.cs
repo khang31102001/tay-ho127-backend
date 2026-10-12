@@ -141,6 +141,12 @@ namespace AdminPlatform.Modules.Notification.Infrastructure.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("request_ip");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_otp_challenges");
 
