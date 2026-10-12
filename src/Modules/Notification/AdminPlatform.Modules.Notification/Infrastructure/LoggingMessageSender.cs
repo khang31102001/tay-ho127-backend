@@ -17,7 +17,7 @@ public sealed class LoggingMessageSenderOptions
 
 /// <summary>The default sender: delivers nothing, only logs that a message would have gone out. A real provider's
 /// sender, registered first, replaces it. Logs a masked phone number, never the full one.</summary>
-internal sealed class LoggingMessageSender : IMessageSender
+public sealed class LoggingMessageSender : IMessageSender
 {
     private readonly ILogger<LoggingMessageSender> _logger;
     private readonly bool _isDevelopment;

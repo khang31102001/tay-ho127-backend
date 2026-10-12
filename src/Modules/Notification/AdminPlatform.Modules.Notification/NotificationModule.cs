@@ -30,11 +30,14 @@ public static class NotificationModule
 
         services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
         services.Configure<LoggingMessageSenderOptions>(configuration.GetSection(LoggingMessageSenderOptions.SectionName));
+        services.Configure<EsmsOptions>(configuration.GetSection(EsmsOptions.SectionName));
         services.AddScoped<IOtpService, OtpService>();
 
-        // The default sender delivers nothing. A host that wires a real provider registers its IMessageSender first
-        // and this is skipped.
-        services.TryAddScoped<IMessageSender, LoggingMessageSender>();
+        // The eSMS sender is the message path. While its connection is missing or switched off it hands the message to
+        // the logging sender, which delivers nothing (and only counts as "sent" in Development). The Host must provide
+        // IIntegrationConnectionProvider (see CrossModuleAdapters).
+        services.AddScoped<LoggingMessageSender>();
+        services.AddHttpClient<IMessageSender, EsmsMessageSender>();
 
         return services;
     }

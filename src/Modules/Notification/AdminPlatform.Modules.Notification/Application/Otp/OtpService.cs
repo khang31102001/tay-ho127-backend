@@ -219,8 +219,10 @@ public sealed class OtpService : IOtpService
         {
             return await _sender.SendAsync(message, cancellationToken);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
+            // A provider timeout is an OperationCanceledException too, but the caller did not cancel: it is a failed
+            // send like any other. Only the caller's own cancellation is allowed to escape.
             // Never log the message: it holds the code. The challenge id is enough to find the delivery log row.
             _logger.LogError(exception, "Sending the one-time code for challenge {ChallengeId} failed.", challengeId);
             return MessageSendResult.Rejected("unknown", "exception");

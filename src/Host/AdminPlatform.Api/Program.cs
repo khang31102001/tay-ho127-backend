@@ -70,6 +70,7 @@ try
     builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
     builder.Services.AddScoped<ICustomerDirectory, SalesCustomerDirectoryAdapter>();
+    builder.Services.AddScoped<AdminPlatform.Modules.Notification.Application.Ports.IIntegrationConnectionProvider, NotificationIntegrationConnectionAdapter>();
 
     // ---- Modules ----
     builder.Services.AddIdentityModule(builder.Configuration);

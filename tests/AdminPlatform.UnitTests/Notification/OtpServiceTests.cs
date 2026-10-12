@@ -35,8 +35,11 @@ internal sealed class OtpCapturingSender : IMessageSender
 
 internal sealed class OtpThrowingSender : IMessageSender
 {
-    public Task<MessageSendResult> SendAsync(OutboundMessage message, CancellationToken cancellationToken) =>
-        throw new HttpRequestException("network down");
+    private readonly Exception _exception;
+
+    public OtpThrowingSender(Exception? exception = null) => _exception = exception ?? new HttpRequestException("network down");
+
+    public Task<MessageSendResult> SendAsync(OutboundMessage message, CancellationToken cancellationToken) => throw _exception;
 }
 
 public class OtpServiceTests
@@ -268,6 +271,21 @@ public class OtpServiceTests
 
         Assert.True((await db.OtpChallenges.SingleAsync()).IsConsumed);
         Assert.Equal("failed", (await db.DeliveryLogs.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task A_provider_timeout_is_a_failed_send_but_the_callers_own_cancellation_still_escapes()
+    {
+        var db = NewDb();
+        var timingOut = NewSut(db, new OtpThrowingSender(new TaskCanceledException("provider timeout")), new OtpTestClock());
+
+        await Assert.ThrowsAsync<ServiceUnavailableException>(() => timingOut.RequestAsync(Request(), CancellationToken.None));
+        Assert.True((await db.OtpChallenges.SingleAsync()).IsConsumed);
+
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+        var cancelling = NewSut(NewDb(), new OtpThrowingSender(new OperationCanceledException(cancelled.Token)), new OtpTestClock());
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelling.RequestAsync(Request(), cancelled.Token));
     }
 
     [Theory]

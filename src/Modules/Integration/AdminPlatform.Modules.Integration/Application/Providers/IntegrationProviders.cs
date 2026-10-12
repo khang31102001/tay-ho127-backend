@@ -27,6 +27,7 @@ public static class IntegrationProviders
                 "otpRegisterTemplateId",
                 "orderPlacedTemplateId",
                 "otpRegisterSmsContent",
+                "smsType",
             ],
             SecretConfigPaths: new Dictionary<string, string>
             {
