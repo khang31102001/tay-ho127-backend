@@ -7,6 +7,10 @@ using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Integration;
+using AdminPlatform.Modules.Integration.Infrastructure;
+using AdminPlatform.Modules.Notification;
+using AdminPlatform.Modules.Notification.Infrastructure;
 using AdminPlatform.Modules.Sales;
 using AdminPlatform.Modules.Sales.Infrastructure;
 using AdminPlatform.Modules.Seo;
@@ -62,6 +66,8 @@ appBuilder.Services.AddCatalogModule(appBuilder.Configuration);
 appBuilder.Services.AddContentModule(appBuilder.Configuration);
 appBuilder.Services.AddSeoModule(appBuilder.Configuration);
 appBuilder.Services.AddSalesModule(appBuilder.Configuration);
+appBuilder.Services.AddIntegrationModule(appBuilder.Configuration);
+appBuilder.Services.AddNotificationModule(appBuilder.Configuration);
 
 using var host = appBuilder.Build();
 using var scope = host.Services.CreateScope();
@@ -155,6 +161,12 @@ static async Task MigrateAsync(IServiceProvider services, ILogger logger)
 
     logger.LogInformation("Applying Sales module migrations...");
     await services.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
+
+    logger.LogInformation("Applying Integration module migrations...");
+    await services.GetRequiredService<IntegrationDbContext>().Database.MigrateAsync();
+
+    logger.LogInformation("Applying Notification module migrations...");
+    await services.GetRequiredService<NotificationDbContext>().Database.MigrateAsync();
 
     logger.LogInformation("All migrations applied.");
 }

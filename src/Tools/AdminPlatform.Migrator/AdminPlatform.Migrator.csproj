@@ -35,6 +35,8 @@
     <ProjectReference Include="..\..\Modules\Content\AdminPlatform.Modules.Content\AdminPlatform.Modules.Content.csproj" />
     <ProjectReference Include="..\..\Modules\Seo\AdminPlatform.Modules.Seo\AdminPlatform.Modules.Seo.csproj" />
     <ProjectReference Include="..\..\Modules\Sales\AdminPlatform.Modules.Sales\AdminPlatform.Modules.Sales.csproj" />
+    <ProjectReference Include="..\..\Modules\Integration\AdminPlatform.Modules.Integration\AdminPlatform.Modules.Integration.csproj" />
+    <ProjectReference Include="..\..\Modules\Notification\AdminPlatform.Modules.Notification\AdminPlatform.Modules.Notification.csproj" />
   </ItemGroup>
 
 </Project>

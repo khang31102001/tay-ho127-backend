@@ -12,6 +12,10 @@ using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Integration;
+using AdminPlatform.Modules.Integration.Infrastructure;
+using AdminPlatform.Modules.Notification;
+using AdminPlatform.Modules.Notification.Infrastructure;
 using AdminPlatform.Modules.Sales;
 using AdminPlatform.Modules.Sales.Api;
 using AdminPlatform.Modules.Sales.Application.Ports;
@@ -79,6 +83,8 @@ try
     builder.Services.AddContentModule(builder.Configuration);
     builder.Services.AddSeoModule(builder.Configuration);
     builder.Services.AddSalesModule(builder.Configuration);
+    builder.Services.AddIntegrationModule(builder.Configuration);
+    builder.Services.AddNotificationModule(builder.Configuration);
 
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
@@ -273,6 +279,8 @@ static async Task MigrateDevelopmentDatabaseAsync(IServiceProvider services)
     await provider.GetRequiredService<ContentDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<SeoDbContext>().Database.MigrateAsync();
     await provider.GetRequiredService<SalesDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<IntegrationDbContext>().Database.MigrateAsync();
+    await provider.GetRequiredService<NotificationDbContext>().Database.MigrateAsync();
 }
 
 public partial class Program;

@@ -22,6 +22,8 @@ public class ModuleBoundaryTests
         ("AdminPlatform.Modules.Content", typeof(Modules.Content.ContentModule).Assembly),
         ("AdminPlatform.Modules.Seo", typeof(Modules.Seo.SeoModule).Assembly),
         ("AdminPlatform.Modules.Sales", typeof(Modules.Sales.SalesModule).Assembly),
+        ("AdminPlatform.Modules.Integration", typeof(Modules.Integration.IntegrationModule).Assembly),
+        ("AdminPlatform.Modules.Notification", typeof(Modules.Notification.NotificationModule).Assembly),
     ];
 
     public static IEnumerable<object[]> ModulePairs
