@@ -5,6 +5,7 @@ using AdminPlatform.Modules.Catalog.Api;
 using AdminPlatform.Modules.Catalog.Infrastructure;
 using AdminPlatform.Modules.Content.Api;
 using AdminPlatform.Modules.Content.Infrastructure;
+using AdminPlatform.Modules.Integration.Api;
 using AdminPlatform.Modules.Integration.Infrastructure;
 using AdminPlatform.Modules.Notification.Infrastructure;
 using AdminPlatform.Modules.Sales.Api;
@@ -128,10 +129,12 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
             .. ContentPermissions.All,
             .. SeoPermissions.All,
             .. SalesPermissions.All,
+            .. IntegrationPermissions.All,
         ];
         await AccessControlSeeder.SeedAsync(
             services, allPermissions, admin!.Id, CancellationToken.None, DefaultPermissionTree.Value);
         await NavigationSeeder.SeedAsync(services, CancellationToken.None);
+        await IntegrationSeeder.SeedAsync(services, CancellationToken.None);
     }
 
     async Task IAsyncLifetime.DisposeAsync()

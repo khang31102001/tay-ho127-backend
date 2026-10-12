@@ -59,6 +59,7 @@ public static class DefaultPermissionTree
             new("group:system.settings", "Cài đặt hệ thống", "group:system", 3),
             new("group:system.audit-logs", "Nhật ký thay đổi", "group:system", 4),
             new("group:system.site-navigation", "Menu website", "group:system", 5),
+            new("group:system.integrations", "Tích hợp bên thứ ba", "group:system", 6),
 
             new(FallbackGroupCode, "Khác", null, 99),
         ],
@@ -105,6 +106,7 @@ public static class DefaultPermissionTree
             ["system-settings"] = "group:system.settings",
             ["audit-logs"] = "group:system.audit-logs",
             ["site-navigation"] = "group:system.site-navigation",
+            ["integrations"] = "group:system.integrations",
         },
         FallbackGroupCode: FallbackGroupCode);
 }

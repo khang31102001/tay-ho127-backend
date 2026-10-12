@@ -49,6 +49,8 @@ services:
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Integrations__Esms__ApiKey: ${ESMS_API_KEY:-}
+      Integrations__Esms__SecretKey: ${ESMS_SECRET_KEY:-}
     depends_on:
       db:
         condition: service_healthy

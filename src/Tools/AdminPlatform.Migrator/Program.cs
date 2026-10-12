@@ -216,6 +216,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     var salesSeeded = await SalesSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation(salesSeeded ? "Sales configuration seeded." : "Sales configuration already exists - left untouched.");
 
+    logger.LogInformation("Seeding Integration module (one disabled sandbox connection per known provider, only when absent)...");
+    var integrationsCreated = await IntegrationSeeder.SeedAsync(services, cancellationToken);
+    logger.LogInformation("{Count} integration connection(s) created.", integrationsCreated);
+
     logger.LogInformation("Seed complete.");
 }
 

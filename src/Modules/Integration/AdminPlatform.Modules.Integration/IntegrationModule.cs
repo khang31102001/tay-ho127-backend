@@ -1,6 +1,9 @@
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Integration.Application;
+using AdminPlatform.Modules.Integration.Application.Connections;
+using AdminPlatform.Modules.Integration.Application.Providers;
 using AdminPlatform.Modules.Integration.Infrastructure;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace AdminPlatform.Modules.Integration;
 
 /// <summary>Composition entry point for the Integration module: how the system connects to third-party providers
-/// (non-secret settings only). The Host calls AddIntegrationModule() once, after AddPlatformCommon().</summary>
+/// (non-secret settings in the database, secrets from server configuration). The Host calls AddIntegrationModule()
+/// once, after AddPlatformCommon().</summary>
 public static class IntegrationModule
 {
     public static IServiceCollection AddIntegrationModule(this IServiceCollection services, IConfiguration configuration)
@@ -26,6 +30,14 @@ public static class IntegrationModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<IIntegrationDbContext>(sp => sp.GetRequiredService<IntegrationDbContext>());
+
+        services.AddSingleton<IIntegrationSecretSource, ConfigurationIntegrationSecretSource>();
+        services.AddScoped<IIntegrationConnectionService, IntegrationConnectionService>();
+        services.AddScoped<IIntegrationConnectionQueryService, IntegrationConnectionQueryService>();
+
+        services.AddValidatorsFromAssembly(typeof(IntegrationModule).Assembly);
+
+        services.AddControllers().AddApplicationPart(typeof(IntegrationModule).Assembly);
 
         return services;
     }
