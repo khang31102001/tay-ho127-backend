@@ -1,7 +1,8 @@
 # Bàn giao: xác minh SĐT bằng OTP khi đăng ký (Zalo → SMS qua eSMS)
 
 > File này là ghi chú để **làm tiếp** công việc ở các phiên sau. Cập nhật nó khi hoàn thành từng bước.
-> Nhánh: `feat/phone-otp-register` (từ `main` a8fca20). Chưa push. Trạng thái tại commit `02d781c` + commit ghi chú này.
+> **Trạng thái: Bước 1–5 (toàn bộ Backend) XONG; còn Bước 6 (Frontend) và Bước 7 (thử với eSMS).**
+> Bước 1–4 đã nằm trong `main` backend (commit `02d781c`). Bước 5 nằm ở nhánh `feat/phone-otp-register-customer` (từ `main` `fbaa366`).
 
 ## 1. Mục tiêu
 
@@ -19,7 +20,7 @@ Phân biệt ba thứ (đã chốt): **OTP xác thực** (nghiệp vụ này), *
 - Cờ `Customer:PhoneVerification:Required` (mặc định **tắt**): tắt thì `register` và test cũ chạy y như cũ.
 - Nhà cung cấp: eSMS API `MultiChannelMessage` (Zalo ZNS rồi SMS dự phòng, một request).
 
-## 3. Đã làm (Bước 1–4)
+## 3. Đã làm (Bước 1–5)
 
 | Bước | Nội dung | Vị trí chính |
 |---|---|---|
@@ -27,9 +28,18 @@ Phân biệt ba thứ (đã chốt): **OTP xác thực** (nghiệp vụ này), *
 | 2 | Integration: danh mục provider (`esms`), API Admin `GET/PUT /api/v1/integrations`, quyền `integrations.view/update`, seeder, `IIntegrationConnectionQueryService` (snapshot có secret, ẩn khi `ToString`) | `Integration/Application/{Providers,Connections}`, `Api/` |
 | 3 | `IOtpService` (HMAC-SHA256, 5 phút, 5 lần đoán, xmin chống đoán song song, cooldown 60s, 5/giờ/SĐT, 20/giờ/IP, trần 500/ngày), `IMessageSender`, `LoggingMessageSender`, lỗi 429/503 | `Notification/Application/{Otp,Ports}`, SharedKernel `Exceptions.cs`, `GlobalExceptionHandler.cs` |
 | 4 | `EsmsMessageSender`, `IIntegrationConnectionProvider` + adapter Host | `Notification/Infrastructure/EsmsMessageSender.cs` |
+| 5 | Customer: đăng ký 2 bước + cờ `Customer:PhoneVerification:Required` (mặc định TẮT), `VietnamesePhone` (SharedKernel), cột `customers.phone_verified_at_utc`, port `ICustomerPhoneVerifier` + adapter Host, rate limit riêng `customer-otp-request` | `Customer/Application/Auth`, `Customer/Domain/Customer.cs`, `Host/CrossModuleAdapters/CustomerAdapters.cs`, `SharedKernel/VietnamesePhone.cs` |
 
-Tại thời điểm commit: build 0 lỗi/0 cảnh báo, test kiến trúc và unit test đều đạt, Host khởi động được (swagger 200).
-**Test tích hợp (Postgres) CHƯA từng chạy** (máy dev không có Docker/Postgres): gồm `IntegrationConnectionsTests` và việc áp migration thật. Chạy ở CI hoặc máy có Postgres trước khi merge.
+Tại thời điểm commit: build 0 lỗi/0 cảnh báo, test kiến trúc (52) và unit test (485) đều đạt, Host khởi động được (swagger có `/register/otp`), `has-pending-model-changes` sạch.
+**Test tích hợp (Postgres) CHƯA từng chạy** (máy dev không có Docker/Postgres): gồm `IntegrationConnectionsTests`, `CustomerPhoneVerificationFlowTests` và việc áp migration thật. Chạy ở CI hoặc máy có Postgres trước khi merge.
+
+### Hợp đồng API của Bước 5 (cho Frontend)
+
+- `POST /api/v1/customer/auth/register/otp` (ẩn danh) body `{ "phone": "0901234567", "email": "a@b.com" }` → `200 { challengeId, expiresAtUtc, resendAfterSeconds }`.
+  Lỗi: `400` cờ tắt hoặc SĐT không phải số VN (`errors.Phone`), `409` SĐT/email đã đăng ký, `429` quá giới hạn (header `Retry-After`, giây), `503` nhà cung cấp không gửi được.
+- `POST /api/v1/customer/auth/register` body như cũ **+ tuỳ chọn** `otpChallengeId` (guid), `otpCode` (chuỗi 6 số). Khi cờ BẬT mà thiếu hoặc sai mã → `400` (thông điệp tiếng Việt: không đúng/đã dùng, hết hạn, sai quá số lần); trùng SĐT/email → `409` (kiểm trước khi tiêu thụ mã). Thành công → `201` token như cũ.
+- `GET /api/v1/customers/me` và admin `CustomerProfileResponse` có thêm `phoneVerified` (bool).
+- Cờ TẮT: `register` không cần mã (client cũ chạy bình thường); `register/otp` trả `400`. FE nên biết cờ qua việc gọi `register/otp` (400 "chưa được bật" → hiện form cũ) hoặc thêm một endpoint đọc cờ nếu cần.
 
 ## 4. Giả định tạm — cần eSMS xác nhận (đổi bằng cấu hình/1 dòng, không đổi thiết kế)
 
@@ -41,18 +51,14 @@ Tại thời điểm commit: build 0 lỗi/0 cảnh báo, test kiến trúc và 
 
 ## 5. Việc còn lại
 
-### Bước 5 — Customer (backend) — NEXT
-1. SharedKernel: thêm bộ chuẩn hoá SĐT dùng chung (dạng `0xxxxxxxxx`, chấp nhận `+84…`). `Sales.Domain.PhoneNumber` chuyển sang gọi nó (hành vi giữ nguyên, đã có test).
-2. `Customer.PhoneVerifiedAtUtc` (+ migration); `Customer.Create` nhận mốc đã xác minh; chuẩn hoá SĐT khi tạo/cập nhật.
-3. Contracts: `RegisterCustomerRequest` thêm 2 tham số **tuỳ chọn có mặc định** `OtpChallengeId`, `OtpCode`; thêm `RequestRegistrationOtpRequest/Response` (`challengeId`, `expiresAtUtc`, `resendAfterSeconds`).
-4. Endpoint `POST /api/v1/customer/auth/register/otp`: validate form, chuẩn hoá SĐT, **kiểm trùng SĐT/email → 409 trước khi gửi OTP** (đỡ tốn tiền OTP), rồi gọi `IOtpService.RequestAsync(purpose=register-phone, ip)`.
-5. Port `ICustomerPhoneVerifier` trong `Customer.Application`; adapter Host → `IOtpService`. Map `OtpVerifyOutcome`: `Invalid`/`Expired`/`TooManyAttempts` → 400 với thông điệp tiếng Việt chung, không lộ lý do chi tiết.
-6. `CustomerAuthService.RegisterAsync`: khi cờ bật bắt buộc OTP (thiếu → 400), verify xong mới tạo Customer với `PhoneVerifiedAtUtc`. Cập nhật `CustomerAuthServiceTests.NewSut` (đổi constructor).
-7. Rate limit: policy `auth` hiện là fixed-window **toàn cục** 10 req/60s, mỗi đăng ký giờ tốn 2 request → cân nhắc policy riêng `otp` cho endpoint xin OTP.
-8. Test tích hợp: factory đặt env `Notification__Otp__HmacKey` và thay `IMessageSender` bằng bản giả có thể đọc mã (cần thêm cơ chế override trong `AdminPlatformApiFactory`).
-9. Trước khi triển khai: SQL kiểm `customers.phone` hiện có không khớp `^0\d{9}$` (không tự sửa dữ liệu).
-
-### Bước 6 — Frontend (repo `fontend`, nhánh `dev` local từ `main`)
+### Bước 5 — Customer (backend) — XONG
+Đã làm theo thiết kế; chi tiết hợp đồng ở mục 3. Các quyết định đáng nhớ:
+- SĐT chuẩn hoá "lenient" trong `Customer` (dạng VN → `0xxxxxxxxx`, còn lại chỉ trim) để không phá dữ liệu/test cũ (test tích hợp cũ dùng SĐT dạng hex như `09a3f1c2e4`); bắt buộc đúng định dạng VN **chỉ khi cờ BẬT**.
+- Đổi SĐT thì `PhoneVerifiedAtUtc` bị xoá (xác minh gắn với một số). Kiểm trùng SĐT của service hồ sơ Admin cũng so theo dạng chuẩn (`+84…` = `0…`).
+- Chưa làm: SQL kiểm `customers.phone` hiện có không khớp `^0\d{9}$` trước khi bật cờ ở môi trường thật, ví dụ
+  `SELECT id, phone FROM customer.customers WHERE phone IS NOT NULL AND phone !~ '^0[0-9]{9}$';` (chỉ kiểm tra, không tự sửa dữ liệu). Khách cũ có `phone_verified_at_utc` = NULL (chưa xác minh) — luồng xác minh cho khách đã có sẵn là việc riêng, chưa làm.
+### Bước 6 — Frontend (repo `fontend`) — NEXT
+> Làm trên nhánh tách từ `main` FE SAU KHI PR sửa build (`fix/revert-broken-refactor`, PR #37) được merge; đừng làm trên `main` đang không biên dịch được.
 - `src/features/auth/{components/AuthModal.tsx, hooks/useAuthModal.ts, services/auth.service.ts, types/auth.types.ts}`: thêm bước nhập OTP 6 số sau form đăng ký, đếm ngược gửi lại, hiển thị lỗi 429/503.
 - BFF: thêm `app/api/customer/auth/register/otp/route.ts`; `register/route.ts` chuyển tiếp thêm `otpChallengeId`, `otpCode`; ghi cookie như hiện tại.
 - `main` FE vừa refactor lớn (`src/core`, `src/shared`...); **đọc lại cấu trúc trước khi sửa**. `main` đang có lỗi cú pháp sẵn ở `src/features/payments/services/admin-payments.service.ts:14` (dấu backtick/nháy lệch) làm `tsc` dừng sớm.
