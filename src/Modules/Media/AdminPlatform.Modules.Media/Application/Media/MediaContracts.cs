@@ -36,3 +36,6 @@ public sealed record PublicMediaResponse(
     string Url,
     string Type,
     string? AltText);
+
+/// <summary>File được client upload, tách khỏi IFormFile để Application không phụ thuộc vào lớp web.</summary>
+public sealed record MediaUploadFile(Stream Content, string FileName, long Length);

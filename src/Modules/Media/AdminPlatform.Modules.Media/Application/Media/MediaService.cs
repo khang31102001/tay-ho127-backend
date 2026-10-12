@@ -2,6 +2,7 @@ using AdminPlatform.Common.Pagination;
 using AdminPlatform.Modules.Media.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MediaEntity = AdminPlatform.Modules.Media.Domain.Media;
 
 namespace AdminPlatform.Modules.Media.Application.Media;
@@ -9,10 +10,14 @@ namespace AdminPlatform.Modules.Media.Application.Media;
 public sealed class MediaService : IMediaService
 {
     private readonly IMediaDbContext _db;
+    private readonly IFileStorage _fileStorage;
+    private readonly MediaStorageOptions _storageOptions;
 
-    public MediaService(IMediaDbContext db)
+    public MediaService(IMediaDbContext db, IFileStorage fileStorage, IOptions<MediaStorageOptions> storageOptions)
     {
         _db = db;
+        _fileStorage = fileStorage;
+        _storageOptions = storageOptions.Value;
     }
 
     public async Task<PagedResult<MediaResponse>> ListAsync(PagedRequest request, string? kind, string? status, CancellationToken cancellationToken)
@@ -60,6 +65,59 @@ public sealed class MediaService : IMediaService
     public async Task<MediaResponse> CreateAsync(CreateMediaRequest request, CancellationToken cancellationToken)
     {
         var media = MediaEntity.Create(request.FileName, request.Url, ParseKind(request.Type), request.AltText, request.Size);
+        _db.Media.Add(media);
+        await _db.SaveChangesAsync(cancellationToken);
+        return ToResponse(media);
+    }
+
+    public async Task<MediaResponse> UploadAsync(MediaUploadFile file, string? altText, string publicBaseUrl, CancellationToken cancellationToken)
+    {
+        if (file.Length <= 0)
+        {
+            throw new BusinessRuleValidationException("File is empty.");
+        }
+
+        if (file.Length > _storageOptions.MaxFileBytes)
+        {
+            throw new BusinessRuleValidationException($"File exceeds the {_storageOptions.MaxFileBytes / (1024 * 1024)} MB limit.");
+        }
+
+        // Path.GetFileName: client có thể gửi tên kèm đường dẫn; chỉ giữ phần tên file.
+        var originalName = Path.GetFileName(file.FileName);
+        var extension = Path.GetExtension(originalName);
+        if (!MediaFileRules.TryGetKind(extension, out var kind))
+        {
+            throw new BusinessRuleValidationException($"File type '{extension}' is not allowed. Allowed: {MediaFileRules.AllowedExtensionsText}.");
+        }
+
+        var header = new byte[MediaFileRules.SignatureLength];
+        var read = 0;
+        while (read < header.Length)
+        {
+            var chunk = await file.Content.ReadAsync(header.AsMemory(read), cancellationToken);
+            if (chunk == 0)
+            {
+                break;
+            }
+
+            read += chunk;
+        }
+
+        if (!MediaFileRules.HasValidSignature(extension, header[..read]))
+        {
+            throw new BusinessRuleValidationException("File content does not match its extension.");
+        }
+
+        file.Content.Seek(0, SeekOrigin.Begin);
+
+        // Tên lưu trữ là Guid: không đoán được, không đụng tên, không mang ký tự lạ từ client.
+        var storedFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var publicPath = await _fileStorage.SaveAsync(storedFileName, file.Content, cancellationToken);
+
+        var baseUrl = string.IsNullOrWhiteSpace(_storageOptions.PublicBaseUrl) ? publicBaseUrl : _storageOptions.PublicBaseUrl;
+        var url = $"{baseUrl.TrimEnd('/')}{publicPath}";
+
+        var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length));
         _db.Media.Add(media);
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(media);

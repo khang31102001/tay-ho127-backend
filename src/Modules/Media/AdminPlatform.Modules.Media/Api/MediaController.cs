@@ -53,6 +53,20 @@ public sealed class MediaController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
+    /// <summary>Upload file (multipart/form-data: "file" + tùy chọn "altText"). Server tự xác định loại,
+    /// dung lượng và URL; chỉ nhận các đuôi file được phép (xem MediaFileRules).</summary>
+    [HttpPost("upload")]
+    [RequirePermission(MediaPermissions.MediaCreate)]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType<MediaResponse>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<MediaResponse>> Upload(IFormFile file, [FromForm] string? altText, CancellationToken cancellationToken)
+    {
+        await using var content = file.OpenReadStream();
+        var publicBaseUrl = $"{Request.Scheme}://{Request.Host}";
+        var created = await _mediaService.UploadAsync(new MediaUploadFile(content, file.FileName, file.Length), altText, publicBaseUrl, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+    }
+
     [HttpPut("{id:guid}")]
     [RequirePermission(MediaPermissions.MediaUpdate)]
     [ProducesResponseType<MediaResponse>(StatusCodes.Status200OK)]

@@ -29,6 +29,7 @@ using AdminPlatform.Modules.Identity.Application;
 using AdminPlatform.Modules.Identity.Application.Users;
 using AdminPlatform.Modules.Identity.Infrastructure;
 using AdminPlatform.Modules.Media;
+using AdminPlatform.Modules.Media.Application.Media;
 using AdminPlatform.Modules.Media.Infrastructure;
 using AdminPlatform.Modules.Navigation;
 using AdminPlatform.Modules.Navigation.Infrastructure;
@@ -40,6 +41,7 @@ using AdminPlatform.Modules.Platform.Application;
 using AdminPlatform.Modules.Platform.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -246,6 +248,18 @@ try
     }
 
     app.UseHttpsRedirection();
+
+    // File media do Admin upload (IFileStorage = LocalDiskFileStorage): phục vụ công khai, chỉ đọc, tại
+    // MediaStorage:RequestPath (mặc định /uploads). Chỉ phục vụ đúng thư mục upload, không phải toàn bộ ContentRoot.
+    var mediaStorage = app.Configuration.GetSection(MediaStorageOptions.SectionName).Get<MediaStorageOptions>() ?? new MediaStorageOptions();
+    var mediaRoot = LocalDiskFileStorage.ResolveRootPath(mediaStorage.RootPath, app.Environment.ContentRootPath);
+    Directory.CreateDirectory(mediaRoot);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(mediaRoot),
+        RequestPath = "/" + mediaStorage.RequestPath.Trim('/'),
+        OnPrepareResponse = ctx => ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff",
+    });
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseRateLimiter();

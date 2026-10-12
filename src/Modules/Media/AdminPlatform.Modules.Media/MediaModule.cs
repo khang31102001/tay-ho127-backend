@@ -30,6 +30,8 @@ public static class MediaModule
         });
         services.AddScoped<IMediaDbContext>(sp => sp.GetRequiredService<MediaDbContext>());
 
+        services.Configure<MediaStorageOptions>(configuration.GetSection(MediaStorageOptions.SectionName));
+        services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
         services.AddScoped<IMediaService, MediaService>();
 
         services.AddValidatorsFromAssembly(typeof(MediaModule).Assembly);
