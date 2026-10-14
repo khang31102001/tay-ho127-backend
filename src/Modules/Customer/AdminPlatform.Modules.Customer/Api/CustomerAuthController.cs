@@ -26,6 +26,28 @@ public sealed class CustomerAuthController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, response);
     }
 
+    /// <summary>Registration step 1. Sends a one-time code to the phone; no account exists yet. 429 when the number
+    /// asks for codes too often.</summary>
+    [HttpPost("register/request-otp")]
+    [AllowAnonymous]
+    [ProducesResponseType<RegistrationOtpResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<RegistrationOtpResponse>> RequestRegistrationOtp([FromBody] RequestRegistrationOtpRequest request, CancellationToken cancellationToken)
+    {
+        var response = await _authService.RequestRegistrationOtpAsync(request, cancellationToken);
+        return Ok(response);
+    }
+
+    /// <summary>Registration step 2. A correct code creates the account (phone verified) and signs it in.</summary>
+    [HttpPost("register/verify")]
+    [AllowAnonymous]
+    [ProducesResponseType<CustomerTokenResponse>(StatusCodes.Status201Created)]
+    public async Task<ActionResult<CustomerTokenResponse>> VerifyRegistrationOtp([FromBody] VerifyRegistrationOtpRequest request, CancellationToken cancellationToken)
+    {
+        var effectiveRequest = request with { DeviceInfo = request.DeviceInfo ?? Request.Headers["User-Agent"].ToString() };
+        var response = await _authService.VerifyRegistrationOtpAsync(effectiveRequest, RemoteIpAddress, cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, response);
+    }
+
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType<CustomerTokenResponse>(StatusCodes.Status200OK)]

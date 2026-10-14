@@ -22,12 +22,16 @@ public sealed class Customer : AuditableEntity
     public CustomerGender? Gender { get; private set; }
     public CustomerStatus Status { get; private set; } = CustomerStatus.Active;
 
+    /// <summary>When the customer proved they own <see cref="Phone"/> with a one-time code. Null = never
+    /// verified (Google sign-in, or accounts created before phone verification existed).</summary>
+    public DateTime? PhoneVerifiedAtUtc { get; private set; }
+
     private Customer()
     {
         // EF Core
     }
 
-    public static Customer Create(string fullName, string? phone, string? email)
+    public static Customer Create(string fullName, string? phone, string? email, DateTime? phoneVerifiedAtUtc = null)
     {
         return new Customer
         {
@@ -37,13 +41,21 @@ public sealed class Customer : AuditableEntity
             Phone = NormalizePhone(phone),
             Email = NormalizeEmail(email),
             Status = CustomerStatus.Active,
+            PhoneVerifiedAtUtc = string.IsNullOrWhiteSpace(phone) ? null : phoneVerifiedAtUtc,
         };
     }
 
     public void UpdateProfile(string fullName, string? phone, string? email, DateOnly? dateOfBirth, CustomerGender? gender)
     {
         FullName = Guard.NotNullOrWhiteSpace(fullName, nameof(fullName)).Trim();
-        Phone = NormalizePhone(phone);
+        var newPhone = NormalizePhone(phone);
+        if (newPhone != Phone)
+        {
+            // A different number has not been proven by a code.
+            PhoneVerifiedAtUtc = null;
+        }
+
+        Phone = newPhone;
         Email = NormalizeEmail(email);
         DateOfBirth = dateOfBirth;
         Gender = gender;

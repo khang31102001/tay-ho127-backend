@@ -1,3 +1,4 @@
+using AdminPlatform.Common.Messaging;
 using System.Text;
 using System.Threading.RateLimiting;
 using AdminPlatform.Api.CrossModuleAdapters;
@@ -66,6 +67,9 @@ try
     builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
     builder.Services.AddScoped<ICustomerDirectory, SalesCustomerDirectoryAdapter>();
+
+    // ---- Messaging (eSMS: Zalo / SMS) — used by Customer (registration codes) and Sales (order notices) ----
+    builder.Services.AddEsmsMessaging(builder.Configuration);
 
     // ---- Modules ----
     builder.Services.AddIdentityModule(builder.Configuration);

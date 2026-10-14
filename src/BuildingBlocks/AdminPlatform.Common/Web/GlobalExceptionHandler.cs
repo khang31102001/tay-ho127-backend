@@ -71,6 +71,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             AuthenticationFailedException => (StatusCodes.Status401Unauthorized, "authentication_failed", "Authentication failed", null),
             ConflictException => (StatusCodes.Status409Conflict, "conflict", "Conflict", null),
             ForbiddenException => (StatusCodes.Status403Forbidden, "forbidden", "Forbidden", null),
+            TooManyRequestsException => (StatusCodes.Status429TooManyRequests, "too_many_requests", "Too many requests", null),
             BusinessRuleValidationException => (StatusCodes.Status400BadRequest, "business_rule_violation", "Business rule violation", null),
             PostgresException { SqlState: "23503" } => (StatusCodes.Status400BadRequest, "invalid_reference", "One of the referenced ids does not exist.", null),
             PostgresException { SqlState: "23505" } => (StatusCodes.Status409Conflict, "duplicate", "A record with the same unique value already exists.", null),

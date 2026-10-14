@@ -67,6 +67,8 @@ public sealed class AdminPlatformApiFactory : WebApplicationFactory<Program>, IA
         Environment.SetEnvironmentVariable(IdentitySeeder.AdminPasswordConfigKey, AdminPassword);
         // The whole suite shares one client address; the production auth limit (10/min) would 429 it.
         Environment.SetEnvironmentVariable("RateLimiting__Auth__PermitLimit", "100000");
+        // The suite signs customers up through the plain register endpoint; the OTP flow has its own tests.
+        Environment.SetEnvironmentVariable("PhoneVerification__Required", "false");
     }
 
     /// <summary>Optional: run the suite against an existing, disposable Postgres database instead of a

@@ -13,6 +13,7 @@ public sealed class CustomerDbContext : DbContext, ICustomerDbContext
     public DbSet<CustomerAddress> CustomerAddresses => Set<CustomerAddress>();
     public DbSet<CustomerAuthIdentity> CustomerAuthIdentities => Set<CustomerAuthIdentity>();
     public DbSet<CustomerRefreshToken> CustomerRefreshTokens => Set<CustomerRefreshToken>();
+    public DbSet<PhoneVerification> PhoneVerifications => Set<PhoneVerification>();
 
     public CustomerDbContext(DbContextOptions<CustomerDbContext> options) : base(options)
     {

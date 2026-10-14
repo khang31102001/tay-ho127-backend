@@ -1,3 +1,4 @@
+using AdminPlatform.Common.Messaging;
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Common.Security;
 using FluentValidation;
@@ -9,6 +10,7 @@ using AdminPlatform.Modules.Customer.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AdminPlatform.Modules.Customer;
 
@@ -38,6 +40,17 @@ public static class CustomerModule
         // infrastructure hiện tại"), distinguished only by the account_type claim (§7).
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
+
+        // Registration proves the phone with a one-time code. The sender is eSMS when Esms:ApiKey/SecretKey are
+        // set; otherwise the logging sender (Development only — it refuses to run anywhere else).
+        services.Configure<PhoneVerificationOptions>(configuration.GetSection(PhoneVerificationOptions.SectionName));
+        // IEsmsClient / EsmsOptions come from the Host's AddEsmsMessaging().
+        services.AddScoped<EsmsPhoneVerificationSender>();
+        services.AddScoped<LoggingPhoneVerificationSender>();
+        services.AddScoped<IPhoneVerificationSender>(sp =>
+            sp.GetRequiredService<IOptions<EsmsOptions>>().Value.IsConfigured
+                ? sp.GetRequiredService<EsmsPhoneVerificationSender>()
+                : sp.GetRequiredService<LoggingPhoneVerificationSender>());
 
         services.AddScoped<IGoogleIdTokenVerifier, GoogleIdTokenVerifier>();
         services.AddScoped<ICustomerAuthService, CustomerAuthService>();

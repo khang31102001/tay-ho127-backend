@@ -11,6 +11,7 @@ public interface ICustomerDbContext
     DbSet<CustomerAddress> CustomerAddresses { get; }
     DbSet<CustomerAuthIdentity> CustomerAuthIdentities { get; }
     DbSet<CustomerRefreshToken> CustomerRefreshTokens { get; }
+    DbSet<PhoneVerification> PhoneVerifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

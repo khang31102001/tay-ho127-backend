@@ -49,3 +49,11 @@ public sealed class AuthenticationFailedException : DomainException
     {
     }
 }
+
+/// <summary>The caller is asking for something too often (e.g. resending a verification code). Maps to HTTP 429.</summary>
+public sealed class TooManyRequestsException : DomainException
+{
+    public TooManyRequestsException(string message) : base(message)
+    {
+    }
+}

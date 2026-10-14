@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sales: a placed order is confirmed to the customer on Zalo (ZNS through eSMS). `ZaloOrderNotifier` replaces the logging
+  notifier when `Esms:ApiKey/SecretKey/ZaloOaId` and `Esms:ZaloOrderPlacedTemplateId` are set; the template's parameters come from
+  `Esms:ZaloOrderPlacedParams` (CustomerName, OrderCode, Phone, TotalAmount). Best effort: it waits at most 8 s and a failure (no
+  Zalo on that number, eSMS down) is only logged — the order is never affected. Status changes are not messaged yet. The eSMS
+  HTTP client moved to `Common.Messaging` (`IEsmsClient`, `AddEsmsMessaging()` in the Host) and is shared with the registration code sender.
+
+- Customer registration now proves the phone with a one-time code (migration `AddPhoneVerification`: `customers.phone_verified_at_utc`,
+  table `customer.phone_verifications`). `POST /api/v1/customer/auth/register/request-otp` validates the sign-up, stores it pending
+  (password already hashed) and sends a 6-digit code (CSPRNG, stored only as a keyed HMAC bound to the phone, 5 min, 5 wrong guesses,
+  60 s resend cooldown, 5 codes/hour/phone → 429); `POST .../register/verify` creates the Customer with the phone verified and signs it
+  in. Delivery goes through `IPhoneVerificationSender`: eSMS.vn Zalo ZNS and/or SMS (`Esms:*`, secrets via env) or, with no key and
+  only in Development, a log line. **Breaking:** `POST /customer/auth/register` is refused while `PhoneVerification:Required` is true
+  (the default) — deploy together with the matching frontend. New `TooManyRequestsException` → HTTP 429.
+
 - Navigation: one model for the admin sidebar and the website menus (migration `UnifyNavigation`, data-preserving rename of
   `menus`/`menu_permissions`). Tables: `navigation_menus` (containers, scope Admin|Site, one per location),
   `navigation_items` (shared tree, max 3 levels, `is_group` headings), `navigation_item_site_details` (website-only target),

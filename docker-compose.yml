@@ -49,6 +49,15 @@ services:
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Esms__ApiKey: ${ESMS_API_KEY:-}
+      Esms__SecretKey: ${ESMS_SECRET_KEY:-}
+      Esms__Channel: ${ESMS_CHANNEL:-Zalo}
+      Esms__Sandbox: ${ESMS_SANDBOX:-false}
+      Esms__ZaloOaId: ${ESMS_ZALO_OA_ID:-}
+      Esms__ZaloOtpTemplateId: ${ESMS_ZALO_OTP_TEMPLATE_ID:-}
+      Esms__ZaloOrderPlacedTemplateId: ${ESMS_ZALO_ORDER_PLACED_TEMPLATE_ID:-}
+      Esms__SmsBrandName: ${ESMS_SMS_BRAND_NAME:-}
+      Esms__SmsType: ${ESMS_SMS_TYPE:-8}
     depends_on:
       db:
         condition: service_healthy

@@ -1,3 +1,4 @@
+using AdminPlatform.Common.Messaging;
 using AdminPlatform.Common.Persistence;
 using AdminPlatform.Modules.Sales.Application;
 using AdminPlatform.Modules.Sales.Application.DeliveryMethods;
@@ -14,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace AdminPlatform.Modules.Sales;
 
@@ -50,8 +52,21 @@ public static class SalesModule
         services.AddScoped<IPaymentSessionService, PaymentSessionService>();
 
         services.AddScoped<IOrderCodeGenerator, OrderCodeGenerator>();
-        // The default notifier only logs; a host that wires a real email/SMS notifier registers it first and this is skipped.
-        services.TryAddScoped<IOrderNotifier, LoggingOrderNotifier>();
+        // A host that wires its own notifier registers it first and this is skipped. Otherwise: Zalo (eSMS) when the
+        // keys and an order template are configured (IEsmsClient/EsmsOptions come from the Host's AddEsmsMessaging()),
+        // else the notifier that only logs.
+        services.AddScoped<LoggingOrderNotifier>();
+        services.AddScoped<ZaloOrderNotifier>();
+        services.TryAddScoped<IOrderNotifier>(sp =>
+        {
+            var esms = sp.GetRequiredService<IOptions<EsmsOptions>>().Value;
+            var zaloOrderMessagesEnabled = esms.IsConfigured
+                && !string.IsNullOrWhiteSpace(esms.ZaloOaId)
+                && !string.IsNullOrWhiteSpace(esms.ZaloOrderPlacedTemplateId);
+            return zaloOrderMessagesEnabled
+                ? sp.GetRequiredService<ZaloOrderNotifier>()
+                : sp.GetRequiredService<LoggingOrderNotifier>();
+        });
 
         services.AddValidatorsFromAssembly(typeof(SalesModule).Assembly);
 

@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using AdminPlatform.Common.Abstractions;
 using AdminPlatform.Common.Security;
 using AdminPlatform.Modules.Customer.Domain;
@@ -16,6 +18,8 @@ public sealed class CustomerAuthService : ICustomerAuthService
     private readonly IGoogleIdTokenVerifier _googleIdTokenVerifier;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly JwtOptions _jwtOptions;
+    private readonly IPhoneVerificationSender _phoneVerificationSender;
+    private readonly PhoneVerificationOptions _phoneVerificationOptions;
 
     public CustomerAuthService(
         ICustomerDbContext db,
@@ -23,7 +27,9 @@ public sealed class CustomerAuthService : ICustomerAuthService
         IJwtTokenService jwtTokenService,
         IGoogleIdTokenVerifier googleIdTokenVerifier,
         IDateTimeProvider dateTimeProvider,
-        IOptions<JwtOptions> jwtOptions)
+        IOptions<JwtOptions> jwtOptions,
+        IPhoneVerificationSender phoneVerificationSender,
+        IOptions<PhoneVerificationOptions> phoneVerificationOptions)
     {
         _db = db;
         _passwordHasher = passwordHasher;
@@ -31,25 +37,22 @@ public sealed class CustomerAuthService : ICustomerAuthService
         _googleIdTokenVerifier = googleIdTokenVerifier;
         _dateTimeProvider = dateTimeProvider;
         _jwtOptions = jwtOptions.Value;
+        _phoneVerificationSender = phoneVerificationSender;
+        _phoneVerificationOptions = phoneVerificationOptions.Value;
     }
 
     public async Task<CustomerTokenResponse> RegisterAsync(RegisterCustomerRequest request, string? ipAddress, CancellationToken cancellationToken)
     {
+        if (_phoneVerificationOptions.Required)
+        {
+            // Otherwise this endpoint would be a way around the one-time code.
+            throw new BusinessRuleValidationException("Phone verification is required. Use register/request-otp, then register/verify.");
+        }
+
         var email = request.Email.Trim().ToLowerInvariant();
         var phone = request.Phone.Trim();
 
-        var emailTaken = await _db.CustomerAuthIdentities
-            .AnyAsync(i => i.Provider == CustomerAuthProvider.Local && i.Email == email, cancellationToken);
-        if (emailTaken)
-        {
-            throw new ConflictException($"A customer with email '{email}' already exists.");
-        }
-
-        var phoneTaken = await _db.Customers.AnyAsync(c => c.Phone == phone, cancellationToken);
-        if (phoneTaken)
-        {
-            throw new ConflictException($"A customer with phone '{phone}' already exists.");
-        }
+        await EnsureNotRegisteredAsync(email, phone, cancellationToken);
 
         var customer = Domain.Customer.Create(request.FullName, phone, email);
         var identity = CustomerAuthIdentity.CreateLocal(customer.Id, email, _passwordHasher.Hash(request.Password));
@@ -59,6 +62,103 @@ public sealed class CustomerAuthService : ICustomerAuthService
         await _db.SaveChangesAsync(cancellationToken);
 
         return await IssueTokenPairAsync(customer, deviceInfo: null, ipAddress, cancellationToken);
+    }
+
+    public async Task<RegistrationOtpResponse> RequestRegistrationOtpAsync(RequestRegistrationOtpRequest request, CancellationToken cancellationToken)
+    {
+        var email = request.Email.Trim().ToLowerInvariant();
+        var phone = PhoneNumberNormalizer.Normalize(request.Phone);
+
+        await EnsureNotRegisteredAsync(email, phone, cancellationToken);
+
+        var options = _phoneVerificationOptions;
+        var now = _dateTimeProvider.UtcNow;
+        var lifetime = TimeSpan.FromMinutes(options.LifetimeMinutes);
+        var cooldown = TimeSpan.FromSeconds(options.ResendCooldownSeconds);
+        var window = TimeSpan.FromMinutes(options.SendWindowMinutes);
+
+        var code = GenerateCode(options.CodeLength);
+        var codeHash = HashCode(phone, code);
+        var passwordHash = _passwordHasher.Hash(request.Password);
+
+        var verification = await _db.PhoneVerifications.SingleOrDefaultAsync(v => v.Phone == phone, cancellationToken);
+        if (verification is null)
+        {
+            verification = PhoneVerification.Start(phone, request.FullName, email, passwordHash, codeHash, now, lifetime);
+            _db.PhoneVerifications.Add(verification);
+        }
+        else
+        {
+            var waitSeconds = verification.ResendWaitSeconds(now, cooldown);
+            if (waitSeconds > 0)
+            {
+                throw new TooManyRequestsException($"Please wait {waitSeconds} seconds before requesting another code.");
+            }
+
+            if (verification.HasReachedSendLimit(now, window, options.MaxSendsPerWindow))
+            {
+                throw new TooManyRequestsException("Too many verification codes were requested for this phone number. Please try again later.");
+            }
+
+            verification.Resend(request.FullName, email, passwordHash, codeHash, now, lifetime, window);
+        }
+
+        // Saved before sending: the limits must count this attempt even if the provider is slow or the process dies.
+        await _db.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _phoneVerificationSender.SendRegistrationCodeAsync(phone, code, lifetime, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            verification.MarkSendFailed();
+            await _db.SaveChangesAsync(CancellationToken.None);
+            throw new BusinessRuleValidationException("We could not send the verification code. Please try again in a moment.");
+        }
+
+        return new RegistrationOtpResponse(verification.ExpiresAtUtc, now + cooldown);
+    }
+
+    public async Task<CustomerTokenResponse> VerifyRegistrationOtpAsync(VerifyRegistrationOtpRequest request, string? ipAddress, CancellationToken cancellationToken)
+    {
+        var phone = PhoneNumberNormalizer.Normalize(request.Phone);
+        var now = _dateTimeProvider.UtcNow;
+
+        var verification = await _db.PhoneVerifications.SingleOrDefaultAsync(v => v.Phone == phone, cancellationToken);
+        if (verification is null || verification.IsExpired(now))
+        {
+            throw new BusinessRuleValidationException("The verification code has expired. Please request a new one.");
+        }
+
+        if (!CodeMatches(verification.CodeHash, HashCode(phone, request.Code.Trim())))
+        {
+            verification.RegisterFailedAttempt();
+            var exhausted = verification.HasReachedAttemptLimit(_phoneVerificationOptions.MaxFailedAttempts);
+            if (exhausted)
+            {
+                verification.Expire(now);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            throw new BusinessRuleValidationException(exhausted
+                ? "Too many incorrect attempts. Please request a new code."
+                : "The verification code is incorrect.");
+        }
+
+        // The number or email may have been taken by someone else while the code was pending.
+        await EnsureNotRegisteredAsync(verification.Email, phone, cancellationToken);
+
+        var customer = Domain.Customer.Create(verification.FullName, phone, verification.Email, phoneVerifiedAtUtc: now);
+        var identity = CustomerAuthIdentity.CreateLocal(customer.Id, verification.Email, verification.PasswordHash);
+
+        _db.Customers.Add(customer);
+        _db.CustomerAuthIdentities.Add(identity);
+        _db.PhoneVerifications.Remove(verification);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return await IssueTokenPairAsync(customer, request.DeviceInfo, ipAddress, cancellationToken);
     }
 
     public async Task<CustomerTokenResponse> LoginAsync(CustomerLoginRequest request, string? ipAddress, CancellationToken cancellationToken)
@@ -182,6 +282,46 @@ public sealed class CustomerAuthService : ICustomerAuthService
 
         return ToMeResponse(customer);
     }
+
+    private async Task EnsureNotRegisteredAsync(string email, string phone, CancellationToken cancellationToken)
+    {
+        var emailTaken = await _db.CustomerAuthIdentities
+            .AnyAsync(i => i.Provider == CustomerAuthProvider.Local && i.Email == email, cancellationToken);
+        if (emailTaken)
+        {
+            throw new ConflictException($"A customer with email '{email}' already exists.");
+        }
+
+        var phoneTaken = await _db.Customers.AnyAsync(c => c.Phone == phone, cancellationToken);
+        if (phoneTaken)
+        {
+            throw new ConflictException($"A customer with phone '{phone}' already exists.");
+        }
+    }
+
+    /// <summary>Unpredictable digits (CSPRNG) — System.Random would let an attacker predict the next code.</summary>
+    private static string GenerateCode(int length)
+    {
+        var code = new char[length];
+        for (var i = 0; i < length; i++)
+        {
+            code[i] = (char)('0' + RandomNumberGenerator.GetInt32(0, 10));
+        }
+
+        return new string(code);
+    }
+
+    /// <summary>Keyed hash bound to the phone: a leaked table reveals no codes, and a code for one number is
+    /// worthless for another.</summary>
+    private string HashCode(string phone, string code)
+    {
+        var key = string.IsNullOrWhiteSpace(_phoneVerificationOptions.HashKey) ? _jwtOptions.SigningKey : _phoneVerificationOptions.HashKey;
+        var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes($"{phone}:{code}"));
+        return Convert.ToHexString(hash);
+    }
+
+    private static bool CodeMatches(string expectedHash, string providedHash) =>
+        CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expectedHash), Encoding.UTF8.GetBytes(providedHash));
 
     private async Task<CustomerTokenResponse> IssueTokenPairAsync(
         Domain.Customer customer,
