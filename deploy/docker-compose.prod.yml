@@ -1,0 +1,75 @@
+# Compose chạy trên VPS (/opt/tayho/docker-compose.yml). Chỉ KÉO image đã build sẵn trên GHCR, không build tại VPS.
+# Secrets nằm trong /opt/tayho/.env (không commit) — xem deploy/env.production.example.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-adminplatform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - adminplatform_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-adminplatform}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Job một lần: áp migration + seed rồi thoát. Workflow deploy chạy `docker compose run --rm migrator all`.
+  migrator:
+    image: ghcr.io/${GHCR_OWNER:-khang31102001}/tayho-migrator:latest
+    command: ["all"]
+    restart: "no"
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-adminplatform};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:?SEED_ADMIN_EMAIL is required}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?SEED_ADMIN_PASSWORD is required}
+      SEED_ADMIN_FULLNAME: ${SEED_ADMIN_FULLNAME:-Super Admin}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Không publish cổng ra ngoài: chỉ `web` gọi tới qua mạng nội bộ Docker (http://api:8080).
+  api:
+    image: ghcr.io/${GHCR_OWNER:-khang31102001}/tayho-api:latest
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-adminplatform};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      Jwt__Issuer: ${JWT_ISSUER:-AdminPlatform}
+      Jwt__Audience: ${JWT_AUDIENCE:-AdminPlatform.Clients}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required (base64, at least 32 bytes)}
+      Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
+      Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
+      GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Integrations__Esms__ApiKey: ${ESMS_API_KEY:-}
+      Integrations__Esms__SecretKey: ${ESMS_SECRET_KEY:-}
+      Notification__Otp__HmacKey: ${NOTIFICATION_OTP_HMAC_KEY:-}
+      # Origin công khai (không có dấu / cuối) dùng để dựng URL ảnh upload lưu vào DB, vd. http://IP hoặc https://domain.
+      MediaStorage__PublicBaseUrl: ${PUBLIC_BASE_URL:-}
+    volumes:
+      # Ảnh Admin upload (MediaStorage:RootPath = uploads, tính từ /app). Không có volume thì mất ảnh mỗi lần deploy.
+      - adminplatform_uploads:/app/uploads
+    # Chỉ nghe ở loopback để Nginx phục vụ /uploads/; web vẫn gọi API qua mạng nội bộ http://api:8080.
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Image do repo frontend build. Chỉ nghe ở 127.0.0.1:3000 để Nginx (trên host) proxy vào.
+  web:
+    image: ghcr.io/${GHCR_OWNER:-khang31102001}/tayho-web:latest
+    restart: unless-stopped
+    environment:
+      BACKEND_API_URL: http://api:8080
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  adminplatform_pgdata:
+  adminplatform_uploads:
