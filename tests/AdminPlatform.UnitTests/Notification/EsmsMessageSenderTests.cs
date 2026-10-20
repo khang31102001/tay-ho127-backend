@@ -158,7 +158,11 @@ public class EsmsMessageSenderTests
     {
         var settings = new Dictionary<string, string>
         {
-            ["oaId"] = "1", ["brandname"] = "B", ["otpRegisterTemplateId"] = "9", ["otpRegisterSmsContent"] = "{code}", ["smsType"] = "8",
+            ["oaId"] = "1",
+            ["brandname"] = "B",
+            ["otpRegisterTemplateId"] = "9",
+            ["otpRegisterSmsContent"] = "{code}",
+            ["smsType"] = "8",
         };
         var rig = NewRig(Connection(sandbox: false, settings: settings));
 
@@ -249,7 +253,10 @@ public class EsmsMessageSenderTests
     {
         var settings = new Dictionary<string, string>
         {
-            ["oaId"] = "1", ["brandname"] = "B", ["otpRegisterTemplateId"] = "9", ["otpRegisterSmsContent"] = "{code}",
+            ["oaId"] = "1",
+            ["brandname"] = "B",
+            ["otpRegisterTemplateId"] = "9",
+            ["otpRegisterSmsContent"] = "{code}",
         };
         settings.Remove(missingSetting);
         var rig = NewRig(Connection(settings: settings));
