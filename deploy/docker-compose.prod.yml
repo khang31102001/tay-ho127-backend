@@ -44,16 +44,17 @@ services:
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       GoogleAuth__ClientId: ${GOOGLE_CLIENT_ID:-}
-      PhoneVerification__Required: ${PHONE_VERIFICATION_REQUIRED:-true}
-      Esms__ApiKey: ${ESMS_API_KEY:-}
-      Esms__SecretKey: ${ESMS_SECRET_KEY:-}
-      Esms__Channel: ${ESMS_CHANNEL:-Zalo}
-      Esms__Sandbox: ${ESMS_SANDBOX:-false}
-      Esms__ZaloOaId: ${ESMS_ZALO_OA_ID:-}
-      Esms__ZaloOtpTemplateId: ${ESMS_ZALO_OTP_TEMPLATE_ID:-}
-      Esms__ZaloOrderPlacedTemplateId: ${ESMS_ZALO_ORDER_PLACED_TEMPLATE_ID:-}
-      Esms__SmsBrandName: ${ESMS_SMS_BRAND_NAME:-}
-      Esms__SmsType: ${ESMS_SMS_TYPE:-8}
+      Integrations__Esms__ApiKey: ${ESMS_API_KEY:-}
+      Integrations__Esms__SecretKey: ${ESMS_SECRET_KEY:-}
+      Notification__Otp__HmacKey: ${NOTIFICATION_OTP_HMAC_KEY:-}
+      # Origin công khai (không có dấu / cuối) dùng để dựng URL ảnh upload lưu vào DB, vd. http://IP hoặc https://domain.
+      MediaStorage__PublicBaseUrl: ${PUBLIC_BASE_URL:-}
+    volumes:
+      # Ảnh Admin upload (MediaStorage:RootPath = uploads, tính từ /app). Không có volume thì mất ảnh mỗi lần deploy.
+      - adminplatform_uploads:/app/uploads
+    # Chỉ nghe ở loopback để Nginx phục vụ /uploads/; web vẫn gọi API qua mạng nội bộ http://api:8080.
+    ports:
+      - "127.0.0.1:8080:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -71,3 +72,4 @@ services:
 
 volumes:
   adminplatform_pgdata:
+  adminplatform_uploads:

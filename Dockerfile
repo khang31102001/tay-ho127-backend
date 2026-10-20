@@ -51,7 +51,9 @@ ENTRYPOINT ["dotnet", "AdminPlatform.Migrator.dll"]
 # should use Dockerfile.migrator instead, which has no such ordering constraint to worry about.
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS api
 WORKDIR /app
-RUN useradd --uid 5678 --user-group --no-create-home appuser
+# /app/uploads must exist and belong to appuser so a volume mounted there is writable (MediaStorage:RootPath).
+RUN useradd --uid 5678 --user-group --no-create-home appuser \
+    && mkdir -p /app/uploads && chown appuser:appuser /app/uploads
 COPY --from=build /app/api ./
 USER appuser
 ENV ASPNETCORE_URLS=http://+:8080
