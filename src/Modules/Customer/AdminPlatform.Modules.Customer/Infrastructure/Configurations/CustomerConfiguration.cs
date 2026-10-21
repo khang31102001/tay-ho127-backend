@@ -19,6 +19,7 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<CustomerE
 
         builder.Property(c => c.FullName).HasMaxLength(256).IsRequired();
         builder.Property(c => c.Phone).HasMaxLength(32);
+        builder.Property(c => c.PhoneVerifiedAtUtc);
         builder.Property(c => c.Email).HasMaxLength(256);
         builder.Property(c => c.AvatarMediaId).HasMaxLength(512);
 
