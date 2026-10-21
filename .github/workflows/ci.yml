@@ -65,7 +65,7 @@ jobs:
           name: test-results
           path: TestResults/*.trx
 
-  # Chỉ chạy khi push vào main VÀ job kiểm tra phía trên xanh.
+  # Chỉ chạy khi push vào production VÀ job kiểm tra phía trên xanh.
   deploy:
     needs: build-lint-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
