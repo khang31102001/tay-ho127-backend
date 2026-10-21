@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, production, uat, dev]
   pull_request:
-    branches: [main]
+    branches: [main, production, uat, dev]
 
 env:
   DOTNET_NOLOGO: 1
@@ -68,7 +68,7 @@ jobs:
   # Chỉ chạy khi push vào main VÀ job kiểm tra phía trên xanh.
   deploy:
     needs: build-lint-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     permissions:
       contents: read
