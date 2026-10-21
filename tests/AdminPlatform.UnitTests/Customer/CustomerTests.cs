@@ -58,6 +58,78 @@ public class CustomerTests
         Assert.Null(customer.AvatarMediaId);
     }
 
+    [Theory]
+    [InlineData("+84 901 234 567", "0901234567")]
+    [InlineData("0901.234.567", "0901234567")]
+    [InlineData("(0901) 234-567", "0901234567")]
+    public void Create_stores_a_vietnamese_phone_in_its_canonical_form(string input, string expected)
+    {
+        Assert.Equal(expected, CustomerEntity.Create("Jane", input, "jane@example.com").Phone);
+    }
+
+    [Fact]
+    public void Create_keeps_text_that_is_not_a_vietnamese_number_trimmed_rather_than_failing()
+    {
+        // Older records and admin-entered foreign numbers must still be storable.
+        Assert.Equal("+1 202 555 0100", CustomerEntity.Create("Jane", " +1 202 555 0100 ", "jane@example.com").Phone);
+        Assert.Null(CustomerEntity.Create("Jane", "   ", "jane@example.com").Phone);
+    }
+
+    [Fact]
+    public void Create_records_the_verification_moment_only_when_there_is_a_phone()
+    {
+        var at = new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+
+        var withPhone = CustomerEntity.Create("Jane", "0901234567", "jane@example.com", at);
+        var withoutPhone = CustomerEntity.Create("Jane", phone: null, email: "jane@example.com", phoneVerifiedAtUtc: at);
+        var unverified = CustomerEntity.Create("Jane", "0901234567", "jane@example.com");
+
+        Assert.Equal(at, withPhone.PhoneVerifiedAtUtc);
+        Assert.True(withPhone.IsPhoneVerified);
+        Assert.Null(withoutPhone.PhoneVerifiedAtUtc);
+        Assert.False(unverified.IsPhoneVerified);
+    }
+
+    [Fact]
+    public void Changing_the_phone_clears_the_verification_but_keeping_the_same_number_does_not()
+    {
+        var at = new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+        var customer = CustomerEntity.Create("Jane", "0901234567", "jane@example.com", at);
+
+        // The same number written differently is still the same number: the proof stands.
+        customer.UpdateProfile("Jane", "+84 901 234 567", "jane@example.com", null, null);
+        Assert.Equal(at, customer.PhoneVerifiedAtUtc);
+
+        customer.UpdateProfile("Jane", "0909999999", "jane@example.com", null, null);
+        Assert.Null(customer.PhoneVerifiedAtUtc);
+        Assert.Equal("0909999999", customer.Phone);
+    }
+
+    [Fact]
+    public void Removing_the_phone_clears_the_verification()
+    {
+        var customer = CustomerEntity.Create("Jane", "0901234567", "jane@example.com", new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc));
+
+        customer.UpdateProfile("Jane", null, "jane@example.com", null, null);
+
+        Assert.Null(customer.Phone);
+        Assert.Null(customer.PhoneVerifiedAtUtc);
+    }
+
+    [Fact]
+    public void MarkPhoneVerified_needs_a_phone_to_prove()
+    {
+        var at = new DateTime(2026, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+        var withPhone = CustomerEntity.Create("Jane", "0901234567", "jane@example.com");
+        var withoutPhone = CustomerEntity.Create("Jane", phone: null, email: "jane@example.com");
+
+        withPhone.MarkPhoneVerified(at);
+        withoutPhone.MarkPhoneVerified(at);
+
+        Assert.Equal(at, withPhone.PhoneVerifiedAtUtc);
+        Assert.Null(withoutPhone.PhoneVerifiedAtUtc);
+    }
+
     [Fact]
     public void Deactivate_then_Activate_round_trips()
     {
