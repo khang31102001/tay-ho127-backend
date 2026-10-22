@@ -68,6 +68,12 @@ try
 
     // ---- Cross-module ports, implemented at the composition root only (architecture assumption #6) ----
     builder.Services.AddScoped<IUserPermissionsProvider, IdentityPermissionsAdapter>();
+    // Admin permissions are resolved on the server per request (cached ~30 s) instead of travelling inside the JWT.
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<AccessControlPermissionSource>();
+    builder.Services.AddScoped<IUserPermissionSource>(services => new CachedUserPermissionSource(
+        services.GetRequiredService<AccessControlPermissionSource>(),
+        services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()));
     builder.Services.AddScoped<IUserScopeValidator, IdentityUserScopeAdapter>();
     builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
@@ -134,6 +140,16 @@ try
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtOptions.SigningKey)),
                 ClockSkew = TimeSpan.FromSeconds(30),
+            };
+
+            // The access token carries no permission claims (it would be several KB); fill them in per request from the
+            // server-side source, once the signature has been validated.
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context => PermissionClaimsEnricher.EnrichAsync(
+                    context.Principal,
+                    context.HttpContext.RequestServices.GetRequiredService<IUserPermissionSource>(),
+                    context.HttpContext.RequestAborted),
             };
         });
 
