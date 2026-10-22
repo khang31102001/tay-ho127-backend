@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Admin access tokens no longer embed permission claims. With ~115 permission codes (all granted to SuperAdmin) the JWT
+  and its cookies grew past 4 KB, which made the reverse proxy answer 502 ("upstream sent too big header") on login and
+  sits right at the browsers' 4 KB cookie limit. The Host now fills the `permission` claims into the authenticated principal
+  on every request from AccessControl (cached ~30 s), so a role/permission change takes effect within seconds instead of
+  at the next token refresh. Tokens issued before this change keep working: their permission claims are ignored.
+
 ### Added
 
 - Customer sign-up phone verification (one-time code over Zalo, SMS fallback via eSMS). New modules **Integration**
