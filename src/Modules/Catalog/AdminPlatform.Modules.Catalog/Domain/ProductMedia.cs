@@ -2,7 +2,7 @@ namespace AdminPlatform.Modules.Catalog.Domain;
 
 /// <summary>Ordered product image link. MediaId is an opaque reference with no FK: it is either a Media
 /// module id (GUID text) or a legacy key of an image bundled with the website (e.g. "media-banh-cuon-dish")
-/// that the site resolves itself — modules never share tables (ARCHITECTURE.md).</summary>
+/// that the site resolves itself — modules never share tables (document/02-backend/ARCHITECTURE.md).</summary>
 public sealed class ProductMedia
 {
     public const int MaxMediaIdLength = 64;

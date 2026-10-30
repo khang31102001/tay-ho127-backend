@@ -16,6 +16,8 @@ public sealed class CustomerAuthService : ICustomerAuthService
     private readonly IGoogleIdTokenVerifier _googleIdTokenVerifier;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly JwtOptions _jwtOptions;
+    private readonly ICustomerPhoneVerifier _phoneVerifier;
+    private readonly PhoneVerificationOptions _phoneVerification;
 
     public CustomerAuthService(
         ICustomerDbContext db,
@@ -23,7 +25,9 @@ public sealed class CustomerAuthService : ICustomerAuthService
         IJwtTokenService jwtTokenService,
         IGoogleIdTokenVerifier googleIdTokenVerifier,
         IDateTimeProvider dateTimeProvider,
-        IOptions<JwtOptions> jwtOptions)
+        IOptions<JwtOptions> jwtOptions,
+        ICustomerPhoneVerifier phoneVerifier,
+        IOptions<PhoneVerificationOptions> phoneVerification)
     {
         _db = db;
         _passwordHasher = passwordHasher;
@@ -31,27 +35,60 @@ public sealed class CustomerAuthService : ICustomerAuthService
         _googleIdTokenVerifier = googleIdTokenVerifier;
         _dateTimeProvider = dateTimeProvider;
         _jwtOptions = jwtOptions.Value;
+        _phoneVerifier = phoneVerifier;
+        _phoneVerification = phoneVerification.Value;
+    }
+
+    public async Task<RegistrationOtpResponse> RequestRegistrationOtpAsync(
+        RequestRegistrationOtpRequest request, string? ipAddress, CancellationToken cancellationToken)
+    {
+        if (!_phoneVerification.Required)
+        {
+            throw new BusinessRuleValidationException("Tính năng xác minh số điện thoại khi đăng ký chưa được bật.");
+        }
+
+        var phone = NormalizeRequiredPhone(request.Phone);
+        var email = request.Email.Trim().ToLowerInvariant();
+
+        // Checked before a code is sent: a number or email that is already taken would waste a paid message, and the
+        // user can fix it straight away instead of finding out only after typing the code.
+        await EnsureContactAvailableAsync(email, phone, cancellationToken);
+
+        var issued = await _phoneVerifier.SendRegistrationCodeAsync(phone, ipAddress, cancellationToken);
+        return new RegistrationOtpResponse(issued.ChallengeId, issued.ExpiresAtUtc, issued.ResendAfterSeconds);
     }
 
     public async Task<CustomerTokenResponse> RegisterAsync(RegisterCustomerRequest request, string? ipAddress, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var phone = request.Phone.Trim();
+        var verificationRequired = _phoneVerification.Required;
 
-        var emailTaken = await _db.CustomerAuthIdentities
-            .AnyAsync(i => i.Provider == CustomerAuthProvider.Local && i.Email == email, cancellationToken);
-        if (emailTaken)
+        // With verification on the number must be a real Vietnamese number (a code is about to go to it); with it
+        // off the old, lenient behaviour is kept exactly.
+        var phone = verificationRequired ? NormalizeRequiredPhone(request.Phone) : VietnamesePhone.NormalizeLenient(request.Phone);
+
+        if (verificationRequired && (request.OtpChallengeId is null || string.IsNullOrWhiteSpace(request.OtpCode)))
         {
-            throw new ConflictException($"A customer with email '{email}' already exists.");
+            throw new BusinessRuleValidationException("Vui lòng xác minh số điện thoại bằng mã OTP trước khi đăng ký.");
         }
 
-        var phoneTaken = await _db.Customers.AnyAsync(c => c.Phone == phone, cancellationToken);
-        if (phoneTaken)
+        // Duplicates are checked BEFORE the code is checked, so a taken email never uses up a correct code.
+        await EnsureContactAvailableAsync(email, phone, cancellationToken);
+
+        DateTime? phoneVerifiedAtUtc = null;
+        if (verificationRequired)
         {
-            throw new ConflictException($"A customer with phone '{phone}' already exists.");
+            var outcome = await _phoneVerifier.VerifyRegistrationCodeAsync(
+                request.OtpChallengeId!.Value, phone!, request.OtpCode!.Trim(), cancellationToken);
+            if (outcome != PhoneVerificationOutcome.Verified)
+            {
+                throw new BusinessRuleValidationException(OtpFailureMessage(outcome));
+            }
+
+            phoneVerifiedAtUtc = _dateTimeProvider.UtcNow;
         }
 
-        var customer = Domain.Customer.Create(request.FullName, phone, email);
+        var customer = Domain.Customer.Create(request.FullName, phone, email, phoneVerifiedAtUtc);
         var identity = CustomerAuthIdentity.CreateLocal(customer.Id, email, _passwordHasher.Hash(request.Password));
 
         _db.Customers.Add(customer);
@@ -234,6 +271,41 @@ public sealed class CustomerAuthService : ICustomerAuthService
         }
     }
 
+    /// <summary>Email and phone are unique across customers; checked up front so the caller gets a readable 409 instead of
+    /// a raw constraint violation. A null phone has nothing to clash with.</summary>
+    private async Task EnsureContactAvailableAsync(string email, string? phone, CancellationToken cancellationToken)
+    {
+        var emailTaken = await _db.CustomerAuthIdentities
+            .AnyAsync(i => i.Provider == CustomerAuthProvider.Local && i.Email == email, cancellationToken);
+        if (emailTaken)
+        {
+            throw new ConflictException($"A customer with email '{email}' already exists.");
+        }
+
+        if (phone is not null && await _db.Customers.AnyAsync(c => c.Phone == phone, cancellationToken))
+        {
+            throw new ConflictException($"A customer with phone '{phone}' already exists.");
+        }
+    }
+
+    private static string NormalizeRequiredPhone(string? phone)
+    {
+        if (!VietnamesePhone.TryNormalize(phone, out var normalized))
+        {
+            throw new BusinessRuleValidationException("Số điện thoại không đúng định dạng.");
+        }
+
+        return normalized;
+    }
+
+    /// <summary>One message per outcome, all in the user's language and none revealing more than it must.</summary>
+    private static string OtpFailureMessage(PhoneVerificationOutcome outcome) => outcome switch
+    {
+        PhoneVerificationOutcome.Expired => "Mã xác minh đã hết hạn. Vui lòng yêu cầu mã mới.",
+        PhoneVerificationOutcome.TooManyAttempts => "Bạn đã nhập sai quá số lần cho phép. Vui lòng yêu cầu mã mới.",
+        _ => "Mã xác minh không đúng hoặc đã được sử dụng.",
+    };
+
     private static CustomerMeResponse ToMeResponse(Domain.Customer customer) => new(
         customer.Id,
         customer.CustomerCode,
@@ -241,5 +313,6 @@ public sealed class CustomerAuthService : ICustomerAuthService
         customer.Phone,
         customer.Email,
         customer.AvatarMediaId,
-        customer.Status.ToString());
+        customer.Status.ToString(),
+        customer.IsPhoneVerified);
 }

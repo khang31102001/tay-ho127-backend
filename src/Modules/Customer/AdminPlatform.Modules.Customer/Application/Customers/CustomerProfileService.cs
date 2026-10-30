@@ -126,9 +126,9 @@ public sealed class CustomerProfileService : ICustomerProfileService
     /// the caller gets a readable 409 instead of a raw constraint violation.</summary>
     private async Task EnsureContactAvailableAsync(Guid? customerId, string? phone, string? email, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(phone))
+        // Compared in the stored (canonical) form, or "+84901234567" would slip past an existing "0901234567".
+        if (VietnamesePhone.NormalizeLenient(phone) is { } normalizedPhone)
         {
-            var normalizedPhone = phone.Trim();
             if (await _db.Customers.AnyAsync(c => c.Id != customerId && c.Phone == normalizedPhone, cancellationToken))
             {
                 throw new ConflictException($"A customer with phone '{normalizedPhone}' already exists.");
@@ -160,5 +160,6 @@ public sealed class CustomerProfileService : ICustomerProfileService
         customer.Gender?.ToString(),
         customer.Status.ToString(),
         customer.CreatedAtUtc,
-        customer.UpdatedAtUtc);
+        customer.UpdatedAtUtc,
+        customer.IsPhoneVerified);
 }
