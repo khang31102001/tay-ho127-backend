@@ -10,6 +10,11 @@ public sealed class Article : AuditableEntity
     public const int MaxSummaryLength = 1000;
     public const int MaxAuthorLength = 200;
     public const int MaxMediaIdLength = 64;
+    public const int MaxContentWords = 5000;
+
+    /// <summary>Hard cap on the stored HTML (markup included), well above what 5000 words of formatted text
+    /// produce, so a pasted blob cannot bloat the row even when its word count is small.</summary>
+    public const int MaxContentLength = 500_000;
 
     private readonly List<ArticleTagLink> _tags = [];
 
@@ -22,7 +27,7 @@ public sealed class Article : AuditableEntity
     public string Content { get; private set; } = string.Empty;
 
     /// <summary>Opaque media reference with no FK (a Media module id, or a legacy key the website resolves
-    /// itself) — modules never share tables (ARCHITECTURE.md). Same convention as ProductMedia.</summary>
+    /// itself) — modules never share tables (document/02-backend/ARCHITECTURE.md). Same convention as ProductMedia.</summary>
     public string? FeaturedMediaId { get; private set; }
 
     public Guid? CategoryId { get; private set; }

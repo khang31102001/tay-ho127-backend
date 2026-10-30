@@ -36,6 +36,9 @@ public static class CatalogModule
         });
         services.AddScoped<ICatalogDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
 
+        // Thread-safe configured whitelist, so one instance serves all requests.
+        services.AddSingleton<IProductContentSanitizer, ProductContentSanitizer>();
+
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ISalesMenuService, SalesMenuService>();

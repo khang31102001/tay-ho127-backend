@@ -68,7 +68,7 @@ For the persistence step specifically, defer to `design-database` for anything b
 
 # 3. This Project's Actual Architecture — Ground Every Step In This
 
-This is a **modular monolith**: one ASP.NET Core process, independent business modules (`Identity`, `AccessControl`, `Organization`, `Navigation`, `Platform`), one shared Postgres database with **one schema per module**. Full detail: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md).
+This is a **modular monolith**: one ASP.NET Core process, independent business modules (`Identity`, `AccessControl`, `Organization`, `Navigation`, `Platform`), one shared Postgres database with **one schema per module**. Full detail: [`../document/02-backend/ARCHITECTURE.md`](../../../document/02-backend/ARCHITECTURE.md).
 
 Each module is **one C# project with four folders**, not four projects:
 

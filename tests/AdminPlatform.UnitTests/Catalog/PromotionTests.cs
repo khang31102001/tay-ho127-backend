@@ -218,7 +218,7 @@ public class PromotionTests
         var leaf = await categories.CreateAsync(new CreateCategoryRequest("Bánh cuốn nhân", banhCuon.Id, 1, true), None);
         var drinks = await categories.CreateAsync(new CreateCategoryRequest("Đồ uống", null, 2, true), None);
 
-        var products = new ProductService(db);
+        var products = new ProductService(db, new ProductContentSanitizer());
         ProductDetailsRequest(out var make);
         var inScope = await products.CreateAsync(make("Bánh cuốn thịt", leaf.Id), None);
         var outOfScope = await products.CreateAsync(make("Trà đá", drinks.Id), None);
@@ -248,5 +248,5 @@ public class PromotionTests
     }
 
     private static void ProductDetailsRequest(out Func<string, Guid, CreateProductRequest> make) =>
-        make = (name, categoryId) => new CreateProductRequest(name, null, categoryId, 50000, null, null, true, null, null, null, [], []);
+        make = (name, categoryId) => new CreateProductRequest(name, null, categoryId, 50000, null, null, null, true, null, null, null, [], []);
 }

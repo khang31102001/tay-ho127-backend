@@ -1,3 +1,4 @@
+using AdminPlatform.Common.Pagination;
 using AdminPlatform.Modules.Catalog.Application;
 using AdminPlatform.Modules.Catalog.Application.Categories;
 using AdminPlatform.Modules.Catalog.Application.Products;
@@ -58,7 +59,7 @@ public class CatalogServiceTests
         var categories = new CategoryService(db);
         var group = await categories.CreateAsync(new CreateCategoryRequest("Món ăn", null, 1, true), None);
         var leaf = await categories.CreateAsync(new CreateCategoryRequest("Bánh cuốn", group.Id, 1, true), None);
-        await new ProductService(db).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
+        await new ProductService(db, new ProductContentSanitizer()).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
 
         await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(group.Id, None));
         await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(leaf.Id, None));
@@ -69,7 +70,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var sut = new ProductService(db);
+        var sut = new ProductService(db, new ProductContentSanitizer());
 
         var first = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
         var second = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
@@ -84,11 +85,34 @@ public class CatalogServiceTests
     }
 
     [Fact]
+    public async Task Product_content_is_sanitized_kept_when_null_and_left_out_of_lists()
+    {
+        var db = NewDb();
+        var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
+        var sut = new ProductService(db, new ProductContentSanitizer());
+
+        var created = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id) with
+        {
+            Content = "<p>Nhân <strong>thịt</strong></p><script>alert(1)</script>",
+        }, None);
+        Assert.Equal("<p>Nhân <strong>thịt</strong></p>", created.Content);
+
+        var kept = await sut.UpdateAsync(created.Id, UpdateRequest("Bánh cuốn thịt", category.Id, slug: null) with { Content = null }, None);
+        Assert.Equal(created.Content, kept.Content);
+
+        var cleared = await sut.UpdateAsync(created.Id, UpdateRequest("Bánh cuốn thịt", category.Id, slug: null) with { Content = "" }, None);
+        Assert.Null(cleared.Content);
+
+        var listed = await sut.ListAsync(new PagedRequest(), null, null, None);
+        Assert.All(listed.Items, product => Assert.Null(product.Content));
+    }
+
+    [Fact]
     public async Task Product_requires_an_existing_category_and_modifier_groups()
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var sut = new ProductService(db);
+        var sut = new ProductService(db, new ProductContentSanitizer());
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(() => sut.CreateAsync(ProductRequest("X", Guid.NewGuid()), None));
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
@@ -100,7 +124,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var product = await new ProductService(db).CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
+        var product = await new ProductService(db, new ProductContentSanitizer()).CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
         var menus = new SalesMenuService(db);
         var menu = await menus.CreateAsync(new CreateSalesMenuRequest("thuc-don-chinh", "Thực đơn chính", true), None);
         var sut = new SalesMenuProductService(db);
@@ -114,8 +138,8 @@ public class CatalogServiceTests
     }
 
     private static CreateProductRequest ProductRequest(string name, Guid categoryId) =>
-        new(name, null, categoryId, 50000, null, null, true, null, null, null, ["media-banh-cuon-dish"], []);
+        new(name, null, categoryId, 50000, null, null, null, true, null, null, null, ["media-banh-cuon-dish"], []);
 
     private static UpdateProductRequest UpdateRequest(string name, Guid categoryId, string? slug) =>
-        new(name, slug, categoryId, 55000, 60000, "Mô tả", true, "DISH", 4.5m, 10, [], []);
+        new(name, slug, categoryId, 55000, 60000, "Mô tả", "<p>Chi tiết</p>", true, "DISH", 4.5m, 10, [], []);
 }
