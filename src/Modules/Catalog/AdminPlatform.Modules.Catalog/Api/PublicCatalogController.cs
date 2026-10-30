@@ -24,4 +24,15 @@ public sealed class PublicCatalogController : ControllerBase
     {
         return Ok(await _publicCatalogService.GetAsync(cancellationToken));
     }
+
+    /// <summary>Rich-text detail (sanitized HTML) of one active product, for its product page only.
+    /// 404 when the slug is unknown or the product is inactive.</summary>
+    [HttpGet("products/{slug}/content")]
+    [AllowAnonymous]
+    [ProducesResponseType<PublicProductContentResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PublicProductContentResponse>> GetProductContent(string slug, CancellationToken cancellationToken)
+    {
+        return Ok(await _publicCatalogService.GetProductContentAsync(slug, cancellationToken));
+    }
 }
