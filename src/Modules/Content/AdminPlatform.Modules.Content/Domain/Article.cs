@@ -22,7 +22,7 @@ public sealed class Article : AuditableEntity
     public string Content { get; private set; } = string.Empty;
 
     /// <summary>Opaque media reference with no FK (a Media module id, or a legacy key the website resolves
-    /// itself) — modules never share tables (ARCHITECTURE.md). Same convention as ProductMedia.</summary>
+    /// itself) — modules never share tables (document/02-backend/ARCHITECTURE.md). Same convention as ProductMedia.</summary>
     public string? FeaturedMediaId { get; private set; }
 
     public Guid? CategoryId { get; private set; }

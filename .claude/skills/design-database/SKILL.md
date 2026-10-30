@@ -33,7 +33,7 @@ This skill governs *data modeling and migrations*. Wiring the entity into an end
 
 # 3. This Project's Actual Persistence Model — Read First
 
-Confirmed from `docs/ARCHITECTURE.md` and the Identity module's implementation. Do not propose an alternative pattern (generic repository, Unit of Work, single shared `DbContext`) without a concrete reason — none of that is used here today.
+Confirmed from `../document/02-backend/ARCHITECTURE.md` and the Identity module's implementation. Do not propose an alternative pattern (generic repository, Unit of Work, single shared `DbContext`) without a concrete reason — none of that is used here today.
 
 * **One schema per module, one shared Postgres database.** `IdentityDbContext.Schema` (e.g. `"identity"`), `organization`, `access_control`, etc. Every table for a module lives in that module's schema.
 * **Naming convention**: `UseSnakeCaseNamingConvention()` is applied per `DbContext` registration — table/column names in the database are `snake_case` (`users`, `full_name`) even though C# properties are `PascalCase`. Don't hand-pick different casing in `ToTable()`/`HasColumnName()` calls; let the convention do it unless a name must diverge intentionally.

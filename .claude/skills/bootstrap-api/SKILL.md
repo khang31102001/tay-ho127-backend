@@ -8,7 +8,7 @@ description: Design, create, or normalize a maintainable ASP.NET Core Web API co
 
 ## 0. This Repository Already Has a Foundation
 
-This is not a greenfield project. `docs/ARCHITECTURE.md` documents an established **modular monolith**: one ASP.NET Core process, independent modules (`Identity`, `AccessControl`, `Organization`, `Navigation`, `Platform`) each as a single project with `Domain/Application/Infrastructure/Api` folders, one shared PostgreSQL database with one schema per module, no generic repository, no MediatR, no AutoMapper — see `build-backend-feature`'s §3 for the full confirmed pattern.
+This is not a greenfield project. `../document/02-backend/ARCHITECTURE.md` documents an established **modular monolith**: one ASP.NET Core process, independent modules (`Identity`, `AccessControl`, `Organization`, `Navigation`, `Platform`) each as a single project with `Domain/Application/Infrastructure/Api` folders, one shared PostgreSQL database with one schema per module, no generic repository, no MediatR, no AutoMapper — see `build-backend-feature`'s §3 for the full confirmed pattern.
 
 For this repository, treat this skill's applicable scope as:
 
