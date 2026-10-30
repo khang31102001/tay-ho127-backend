@@ -43,6 +43,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -99,6 +100,16 @@ try
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
     builder.Services.AddEndpointsApiExplorer();
+
+    // ---- Response compression (Brotli, then Gzip) ----
+    // EnableForHttps stays false (the default): compressing HTTPS responses that carry tokens next to
+    // request-reflected input opens BREACH. The website's BFF calls this API over the internal network, so
+    // those responses (catalog snapshot, article/product HTML) are still compressed there.
+    builder.Services.AddResponseCompression(options =>
+    {
+        options.Providers.Add<BrotliCompressionProvider>();
+        options.Providers.Add<GzipCompressionProvider>();
+    });
 
     // ---- Problem Details + centralized exception handling (api-design.md §18-21) ----
     builder.Services.AddProblemDetails();
@@ -257,6 +268,7 @@ try
 
     var app = builder.Build();
 
+    app.UseResponseCompression();
     app.UseSerilogRequestLogging();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseExceptionHandler();

@@ -8,10 +8,12 @@ namespace AdminPlatform.Modules.Catalog.Application.Products;
 public sealed class ProductService : IProductService
 {
     private readonly ICatalogDbContext _db;
+    private readonly IProductContentSanitizer _sanitizer;
 
-    public ProductService(ICatalogDbContext db)
+    public ProductService(ICatalogDbContext db, IProductContentSanitizer sanitizer)
     {
         _db = db;
+        _sanitizer = sanitizer;
     }
 
     public async Task<PagedResult<ProductResponse>> ListAsync(PagedRequest request, Guid? categoryId, bool? isActive, CancellationToken cancellationToken)
@@ -36,16 +38,29 @@ public sealed class ProductService : IProductService
 
         query = request.IsDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name);
 
-        // Links are loaded with a split query: a single JOIN would multiply every product row by
+        // Projected so the rich-text Content column is never read for a list (only the editor needs it).
+        // Links come from a split query: a single JOIN would multiply every product row by
         // (images × modifier groups) before paging.
-        var pagedProducts = await query
-            .Include(p => p.Media)
-            .Include(p => p.ModifierGroups)
+        return await query
+            .Select(p => new ProductResponse(
+                p.Id,
+                p.Name,
+                p.Slug,
+                p.CategoryId,
+                p.Price,
+                p.OldPrice,
+                p.Description,
+                null,
+                p.IsActive,
+                p.Badge,
+                p.Rating,
+                p.RatingCount,
+                p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).ToList(),
+                p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList(),
+                p.CreatedAtUtc,
+                p.UpdatedAtUtc))
             .AsSplitQuery()
             .ToPagedResultAsync(request, cancellationToken);
-
-        var items = pagedProducts.Items.Select(ToResponse).ToList();
-        return new PagedResult<ProductResponse>(items, pagedProducts.Page, pagedProducts.PageSize, pagedProducts.TotalItems);
     }
 
     public async Task<ProductResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -59,7 +74,7 @@ public sealed class ProductService : IProductService
         var slug = await ResolveSlugAsync(request.Slug, request.Name, productId: null, cancellationToken);
 
         var product = Product.Create(request.Name, slug, request.CategoryId, ToDetails(request.Price, request.OldPrice,
-            request.Description, request.IsActive, request.Badge, request.Rating, request.RatingCount));
+            request.Description, request.Content, request.IsActive, request.Badge, request.Rating, request.RatingCount));
         product.ReplaceMedia(request.MediaIds ?? []);
         product.ReplaceModifierGroups(request.ModifierGroupIds ?? []);
 
@@ -77,8 +92,11 @@ public sealed class ProductService : IProductService
             ? product.Slug
             : await ResolveSlugAsync(request.Slug, request.Name, product.Id, cancellationToken);
 
+        // Content null = keep the current detail: list reads never carry Content, so a caller that edits
+        // from list data (e.g. CSV import) must not wipe it. An empty string clears it.
+        var content = request.Content is null ? product.Content : request.Content;
         product.Update(request.Name, slug, request.CategoryId, ToDetails(request.Price, request.OldPrice,
-            request.Description, request.IsActive, request.Badge, request.Rating, request.RatingCount));
+            request.Description, content, request.IsActive, request.Badge, request.Rating, request.RatingCount));
         product.ReplaceMedia(request.MediaIds ?? []);
         product.ReplaceModifierGroups(request.ModifierGroupIds ?? []);
 
@@ -161,9 +179,10 @@ public sealed class ProductService : IProductService
         }
     }
 
-    private static ProductDetails ToDetails(decimal price, decimal? oldPrice, string? description, bool isActive,
+    private ProductDetails ToDetails(decimal price, decimal? oldPrice, string? description, string? content, bool isActive,
         string? badge, decimal? rating, int? ratingCount) =>
-        new(price, oldPrice, description, isActive, badge, rating, ratingCount);
+        new(price, oldPrice, description, string.IsNullOrWhiteSpace(content) ? null : _sanitizer.Sanitize(content),
+            isActive, badge, rating, ratingCount);
 
     private async Task<Product> FindOrThrowAsync(Guid id, CancellationToken cancellationToken) =>
         await _db.Products
@@ -181,6 +200,7 @@ public sealed class ProductService : IProductService
         product.Price,
         product.OldPrice,
         product.Description,
+        product.Content,
         product.IsActive,
         product.Badge,
         product.Rating,

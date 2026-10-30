@@ -10,6 +10,11 @@ public sealed class Article : AuditableEntity
     public const int MaxSummaryLength = 1000;
     public const int MaxAuthorLength = 200;
     public const int MaxMediaIdLength = 64;
+    public const int MaxContentWords = 5000;
+
+    /// <summary>Hard cap on the stored HTML (markup included), well above what 5000 words of formatted text
+    /// produce, so a pasted blob cannot bloat the row even when its word count is small.</summary>
+    public const int MaxContentLength = 500_000;
 
     private readonly List<ArticleTagLink> _tags = [];
 
