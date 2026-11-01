@@ -76,6 +76,30 @@ public class ArticleTests
     }
 
     [Fact]
+    public void Featured_order_is_kept_only_while_the_article_is_featured()
+    {
+        var details = new ArticleDetails("T", "t", "S", "<p>c</p>", null, null, "A", PublishStatus.Published, IsFeatured: true, FeaturedOrder: 2);
+        var article = Article.Create(details, Now);
+        Assert.True(article.IsFeatured);
+        Assert.Equal(2, article.FeaturedOrder);
+
+        article.Update(details with { IsFeatured = false }, Now);
+
+        Assert.False(article.IsFeatured);
+        Assert.Null(article.FeaturedOrder);
+    }
+
+    [Fact]
+    public void Featured_order_outside_the_allowed_range_is_rejected()
+    {
+        var validator = new CreateArticleRequestValidator();
+
+        Assert.False(validator.Validate(NewArticle() with { IsFeatured = true, FeaturedOrder = -1 }).IsValid);
+        Assert.False(validator.Validate(NewArticle() with { IsFeatured = true, FeaturedOrder = Article.MaxFeaturedOrder + 1 }).IsValid);
+        Assert.True(validator.Validate(NewArticle() with { IsFeatured = true, FeaturedOrder = 0 }).IsValid);
+    }
+
+    [Fact]
     public void Replacing_tags_keeps_existing_links_and_dedupes()
     {
         var article = Article.Create(new ArticleDetails("T", "t", "S", "<p>c</p>", null, null, "A", PublishStatus.Draft), Now);
@@ -184,6 +208,24 @@ public class ArticleTests
         Assert.Equal(Now, list.Items[0].PublishedAt);
         Assert.Equal(published.Slug, (await sut.GetArticleBySlugAsync(published.Slug, None)).Slug);
         await Assert.ThrowsAsync<NotFoundException>(() => sut.GetArticleBySlugAsync("ban-nhap", None));
+    }
+
+    [Fact]
+    public async Task Public_api_exposes_the_featured_flag_and_order()
+    {
+        var db = NewDb();
+        var articles = Articles(db);
+        await articles.CreateAsync(NewArticle(title: "Nổi bật", status: "published") with { IsFeatured = true, FeaturedOrder = 1 }, None);
+        await articles.CreateAsync(NewArticle(title: "Thường", status: "published"), None);
+
+        var list = await new PublicContentService(db, new FixedClock(Now)).ListArticlesAsync(new PagedRequest(), None);
+
+        var featured = list.Items.Single(a => a.Slug == "noi-bat");
+        Assert.True(featured.IsFeatured);
+        Assert.Equal(1, featured.FeaturedOrder);
+        var regular = list.Items.Single(a => a.Slug == "thuong");
+        Assert.False(regular.IsFeatured);
+        Assert.Null(regular.FeaturedOrder);
     }
 
     [Fact]

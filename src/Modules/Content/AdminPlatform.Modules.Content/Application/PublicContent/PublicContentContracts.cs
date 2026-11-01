@@ -1,7 +1,7 @@
 namespace AdminPlatform.Modules.Content.Application.PublicContent;
 
 /// <summary>A published article as the website lists it — no HTML body, but the reading time is computed
-/// from it so the list does not need the body.</summary>
+/// from it so the list does not need the body. IsFeatured/FeaturedOrder drive the "Tin nổi bật" block.</summary>
 public sealed record PublicArticleSummaryResponse(
     Guid Id,
     string Slug,
@@ -13,7 +13,9 @@ public sealed record PublicArticleSummaryResponse(
     string AuthorName,
     DateTime PublishedAt,
     DateTime UpdatedAt,
-    int ReadingTimeMinutes);
+    int ReadingTimeMinutes,
+    bool IsFeatured,
+    int? FeaturedOrder);
 
 /// <summary>A published article with its (sanitized) HTML body.</summary>
 public sealed record PublicArticleResponse(
@@ -28,7 +30,9 @@ public sealed record PublicArticleResponse(
     string AuthorName,
     DateTime PublishedAt,
     DateTime UpdatedAt,
-    int ReadingTimeMinutes);
+    int ReadingTimeMinutes,
+    bool IsFeatured,
+    int? FeaturedOrder);
 
 public sealed record PublicArticleCategoryResponse(Guid Id, string Name, string Slug, Guid? ParentId, int SortOrder);
 
