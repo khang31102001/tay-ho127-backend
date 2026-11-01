@@ -58,6 +58,14 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("featured_media_id");
 
+                    b.Property<int?>("FeaturedOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("featured_order");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_featured");
+
                     b.Property<DateTime?>("PublishedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at_utc");

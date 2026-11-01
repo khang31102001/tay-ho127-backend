@@ -11,6 +11,7 @@ public sealed class Article : AuditableEntity
     public const int MaxAuthorLength = 200;
     public const int MaxMediaIdLength = 64;
     public const int MaxContentWords = 5000;
+    public const int MaxFeaturedOrder = 9999;
 
     /// <summary>Hard cap on the stored HTML (markup included), well above what 5000 words of formatted text
     /// produce, so a pasted blob cannot bloat the row even when its word count is small.</summary>
@@ -36,6 +37,12 @@ public sealed class Article : AuditableEntity
 
     /// <summary>Set the first time the article is published and kept afterwards (un-publishing does not erase it).</summary>
     public DateTime? PublishedAtUtc { get; private set; }
+
+    /// <summary>Shown in the website's "Tin nổi bật" block.</summary>
+    public bool IsFeatured { get; private set; }
+
+    /// <summary>Position inside the featured block (lower first, null last). Only kept while the article is featured.</summary>
+    public int? FeaturedOrder { get; private set; }
 
     public IReadOnlyList<ArticleTagLink> Tags => _tags;
 
@@ -66,6 +73,8 @@ public sealed class Article : AuditableEntity
         CategoryId = details.CategoryId;
         AuthorName = Guard.NotNullOrWhiteSpace(details.AuthorName, nameof(details.AuthorName)).Trim();
         Status = details.Status;
+        IsFeatured = details.IsFeatured;
+        FeaturedOrder = details.IsFeatured ? details.FeaturedOrder : null;
 
         if (details.Status == PublishStatus.Published && PublishedAtUtc is null)
         {
@@ -99,4 +108,6 @@ public sealed record ArticleDetails(
     string? FeaturedMediaId,
     Guid? CategoryId,
     string AuthorName,
-    PublishStatus Status);
+    PublishStatus Status,
+    bool IsFeatured = false,
+    int? FeaturedOrder = null);

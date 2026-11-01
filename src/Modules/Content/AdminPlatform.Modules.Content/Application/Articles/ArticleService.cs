@@ -60,6 +60,8 @@ public sealed class ArticleService : IArticleService
                 a.CategoryId,
                 a.AuthorName,
                 a.Status,
+                a.IsFeatured,
+                a.FeaturedOrder,
                 a.PublishedAtUtc,
                 a.CreatedAtUtc,
                 a.UpdatedAtUtc,
@@ -77,7 +79,7 @@ public sealed class ArticleService : IArticleService
         var items = page.Items.Select(a => new ArticleListItemResponse(
             a.Id, a.Title, a.Slug, a.Summary, a.FeaturedMediaId, a.CategoryId,
             tagsByArticle.GetValueOrDefault(a.Id, []), a.AuthorName, ContentWireFormat.ToWire(a.Status),
-            a.PublishedAtUtc, a.CreatedAtUtc, a.UpdatedAtUtc)).ToList();
+            a.IsFeatured, a.FeaturedOrder, a.PublishedAtUtc, a.CreatedAtUtc, a.UpdatedAtUtc)).ToList();
         return new PagedResult<ArticleListItemResponse>(items, page.Page, page.PageSize, page.TotalItems);
     }
 
@@ -93,7 +95,7 @@ public sealed class ArticleService : IArticleService
             _db.Articles.Select(a => a.Slug), cancellationToken);
 
         var article = Article.Create(ToDetails(request.Title, slug, request.Summary, request.Content, request.FeaturedMediaId,
-            request.CategoryId, request.AuthorName, request.Status), _dateTimeProvider.UtcNow);
+            request.CategoryId, request.AuthorName, request.Status, request.IsFeatured, request.FeaturedOrder), _dateTimeProvider.UtcNow);
         article.ReplaceTags(request.TagIds ?? []);
 
         _db.Articles.Add(article);
@@ -112,7 +114,7 @@ public sealed class ArticleService : IArticleService
                 _db.Articles.Where(a => a.Id != id).Select(a => a.Slug), cancellationToken);
 
         article.Update(ToDetails(request.Title, slug, request.Summary, request.Content, request.FeaturedMediaId,
-            request.CategoryId, request.AuthorName, request.Status), _dateTimeProvider.UtcNow);
+            request.CategoryId, request.AuthorName, request.Status, request.IsFeatured, request.FeaturedOrder), _dateTimeProvider.UtcNow);
         article.ReplaceTags(request.TagIds ?? []);
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -147,16 +149,17 @@ public sealed class ArticleService : IArticleService
 
     private ArticleDetails ToDetails(
         string title, string slug, string summary, string content, string? featuredMediaId, Guid? categoryId,
-        string authorName, string status)
+        string authorName, string status, bool isFeatured, int? featuredOrder)
     {
         // The validators already checked the status; a failed parse here would be a programming error.
         ContentWireFormat.TryParseStatus(status, out var parsedStatus);
 
-        return new ArticleDetails(title, slug, summary, _sanitizer.Sanitize(content), featuredMediaId, categoryId, authorName, parsedStatus);
+        return new ArticleDetails(title, slug, summary, _sanitizer.Sanitize(content), featuredMediaId, categoryId, authorName, parsedStatus,
+            isFeatured, featuredOrder);
     }
 
     private static ArticleResponse ToResponse(Article article) => new(
         article.Id, article.Title, article.Slug, article.Summary, article.Content, article.FeaturedMediaId, article.CategoryId,
         article.Tags.Select(link => link.TagId).ToList(), article.AuthorName, ContentWireFormat.ToWire(article.Status),
-        article.PublishedAtUtc, article.CreatedAtUtc, article.UpdatedAtUtc);
+        article.IsFeatured, article.FeaturedOrder, article.PublishedAtUtc, article.CreatedAtUtc, article.UpdatedAtUtc);
 }
