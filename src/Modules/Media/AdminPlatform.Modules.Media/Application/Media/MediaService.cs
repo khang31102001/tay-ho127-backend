@@ -9,7 +9,7 @@ namespace AdminPlatform.Modules.Media.Application.Media;
 
 public sealed class MediaService : IMediaService
 {
-    private static readonly MediaStorageProvider[] UploadProviders = [MediaStorageProvider.Local, MediaStorageProvider.Cloudinary];
+    private static readonly MediaStorageProvider[] UploadProviders = [MediaStorageProvider.Local, MediaStorageProvider.Cloudinary, MediaStorageProvider.S3];
 
     private readonly IMediaDbContext _db;
     private readonly IReadOnlyDictionary<MediaStorageProvider, IFileStorage> _fileStorages;

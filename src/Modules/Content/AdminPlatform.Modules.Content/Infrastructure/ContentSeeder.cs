@@ -120,7 +120,7 @@ public static class ContentSeeder
             ContentWireFormat.TryParseSectionKind(seedSection.SectionKind, out var kind);
             db.PageSections.Add(PageSection.Create(pageIds[seedSection.PageKey], new SectionDetails(kind, seedSection.Eyebrow,
                 seedSection.Heading, seedSection.Subheading, seedSection.Body, seedSection.MediaId, seedSection.CtaLabel, seedSection.CtaUrl,
-                seedSection.DisplayOrder, seedSection.IsVisible)));
+                seedSection.DisplayOrder, seedSection.IsVisible, PageSectionSettings.Create(seedSection.GalleryMediaIds))));
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -161,7 +161,8 @@ public static class ContentSeeder
         string? CtaLabel,
         string? CtaUrl,
         int DisplayOrder,
-        bool IsVisible);
+        bool IsVisible,
+        IReadOnlyList<string>? GalleryMediaIds = null);
 
     private sealed record SeedBanner(
         string Key,

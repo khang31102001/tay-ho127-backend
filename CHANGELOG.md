@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Page sections: new kind `story` (the homepage brand story) and an optional `settings` object (`settings.galleryMediaIds`:
+  up to 6 secondary images, in order) on create/update/response. Stored in `content.page_sections.settings` (jsonb, nullable)
+  — migration `AddPageSectionSettings` uses `ADD COLUMN IF NOT EXISTS` because the column was added by hand on production
+  first. New anonymous `GET /api/v1/content/public/page-sections?pageSlug=/`: visible sections of a published page by
+  display order, 404 for an unknown or unpublished page. Seed: the homepage story section is now kind `story` with the
+  current website text (fresh databases only).
+
 ### Changed
 
 - Admin access tokens no longer embed permission claims. With ~115 permission codes (all granted to SuperAdmin) the JWT

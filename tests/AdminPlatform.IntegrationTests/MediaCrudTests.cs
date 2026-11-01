@@ -89,7 +89,11 @@ public class MediaCrudTests
         var options = await client.GetFromJsonAsync<List<MediaStorageOptionResponse>>("/api/v1/media/storage-options");
 
         Assert.Equal(
-            [new MediaStorageOptionResponse("Local", true, true), new MediaStorageOptionResponse("Cloudinary", false, false)],
+            [
+                new MediaStorageOptionResponse("Local", true, true),
+                new MediaStorageOptionResponse("Cloudinary", false, false),
+                new MediaStorageOptionResponse("S3", false, false),
+            ],
             options);
     }
 

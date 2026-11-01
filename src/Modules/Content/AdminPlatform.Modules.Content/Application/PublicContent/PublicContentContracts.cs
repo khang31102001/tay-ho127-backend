@@ -1,3 +1,5 @@
+using AdminPlatform.Modules.Content.Application.PageSections;
+
 namespace AdminPlatform.Modules.Content.Application.PublicContent;
 
 /// <summary>A published article as the website lists it — no HTML body, but the reading time is computed
@@ -59,3 +61,18 @@ public sealed record PublicBannerResponse(
 
 /// <summary>A published page's identity — enough for the navigation to turn a page reference into its URL (Slug is the page's URL path).</summary>
 public sealed record PublicPageResponse(Guid Id, string Name, string Slug);
+
+/// <summary>A visible section of a published page (no admin-only fields). SectionKind is the wire name, e.g. "story";
+/// Body is plain text.</summary>
+public sealed record PublicPageSectionResponse(
+    Guid Id,
+    string SectionKind,
+    string? Eyebrow,
+    string? Heading,
+    string? Subheading,
+    string? Body,
+    string? MediaId,
+    string? CtaLabel,
+    string? CtaUrl,
+    int DisplayOrder,
+    PageSectionSettingsResponse? Settings);

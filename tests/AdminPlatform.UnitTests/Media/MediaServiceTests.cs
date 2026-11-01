@@ -105,6 +105,20 @@ public class MediaServiceTests
     }
 
     [Fact]
+    public async Task UploadAsync_to_s3_keeps_the_absolute_url_and_records_s3()
+    {
+        var local = new InMemoryFileStorage(MediaStorageProvider.Local);
+        var s3 = new InMemoryFileStorage(MediaStorageProvider.S3);
+        var sut = NewService(NewDb(), [local, s3], new MediaStorageOptions { Provider = "S3" });
+
+        var created = await sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None);
+
+        Assert.Equal("S3", created.Storage);
+        Assert.Single(s3.Files);
+        Assert.Empty(local.Files);
+    }
+
+    [Fact]
     public async Task UploadAsync_uses_default_storage_when_none_is_chosen()
     {
         var local = new InMemoryFileStorage(MediaStorageProvider.Local);
@@ -121,6 +135,7 @@ public class MediaServiceTests
     [InlineData("Cloudinary")]
     [InlineData("External")]
     [InlineData("S3")]
+    [InlineData("Ftp")]
     [InlineData("7")]
     public async Task UploadAsync_rejects_storage_that_is_unknown_or_not_configured(string storage)
     {
@@ -140,7 +155,11 @@ public class MediaServiceTests
         var options = sut.GetStorageOptions();
 
         Assert.Equal(
-            [new MediaStorageOptionResponse("Local", true, true), new MediaStorageOptionResponse("Cloudinary", false, false)],
+            [
+                new MediaStorageOptionResponse("Local", true, true),
+                new MediaStorageOptionResponse("Cloudinary", false, false),
+                new MediaStorageOptionResponse("S3", false, false),
+            ],
             options);
     }
 

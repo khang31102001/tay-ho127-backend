@@ -62,6 +62,49 @@ public class ContentPagesTests
         Assert.Empty(remaining.Items);
     }
 
+    [Fact]
+    public async Task Story_section_keeps_its_gallery_and_only_visible_sections_of_a_published_page_are_public()
+    {
+        using var admin = await AuthTestHelper.CreateAdminClientAsync(_factory);
+        using var anonymous = _factory.CreateClient();
+        var suffix = Guid.NewGuid().ToString("n")[..8];
+
+        var page = await CreateAsync<PageResponse>(admin, "/api/v1/content/pages", new CreatePageRequest($"Story test {suffix}", $"/story-{suffix}", "published"));
+        var sectionsUrl = $"/api/v1/content/pages/{page.Id}/sections";
+
+        // Blank gallery ids are dropped; the rest keep their order.
+        var story = await CreateAsync<PageSectionResponse>(admin, sectionsUrl, new CreatePageSectionRequest(
+            "story", null, "Hơn 6 thập kỷ", "gìn giữ vị xưa", "Đoạn 1\n\nĐoạn 2", "media-main", "Đọc thêm", "/gioi-thieu", 1, true,
+            new PageSectionSettingsRequest([" media-a ", "", "media-b"])));
+        Assert.Equal("story", story.SectionKind);
+        Assert.Equal(["media-a", "media-b"], story.Settings!.GalleryMediaIds);
+
+        await CreateAsync<PageSectionResponse>(admin, sectionsUrl, new CreatePageSectionRequest("cta", null, "Ẩn", null, null, null, null, null, 2, false));
+
+        // Too many gallery images is a 400.
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync(sectionsUrl, new CreatePageSectionRequest(
+            "story", null, null, null, null, null, null, null, 3, true,
+            new PageSectionSettingsRequest(Enumerable.Range(1, 7).Select(i => (string?)$"m{i}").ToList())))).StatusCode);
+
+        var publicUrl = $"/api/v1/content/public/page-sections?pageSlug={Uri.EscapeDataString(page.Slug)}";
+        var publicSections = (await anonymous.GetFromJsonAsync<List<PublicPageSectionResponse>>(publicUrl))!;
+        var publicStory = Assert.Single(publicSections);
+        Assert.Equal(story.Id, publicStory.Id);
+        Assert.Equal(["media-a", "media-b"], publicStory.Settings!.GalleryMediaIds);
+
+        // Clearing the settings removes the gallery.
+        var cleared = await admin.PutAsJsonAsync($"{sectionsUrl}/{story.Id}", new UpdatePageSectionRequest(
+            "story", null, "Hơn 6 thập kỷ", null, null, "media-main", null, null, 1, true));
+        Assert.Null((await cleared.Content.ReadFromJsonAsync<PageSectionResponse>())!.Settings);
+
+        // A page that is not published has no public sections.
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/v1/content/pages/{page.Id}", new UpdatePageRequest(page.Name, page.Slug, "draft"))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync(publicUrl)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync("/api/v1/content/public/page-sections?pageSlug=/khong-ton-tai")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/content/pages/{page.Id}")).StatusCode);
+    }
+
     private static async Task<T> CreateAsync<T>(HttpClient client, string url, object body)
     {
         var response = await client.PostAsJsonAsync(url, body);
