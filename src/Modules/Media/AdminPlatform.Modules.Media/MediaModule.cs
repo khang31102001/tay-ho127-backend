@@ -30,8 +30,29 @@ public static class MediaModule
         });
         services.AddScoped<IMediaDbContext>(sp => sp.GetRequiredService<MediaDbContext>());
 
-        services.Configure<MediaStorageOptions>(configuration.GetSection(MediaStorageOptions.SectionName));
-        services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+        var storageSection = configuration.GetSection(MediaStorageOptions.SectionName);
+        services.Configure<MediaStorageOptions>(storageSection);
+        var provider = storageSection.GetValue<string>(nameof(MediaStorageOptions.Provider)) ?? MediaStorageOptions.LocalProvider;
+        if (string.Equals(provider, MediaStorageOptions.CloudinaryProvider, StringComparison.OrdinalIgnoreCase))
+        {
+            // Thiếu khóa thì báo lỗi lúc khởi động, không đợi tới lần upload đầu tiên.
+            services.AddOptions<MediaStorageOptions>()
+                .Validate(
+                    o => !string.IsNullOrWhiteSpace(o.Cloudinary.CloudName)
+                        && !string.IsNullOrWhiteSpace(o.Cloudinary.ApiKey)
+                        && !string.IsNullOrWhiteSpace(o.Cloudinary.ApiSecret),
+                    "MediaStorage:Cloudinary:CloudName, ApiKey and ApiSecret are required when MediaStorage:Provider is Cloudinary.")
+                .ValidateOnStart();
+            services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        }
+        else if (string.Equals(provider, MediaStorageOptions.LocalProvider, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+        }
+        else
+        {
+            throw new InvalidOperationException($"Unknown MediaStorage:Provider '{provider}'. Use 'Local' or 'Cloudinary'.");
+        }
         services.AddScoped<IMediaService, MediaService>();
 
         services.AddValidatorsFromAssembly(typeof(MediaModule).Assembly);
