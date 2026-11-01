@@ -18,7 +18,7 @@ internal static class PageSectionRules
         Func<T, PageSectionSettingsRequest?> settings)
     {
         validator.RuleFor(x => sectionKind(x)).Must(value => ContentWireFormat.TryParseSectionKind(value, out _))
-            .WithMessage("SectionKind must be hero, introduction, promotion, highlight, testimonial, cta or story.");
+            .WithMessage("SectionKind must be hero, introduction, promotion, highlight, testimonial, cta, story or award.");
         validator.RuleFor(x => eyebrow(x)).MaximumLength(PageSection.MaxTextLength);
         validator.RuleFor(x => heading(x)).MaximumLength(PageSection.MaxTextLength);
         validator.RuleFor(x => subheading(x)).MaximumLength(PageSection.MaxTextLength);
