@@ -1,5 +1,7 @@
+using System.Text.Json;
 using AdminPlatform.Modules.Content.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AdminPlatform.Modules.Content.Infrastructure.Configurations;
@@ -21,6 +23,8 @@ internal sealed class PageConfiguration : IEntityTypeConfiguration<Page>
 
 internal sealed class PageSectionConfiguration : IEntityTypeConfiguration<PageSection>
 {
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
     public void Configure(EntityTypeBuilder<PageSection> builder)
     {
         builder.ToTable("page_sections");
@@ -35,6 +39,16 @@ internal sealed class PageSectionConfiguration : IEntityTypeConfiguration<PageSe
         builder.Property(s => s.MediaId).HasMaxLength(PageSection.MaxMediaIdLength);
         builder.Property(s => s.CtaLabel).HasMaxLength(PageSection.MaxTextLength);
         builder.Property(s => s.CtaUrl).HasMaxLength(PageSection.MaxUrlLength);
+        builder.Property(s => s.Settings)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                settings => JsonSerializer.Serialize(settings, Json),
+                text => JsonSerializer.Deserialize<PageSectionSettings>(text, Json),
+                new ValueComparer<PageSectionSettings?>(
+                    (a, b) => JsonSerializer.Serialize(a, Json) == JsonSerializer.Serialize(b, Json),
+                    settings => JsonSerializer.Serialize(settings, Json).GetHashCode(),
+                    // Settings is immutable (replaced, never mutated in place), so the instance itself is a safe snapshot.
+                    settings => settings));
 
         builder.HasOne<Page>()
             .WithMany()

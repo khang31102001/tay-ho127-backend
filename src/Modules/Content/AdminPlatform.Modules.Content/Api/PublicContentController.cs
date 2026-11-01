@@ -43,6 +43,17 @@ public sealed class PublicContentController : ControllerBase
         return Ok(await _publicContentService.ListPublishedPagesAsync(cancellationToken));
     }
 
+    /// <summary>Visible sections of a published page, by display order — <paramref name="pageSlug"/> is the page's URL path
+    /// (e.g. "/" for the homepage). 404 for an unknown or unpublished page.</summary>
+    [HttpGet("page-sections")]
+    [ProducesResponseType<IReadOnlyList<PublicPageSectionResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<PublicPageSectionResponse>>> ListPageSections(
+        [FromQuery] string pageSlug, CancellationToken cancellationToken)
+    {
+        return Ok(await _publicContentService.ListPageSectionsAsync(pageSlug, cancellationToken));
+    }
+
     /// <summary>Banners live right now, optionally for one placement (HOME_HERO, HOME_PROMOTION, MENU_HERO, ARTICLE_BANNER).</summary>
     [HttpGet("banners")]
     [ProducesResponseType<IReadOnlyList<PublicBannerResponse>>(StatusCodes.Status200OK)]

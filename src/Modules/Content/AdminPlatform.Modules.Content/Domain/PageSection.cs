@@ -30,6 +30,9 @@ public sealed class PageSection : AuditableEntity
     public int DisplayOrder { get; private set; }
     public bool IsVisible { get; private set; } = true;
 
+    /// <summary>Kind-specific extras (e.g. the story gallery); null when the section has none.</summary>
+    public PageSectionSettings? Settings { get; private set; }
+
     private PageSection()
     {
         // EF Core
@@ -59,6 +62,7 @@ public sealed class PageSection : AuditableEntity
         CtaUrl = Clean(details.CtaUrl);
         DisplayOrder = details.DisplayOrder;
         IsVisible = details.IsVisible;
+        Settings = details.Settings;
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -75,4 +79,5 @@ public sealed record SectionDetails(
     string? CtaLabel,
     string? CtaUrl,
     int DisplayOrder,
-    bool IsVisible);
+    bool IsVisible,
+    PageSectionSettings? Settings = null);
