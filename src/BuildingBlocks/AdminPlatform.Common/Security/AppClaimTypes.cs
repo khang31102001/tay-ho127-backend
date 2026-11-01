@@ -16,6 +16,8 @@ public static class AppClaimTypes
     public const string UserId = "sub";
     public const string Email = "email";
     public const string Role = "role";
+    /// <summary>NOT issued in the access token: <see cref="PermissionClaimsEnricher"/> adds these to the authenticated
+    /// principal on every request from the server-side <see cref="IUserPermissionSource"/>.</summary>
     public const string Permission = "permission";
     public const string CurrentBrandId = "brand_id";
     public const string CurrentFiscalYearId = "fiscal_year_id";

@@ -33,7 +33,7 @@ public class CatalogCrudTests
         Assert.Equal("single", modifierGroup.SelectionType);
 
         var product = await CreateAsync<ProductResponse>(client, "/api/v1/catalog/products", new CreateProductRequest(
-            $"Bánh cuốn thịt {suffix}", null, leaf.Id, 56000, 60000, "Nhân thịt", true, "DISH", 4.8m, 25,
+            $"Bánh cuốn thịt {suffix}", null, leaf.Id, 56000, 60000, "Nhân thịt", "<p>Bánh cuốn <strong>nhân thịt</strong></p><script>alert(1)</script>", true, "DISH", 4.8m, 25,
             ["media-banh-cuon-dish"], [modifierGroup.Id]));
         Assert.Equal($"banh-cuon-thit-{suffix}", product.Slug);
         Assert.Equal(["media-banh-cuon-dish"], product.MediaIds);
@@ -64,7 +64,7 @@ public class CatalogCrudTests
         Assert.Equal([modifierGroup.Id], publicProduct.ModifierGroupIds);
 
         // Deactivating the product hides it and its placement from the public snapshot.
-        var update = new UpdateProductRequest(product.Name, null, leaf.Id, 56000, null, null, false, null, null, null, [], [modifierGroup.Id]);
+        var update = new UpdateProductRequest(product.Name, null, leaf.Id, 56000, null, null, null, false, null, null, null, [], [modifierGroup.Id]);
         Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync($"/api/v1/catalog/products/{product.Id}", update)).StatusCode);
         snapshot = (await anonymous.GetFromJsonAsync<PublicCatalogResponse>("/api/v1/catalog/public"))!;
         Assert.DoesNotContain(snapshot.Products, p => p.Id == product.Id);
@@ -86,9 +86,9 @@ public class CatalogCrudTests
         using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
 
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/v1/catalog/products", new CreateProductRequest(
-            "", "Not A Slug", Guid.Empty, -1, null, null, true, null, 9, -1, null, null))).StatusCode);
+            "", "Not A Slug", Guid.Empty, -1, null, null, null, true, null, 9, -1, null, null))).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/v1/catalog/products", new CreateProductRequest(
-            "Món mồ côi", null, Guid.NewGuid(), 1000, null, null, true, null, null, null, null, null))).StatusCode);
+            "Món mồ côi", null, Guid.NewGuid(), 1000, null, null, null, true, null, null, null, null, null))).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/v1/catalog/sales-menus",
             new CreateSalesMenuRequest("Thuc Don", "Sai mã", true))).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/v1/catalog/modifier-groups",

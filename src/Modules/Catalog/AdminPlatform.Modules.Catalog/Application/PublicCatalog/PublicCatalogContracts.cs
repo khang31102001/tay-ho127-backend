@@ -26,6 +26,10 @@ public sealed record PublicProductResponse(
     IReadOnlyList<string> MediaIds,
     IReadOnlyList<Guid> ModifierGroupIds);
 
+/// <summary>The rich-text detail of one product, fetched only by its product page (kept out of the
+/// snapshot so listing pages never download it).</summary>
+public sealed record PublicProductContentResponse(string Slug, string? Content);
+
 public sealed record PublicSalesMenuResponse(Guid Id, string Code, string Name);
 
 public sealed record PublicSalesMenuProductResponse(Guid Id, Guid SalesMenuId, Guid ProductId, decimal? PriceOverride, int SortOrder);

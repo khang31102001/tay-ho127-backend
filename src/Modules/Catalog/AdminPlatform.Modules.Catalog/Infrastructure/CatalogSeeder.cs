@@ -59,7 +59,7 @@ public static class CatalogSeeder
         foreach (var seedProduct in seed.Products)
         {
             var slug = UniqueSlug(Slug.FromText(seedProduct.Name), usedSlugs);
-            var details = new ProductDetails(seedProduct.Price, seedProduct.OldPrice, seedProduct.Description, seedProduct.IsActive,
+            var details = new ProductDetails(seedProduct.Price, seedProduct.OldPrice, seedProduct.Description, null, seedProduct.IsActive,
                 seedProduct.Badge, seedProduct.Rating, seedProduct.RatingCount);
             var product = Product.Create(seedProduct.Name, slug, categoryIds[seedProduct.CategoryKey], details);
             product.ReplaceMedia(seedProduct.MediaIds);

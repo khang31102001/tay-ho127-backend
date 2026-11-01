@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Admin access tokens no longer embed permission claims. With ~115 permission codes (all granted to SuperAdmin) the JWT
+  and its cookies grew past 4 KB, which made the reverse proxy answer 502 ("upstream sent too big header") on login and
+  sits right at the browsers' 4 KB cookie limit. The Host now fills the `permission` claims into the authenticated principal
+  on every request from AccessControl (cached ~30 s), so a role/permission change takes effect within seconds instead of
+  at the next token refresh. Tokens issued before this change keep working: their permission claims are ignored.
+
 ### Added
 
 - Customer sign-up phone verification (one-time code over Zalo, SMS fallback via eSMS). New modules **Integration**
@@ -19,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (migration `AddCustomerPhoneVerifiedAt`, one nullable column); `phoneVerified` added to `GET /customers/me` and the admin
   customer response. Customer phones are now stored in the canonical `0xxxxxxxxx` form and a changed phone loses its
   verification. New env vars: `ESMS_API_KEY`, `ESMS_SECRET_KEY`, `NOTIFICATION_OTP_HMAC_KEY`,
-  `CUSTOMER_PHONE_VERIFICATION_REQUIRED`. See `docs/phone-otp-register-handoff.md`.
+  `CUSTOMER_PHONE_VERIFICATION_REQUIRED`. See `document/02-backend/phone-otp-register-handoff.md`.
 
 - Navigation: one model for the admin sidebar and the website menus (migration `UnifyNavigation`, data-preserving rename of
   `menus`/`menu_permissions`). Tables: `navigation_menus` (containers, scope Admin|Site, one per location),
@@ -37,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GET /api/v1/permissions/tree` (active nodes, nested). `PUT /roles/{id}/permissions` expands a selected group to the
   active leaves below it (a snapshot — leaves added later are not granted automatically) and stores only leaves.
   `AccessControlSeeder` builds the group tree from `DefaultPermissionTree` and re-places catalog leaves under their
-  resource group (structure only; admin-edited names are kept). Sample data: `docs/seed-data-permission-navigation.md`.
+  resource group (structure only; admin-edited names are kept). Sample data: `document/02-backend/seed-data-permission-navigation.md`.
   **Breaking contract:** `Create/UpdatePermissionRequest` now carry `parentId`, `isGroup`, `sortOrder` — deploy the
   matching frontend together; run `seed` after `migrate` so existing leaves get a parent.
 

@@ -19,7 +19,7 @@ public sealed class PageSection : AuditableEntity
     public string? Body { get; private set; }
 
     /// <summary>Opaque media reference with no FK (a Media module id, or a legacy key the website resolves
-    /// itself) — modules never share tables (ARCHITECTURE.md). Same convention as ProductMedia.</summary>
+    /// itself) — modules never share tables (document/02-backend/ARCHITECTURE.md). Same convention as ProductMedia.</summary>
     public string? MediaId { get; private set; }
 
     public string? CtaLabel { get; private set; }

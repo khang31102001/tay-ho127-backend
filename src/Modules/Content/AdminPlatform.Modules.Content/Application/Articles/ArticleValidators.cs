@@ -24,7 +24,9 @@ internal static class ArticleRules
         validator.RuleFor(x => slug(x)).Must(Slug.IsValid).When(x => !string.IsNullOrWhiteSpace(slug(x)))
             .WithMessage("Slug must be lowercase letters, digits and single hyphens.");
         validator.RuleFor(x => summary(x)).NotEmpty().MaximumLength(Article.MaxSummaryLength);
-        validator.RuleFor(x => content(x)).NotEmpty();
+        validator.RuleFor(x => content(x)).NotEmpty().MaximumLength(Article.MaxContentLength);
+        validator.RuleFor(x => content(x)).Must(value => HtmlText.CountWords(value) <= Article.MaxContentWords)
+            .WithMessage($"Content can have at most {Article.MaxContentWords} words.");
         validator.RuleFor(x => featuredMediaId(x)).MaximumLength(Article.MaxMediaIdLength);
         validator.RuleFor(x => tagIds(x)).Must(ids => ids is null || ids.Count <= MaxTagCount)
             .WithMessage($"An article can have at most {MaxTagCount} tags.");

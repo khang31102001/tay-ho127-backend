@@ -14,7 +14,7 @@ public sealed class Banner : AuditableEntity
     public string Name { get; private set; } = string.Empty;
 
     /// <summary>Opaque media references with no FK (a Media module id, or a legacy key the website resolves
-    /// itself) — modules never share tables (ARCHITECTURE.md). Same convention as ProductMedia.</summary>
+    /// itself) — modules never share tables (document/02-backend/ARCHITECTURE.md). Same convention as ProductMedia.</summary>
     public string? DesktopMediaId { get; private set; }
 
     public string? MobileMediaId { get; private set; }

@@ -15,6 +15,9 @@ public sealed class CreateProductRequestValidator : AbstractValidator<CreateProd
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
         RuleFor(x => x.OldPrice).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Description).MaximumLength(4000);
+        RuleFor(x => x.Content).MaximumLength(Product.MaxContentLength);
+        RuleFor(x => x.Content).Must(content => HtmlText.CountWords(content) <= Product.MaxContentWords)
+            .WithMessage($"Content can have at most {Product.MaxContentWords} words.");
         RuleFor(x => x.Badge).MaximumLength(64);
         RuleFor(x => x.Rating).InclusiveBetween(0, 5);
         RuleFor(x => x.RatingCount).GreaterThanOrEqualTo(0);
@@ -36,6 +39,9 @@ public sealed class UpdateProductRequestValidator : AbstractValidator<UpdateProd
         RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
         RuleFor(x => x.OldPrice).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Description).MaximumLength(4000);
+        RuleFor(x => x.Content).MaximumLength(Product.MaxContentLength);
+        RuleFor(x => x.Content).Must(content => HtmlText.CountWords(content) <= Product.MaxContentWords)
+            .WithMessage($"Content can have at most {Product.MaxContentWords} words.");
         RuleFor(x => x.Badge).MaximumLength(64);
         RuleFor(x => x.Rating).InclusiveBetween(0, 5);
         RuleFor(x => x.RatingCount).GreaterThanOrEqualTo(0);

@@ -4,7 +4,7 @@ namespace AdminPlatform.Modules.Media.Domain;
 
 /// <summary>Shared media library entry, referenced by id from Product, Customer, Article, Banner,
 /// BrandSettings, PaymentMethod and PageSection (stored as a plain id column in those modules — no
-/// cross-module ProjectReference, per ARCHITECTURE.md "How modules communicate"). This module owns only
+/// cross-module ProjectReference, per document/02-backend/ARCHITECTURE.md "How modules communicate"). This module owns only
 /// the media metadata; actual file storage/upload is a separate boundary — see the module report.</summary>
 public sealed class Media : AuditableEntity
 {

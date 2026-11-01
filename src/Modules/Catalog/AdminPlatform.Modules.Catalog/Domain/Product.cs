@@ -7,6 +7,11 @@ namespace AdminPlatform.Modules.Catalog.Domain;
 public sealed class Product : AuditableEntity
 {
     public const int MaxMediaCount = 20;
+    public const int MaxContentWords = 1000;
+
+    /// <summary>Hard cap on the stored HTML (markup included), well above what 1000 words of formatted text
+    /// produce, so a pasted blob cannot bloat the row even when its word count is small.</summary>
+    public const int MaxContentLength = 100_000;
 
     private readonly List<ProductMedia> _media = [];
     private readonly List<ProductModifierGroup> _modifierGroups = [];
@@ -19,7 +24,12 @@ public sealed class Product : AuditableEntity
     /// <summary>Pre-discount price shown struck through next to <see cref="Price"/>.</summary>
     public decimal? OldPrice { get; private set; }
 
+    /// <summary>Short plain-text summary shown under the product name and in listings.</summary>
     public string? Description { get; private set; }
+
+    /// <summary>Long rich-text (sanitized HTML) detail, shown only on the product page and fetched on its
+    /// own — never part of list/snapshot reads.</summary>
+    public string? Content { get; private set; }
     public bool IsActive { get; private set; } = true;
 
     /// <summary>Short label also used for site search matching (e.g. "DISH").</summary>
@@ -73,6 +83,7 @@ public sealed class Product : AuditableEntity
         Price = details.Price;
         OldPrice = details.OldPrice;
         Description = string.IsNullOrWhiteSpace(details.Description) ? null : details.Description.Trim();
+        Content = string.IsNullOrWhiteSpace(details.Content) ? null : details.Content.Trim();
         IsActive = details.IsActive;
         Badge = string.IsNullOrWhiteSpace(details.Badge) ? null : details.Badge.Trim();
         Rating = details.Rating;
@@ -130,6 +141,7 @@ public sealed record ProductDetails(
     decimal Price,
     decimal? OldPrice,
     string? Description,
+    string? Content,
     bool IsActive,
     string? Badge,
     decimal? Rating,

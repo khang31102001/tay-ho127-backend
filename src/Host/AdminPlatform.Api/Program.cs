@@ -43,6 +43,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -68,6 +69,12 @@ try
 
     // ---- Cross-module ports, implemented at the composition root only (architecture assumption #6) ----
     builder.Services.AddScoped<IUserPermissionsProvider, IdentityPermissionsAdapter>();
+    // Admin permissions are resolved on the server per request (cached ~30 s) instead of travelling inside the JWT.
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<AccessControlPermissionSource>();
+    builder.Services.AddScoped<IUserPermissionSource>(services => new CachedUserPermissionSource(
+        services.GetRequiredService<AccessControlPermissionSource>(),
+        services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()));
     builder.Services.AddScoped<IUserScopeValidator, IdentityUserScopeAdapter>();
     builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
@@ -93,6 +100,16 @@ try
     // ---- MVC / validation ----
     builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
     builder.Services.AddEndpointsApiExplorer();
+
+    // ---- Response compression (Brotli, then Gzip) ----
+    // EnableForHttps stays false (the default): compressing HTTPS responses that carry tokens next to
+    // request-reflected input opens BREACH. The website's BFF calls this API over the internal network, so
+    // those responses (catalog snapshot, article/product HTML) are still compressed there.
+    builder.Services.AddResponseCompression(options =>
+    {
+        options.Providers.Add<BrotliCompressionProvider>();
+        options.Providers.Add<GzipCompressionProvider>();
+    });
 
     // ---- Problem Details + centralized exception handling (api-design.md §18-21) ----
     builder.Services.AddProblemDetails();
@@ -134,6 +151,16 @@ try
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtOptions.SigningKey)),
                 ClockSkew = TimeSpan.FromSeconds(30),
+            };
+
+            // The access token carries no permission claims (it would be several KB); fill them in per request from the
+            // server-side source, once the signature has been validated.
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context => PermissionClaimsEnricher.EnrichAsync(
+                    context.Principal,
+                    context.HttpContext.RequestServices.GetRequiredService<IUserPermissionSource>(),
+                    context.HttpContext.RequestAborted),
             };
         });
 
@@ -241,6 +268,7 @@ try
 
     var app = builder.Build();
 
+    app.UseResponseCompression();
     app.UseSerilogRequestLogging();
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseExceptionHandler();

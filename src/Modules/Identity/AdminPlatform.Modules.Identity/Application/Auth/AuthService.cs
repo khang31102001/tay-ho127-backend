@@ -149,7 +149,9 @@ public sealed class AuthService : IAuthService
             new(AppClaimTypes.AccountType, AccountTypes.Admin),
         };
         claims.AddRange(permissions.Roles.Select(role => new Claim(AppClaimTypes.Role, role)));
-        claims.AddRange(permissions.Permissions.Select(permission => new Claim(AppClaimTypes.Permission, permission)));
+        // Permissions are deliberately NOT embedded: ~115 codes made the token (and its cookies) several KB, past the
+        // reverse proxy's header buffer and close to the browser's 4 KB cookie limit. The Host adds them to the
+        // principal per request from AccessControl (PermissionClaimsEnricher).
         if (user.CurrentBrandId is { } brandId)
         {
             claims.Add(new Claim(AppClaimTypes.CurrentBrandId, brandId.ToString()));

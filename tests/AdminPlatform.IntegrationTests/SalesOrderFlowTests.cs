@@ -43,7 +43,7 @@ public class SalesOrderFlowTests
         var suffix = Guid.NewGuid().ToString("n")[..8];
         var category = await PostAsync<CategoryResponse>(admin, "/api/v1/catalog/categories", new CreateCategoryRequest($"Đơn {suffix}", null, 1, true));
         var product = await PostAsync<ProductResponse>(admin, "/api/v1/catalog/products", new CreateProductRequest(
-            $"Bánh cuốn {suffix}", null, category.Id, 50_000, null, null, true, null, null, null, null, null));
+            $"Bánh cuốn {suffix}", null, category.Id, 50_000, null, null, null, true, null, null, null, null, null));
 
         var delivery = await PostAsync<DeliveryMethodResponse>(admin, $"{Sales}/delivery-methods", new CreateDeliveryMethodRequest(
             $"giao-{suffix}", "Giao tận nơi", null, "delivery", 15_000, 500_000, 20, 40, null, 1, true, false));

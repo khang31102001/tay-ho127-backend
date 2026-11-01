@@ -1,3 +1,4 @@
+using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdminPlatform.Modules.Catalog.Application.PublicCatalog;
@@ -22,12 +23,25 @@ public sealed class PublicCatalogService : IPublicCatalogService
             .Select(c => new PublicCategoryResponse(c.Id, c.Name, c.ParentId, c.SortOrder))
             .ToListAsync(cancellationToken);
 
+        // Projected so the rich-text Content column is never read here: every page fetches the snapshot,
+        // only the product page needs Content (GetProductContentAsync).
         var products = await _db.Products.AsNoTracking()
             .Where(p => p.IsActive)
-            .Include(p => p.Media)
-            .Include(p => p.ModifierGroups)
-            .AsSplitQuery()
             .OrderBy(p => p.Name)
+            .Select(p => new PublicProductResponse(
+                p.Id,
+                p.Slug,
+                p.Name,
+                p.CategoryId,
+                p.Price,
+                p.OldPrice,
+                p.Description,
+                p.Badge,
+                p.Rating,
+                p.RatingCount,
+                p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).ToList(),
+                p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList()))
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         var salesMenus = await _db.SalesMenus.AsNoTracking()
@@ -51,19 +65,7 @@ public sealed class PublicCatalogService : IPublicCatalogService
 
         return new PublicCatalogResponse(
             categories,
-            products.Select(p => new PublicProductResponse(
-                p.Id,
-                p.Slug,
-                p.Name,
-                p.CategoryId,
-                p.Price,
-                p.OldPrice,
-                p.Description,
-                p.Badge,
-                p.Rating,
-                p.RatingCount,
-                p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).ToList(),
-                p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList())).ToList(),
+            products,
             salesMenus,
             salesMenuProducts,
             modifierGroups.Select(g => new PublicModifierGroupResponse(
@@ -75,5 +77,15 @@ public sealed class PublicCatalogService : IPublicCatalogService
                     .OrderBy(o => o.SortOrder)
                     .Select(o => new PublicModifierOptionResponse(o.Id, o.Label, o.PriceAdjustment, o.IsDefault))
                     .ToList())).ToList());
+    }
+
+    public async Task<PublicProductContentResponse> GetProductContentAsync(string slug, CancellationToken cancellationToken)
+    {
+        var productContent = await _db.Products.AsNoTracking()
+            .Where(p => p.Slug == slug && p.IsActive)
+            .Select(p => new PublicProductContentResponse(p.Slug, p.Content))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return productContent ?? throw new NotFoundException("Product", slug);
     }
 }

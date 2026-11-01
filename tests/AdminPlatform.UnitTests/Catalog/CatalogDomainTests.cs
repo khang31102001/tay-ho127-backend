@@ -101,5 +101,5 @@ public class CatalogDomainTests
 
     private static Product NewProduct(decimal price = 50000, decimal? rating = null) =>
         Product.Create("Bánh cuốn", "banh-cuon", Guid.NewGuid(),
-            new ProductDetails(price, null, null, true, null, rating, null));
+            new ProductDetails(price, null, null, null, true, null, rating, null));
 }

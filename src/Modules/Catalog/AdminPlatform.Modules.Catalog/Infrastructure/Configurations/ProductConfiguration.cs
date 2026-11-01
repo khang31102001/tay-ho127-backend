@@ -24,6 +24,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Price).HasPrecision(12, 2);
         builder.Property(p => p.OldPrice).HasPrecision(12, 2);
         builder.Property(p => p.Description).HasMaxLength(4000);
+        builder.Property(p => p.Content).HasColumnType("text");
         builder.Property(p => p.Badge).HasMaxLength(64);
         builder.Property(p => p.Rating).HasPrecision(3, 1);
 
