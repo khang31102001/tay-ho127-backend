@@ -9,18 +9,20 @@ namespace AdminPlatform.Modules.Media.Application.Media;
 
 public sealed class MediaService : IMediaService
 {
+    private static readonly MediaStorageProvider[] UploadProviders = [MediaStorageProvider.Local, MediaStorageProvider.Cloudinary];
+
     private readonly IMediaDbContext _db;
-    private readonly IFileStorage _fileStorage;
+    private readonly IReadOnlyDictionary<MediaStorageProvider, IFileStorage> _fileStorages;
     private readonly MediaStorageOptions _storageOptions;
 
-    public MediaService(IMediaDbContext db, IFileStorage fileStorage, IOptions<MediaStorageOptions> storageOptions)
+    public MediaService(IMediaDbContext db, IEnumerable<IFileStorage> fileStorages, IOptions<MediaStorageOptions> storageOptions)
     {
         _db = db;
-        _fileStorage = fileStorage;
+        _fileStorages = fileStorages.ToDictionary(s => s.Provider);
         _storageOptions = storageOptions.Value;
     }
 
-    public async Task<PagedResult<MediaResponse>> ListAsync(PagedRequest request, string? kind, string? status, CancellationToken cancellationToken)
+    public async Task<PagedResult<MediaResponse>> ListAsync(PagedRequest request, string? kind, string? status, string? storage, CancellationToken cancellationToken)
     {
         var query = _db.Media.AsNoTracking().AsQueryable();
 
@@ -37,6 +39,12 @@ public sealed class MediaService : IMediaService
         {
             var parsedStatus = ParseStatus(status);
             query = query.Where(m => m.Status == parsedStatus);
+        }
+
+        if (!string.IsNullOrWhiteSpace(storage))
+        {
+            var parsedStorage = ParseStorage(storage);
+            query = query.Where(m => m.StorageProvider == parsedStorage);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Search))
@@ -64,14 +72,16 @@ public sealed class MediaService : IMediaService
 
     public async Task<MediaResponse> CreateAsync(CreateMediaRequest request, CancellationToken cancellationToken)
     {
-        var media = MediaEntity.Create(request.FileName, request.Url, ParseKind(request.Type), request.AltText, request.Size);
+        var media = MediaEntity.Create(request.FileName, request.Url, ParseKind(request.Type), request.AltText, request.Size, MediaStorageProvider.External);
         _db.Media.Add(media);
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(media);
     }
 
-    public async Task<MediaResponse> UploadAsync(MediaUploadFile file, string? altText, string publicBaseUrl, CancellationToken cancellationToken)
+    public async Task<MediaResponse> UploadAsync(MediaUploadFile file, string? altText, string? storage, string publicBaseUrl, CancellationToken cancellationToken)
     {
+        var fileStorage = ResolveUploadStorage(storage);
+
         if (file.Length <= 0)
         {
             throw new BusinessRuleValidationException("File is empty.");
@@ -112,7 +122,7 @@ public sealed class MediaService : IMediaService
 
         // Tên lưu trữ là Guid: không đoán được, không đụng tên, không mang ký tự lạ từ client.
         var storedFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var location = await _fileStorage.SaveAsync(storedFileName, file.Content, cancellationToken);
+        var location = await fileStorage.SaveAsync(storedFileName, file.Content, cancellationToken);
 
         // Kiểm tra "/" thay vì Uri.IsAbsoluteUri: trên Linux "/uploads/x" cũng parse được thành file:// tuyệt đối.
         var url = location;
@@ -122,10 +132,18 @@ public sealed class MediaService : IMediaService
             url = $"{baseUrl.TrimEnd('/')}{location}";
         }
 
-        var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length));
+        var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length), fileStorage.Provider);
         _db.Media.Add(media);
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(media);
+    }
+
+    public IReadOnlyList<MediaStorageOptionResponse> GetStorageOptions()
+    {
+        var defaultProvider = DefaultUploadProvider();
+        return UploadProviders
+            .Select(p => new MediaStorageOptionResponse(p.ToString(), _fileStorages.ContainsKey(p), p == defaultProvider))
+            .ToList();
     }
 
     public async Task<MediaResponse> UpdateAsync(Guid id, UpdateMediaRequest request, CancellationToken cancellationToken)
@@ -160,6 +178,31 @@ public sealed class MediaService : IMediaService
         await _db.Media.SingleOrDefaultAsync(m => m.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(Media), id);
 
+    private IFileStorage ResolveUploadStorage(string? storage)
+    {
+        var provider = string.IsNullOrWhiteSpace(storage) ? DefaultUploadProvider() : ParseStorage(storage);
+        if (!UploadProviders.Contains(provider))
+        {
+            throw new BusinessRuleValidationException($"Files cannot be uploaded to '{provider}'.");
+        }
+
+        return _fileStorages.TryGetValue(provider, out var fileStorage)
+            ? fileStorage
+            : throw new BusinessRuleValidationException($"Storage '{provider}' is not configured on the server.");
+    }
+
+    // MediaModule đã kiểm tra MediaStorage:Provider lúc khởi động; giá trị lạ ở đây (chỉ gặp trong test) coi như Local.
+    private MediaStorageProvider DefaultUploadProvider() =>
+        Enum.TryParse<MediaStorageProvider>(_storageOptions.Provider, ignoreCase: true, out var parsed) && UploadProviders.Contains(parsed)
+            ? parsed
+            : MediaStorageProvider.Local;
+
+    // IsDefined: Enum.TryParse nhận cả chuỗi số ("7") và trả về giá trị không thuộc enum.
+    private static MediaStorageProvider ParseStorage(string storage) =>
+        Enum.TryParse<MediaStorageProvider>(storage, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)
+            ? parsed
+            : throw new BusinessRuleValidationException($"'{storage}' is not a valid storage.");
+
     private static MediaKind ParseKind(string kind) =>
         Enum.TryParse<MediaKind>(kind, ignoreCase: true, out var parsed)
             ? parsed
@@ -178,6 +221,7 @@ public sealed class MediaService : IMediaService
         media.AltText,
         media.Size,
         media.Status.ToString(),
+        media.StorageProvider.ToString(),
         media.CreatedAtUtc,
         media.UpdatedAtUtc);
 }

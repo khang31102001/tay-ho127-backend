@@ -1,4 +1,5 @@
 using AdminPlatform.Modules.Media.Application.Media;
+using AdminPlatform.Modules.Media.Domain;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 
@@ -10,6 +11,8 @@ public sealed class LocalDiskFileStorage : IFileStorage
 {
     private readonly string _rootPath;
     private readonly string _requestPath;
+
+    public MediaStorageProvider Provider => MediaStorageProvider.Local;
 
     public LocalDiskFileStorage(IOptions<MediaStorageOptions> options, IWebHostEnvironment environment)
     {

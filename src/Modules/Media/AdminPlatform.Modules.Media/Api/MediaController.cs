@@ -21,9 +21,9 @@ public sealed class MediaController : ControllerBase
     [RequirePermission(MediaPermissions.MediaView)]
     [ProducesResponseType<PagedResult<MediaResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<MediaResponse>>> List(
-        [FromQuery] PagedRequest request, [FromQuery] string? kind, [FromQuery] string? status, CancellationToken cancellationToken)
+        [FromQuery] PagedRequest request, [FromQuery] string? kind, [FromQuery] string? status, [FromQuery] string? storage, CancellationToken cancellationToken)
     {
-        return Ok(await _mediaService.ListAsync(request, kind, status, cancellationToken));
+        return Ok(await _mediaService.ListAsync(request, kind, status, storage, cancellationToken));
     }
 
     /// <summary>Anonymous, read-only list of ACTIVE media for public pages (the user site renders images
@@ -53,17 +53,27 @@ public sealed class MediaController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    /// <summary>Upload file (multipart/form-data: "file" + tùy chọn "altText"). Server tự xác định loại,
+    /// <summary>Các nơi lưu Admin chọn được khi upload (màn Thêm media hiển thị trước ô chọn file).</summary>
+    [HttpGet("storage-options")]
+    [RequirePermission(MediaPermissions.MediaCreate)]
+    [ProducesResponseType<IReadOnlyList<MediaStorageOptionResponse>>(StatusCodes.Status200OK)]
+    public ActionResult<IReadOnlyList<MediaStorageOptionResponse>> GetStorageOptions()
+    {
+        return Ok(_mediaService.GetStorageOptions());
+    }
+
+    /// <summary>Upload file (multipart/form-data: "file" + tùy chọn "altText", "storage" = Local | Cloudinary,
+    /// bỏ trống thì dùng nơi lưu mặc định). Server tự xác định loại,
     /// dung lượng và URL; chỉ nhận các đuôi file được phép (xem MediaFileRules).</summary>
     [HttpPost("upload")]
     [RequirePermission(MediaPermissions.MediaCreate)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType<MediaResponse>(StatusCodes.Status201Created)]
-    public async Task<ActionResult<MediaResponse>> Upload(IFormFile file, [FromForm] string? altText, CancellationToken cancellationToken)
+    public async Task<ActionResult<MediaResponse>> Upload(IFormFile file, [FromForm] string? altText, [FromForm] string? storage, CancellationToken cancellationToken)
     {
         await using var content = file.OpenReadStream();
         var publicBaseUrl = $"{Request.Scheme}://{Request.Host}";
-        var created = await _mediaService.UploadAsync(new MediaUploadFile(content, file.FileName, file.Length), altText, publicBaseUrl, cancellationToken);
+        var created = await _mediaService.UploadAsync(new MediaUploadFile(content, file.FileName, file.Length), altText, storage, publicBaseUrl, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 

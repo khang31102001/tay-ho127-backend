@@ -14,6 +14,8 @@ public sealed class CloudinaryFileStorage : IFileStorage
     private readonly Cloudinary _cloudinary;
     private readonly string _folder;
 
+    public MediaStorageProvider Provider => MediaStorageProvider.Cloudinary;
+
     public CloudinaryFileStorage(IOptions<MediaStorageOptions> options)
     {
         var value = options.Value.Cloudinary;

@@ -1,8 +1,8 @@
 namespace AdminPlatform.Modules.Media.Application.Media;
 
-/// <summary>Cấu hình lưu file upload (section "MediaStorage"). <see cref="Provider"/> chọn nơi lưu:
-/// "Local" (disk của server) hoặc "Cloudinary". Đổi qua lại chỉ cần đổi cấu hình — URL đã lưu trong DB
-/// là URL tuyệt đối nên ảnh cũ vẫn hiển thị.</summary>
+/// <summary>Cấu hình lưu file upload (section "MediaStorage"). Local (disk của server) luôn dùng được;
+/// Cloudinary dùng được khi đủ 3 khóa. Admin chọn nơi lưu cho từng lần upload, <see cref="Provider"/> là
+/// nơi mặc định khi không chọn. URL lưu trong DB là URL tuyệt đối nên ảnh cũ không phụ thuộc cấu hình.</summary>
 public sealed class MediaStorageOptions
 {
     public const string SectionName = "MediaStorage";
@@ -10,6 +10,7 @@ public sealed class MediaStorageOptions
     public const string LocalProvider = "Local";
     public const string CloudinaryProvider = "Cloudinary";
 
+    /// <summary>Nơi lưu mặc định: "Local" hoặc "Cloudinary".</summary>
     public string Provider { get; set; } = LocalProvider;
 
     /// <summary>Thư mục gốc chứa file. Đường dẫn tương đối được tính từ ContentRoot của Host.</summary>
@@ -39,4 +40,7 @@ public sealed class CloudinaryStorageOptions
 
     /// <summary>Thư mục trên Cloudinary chứa file của site, vd. "tayho127".</summary>
     public string Folder { get; set; } = "tayho127";
+
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(CloudName) && !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(ApiSecret);
 }
