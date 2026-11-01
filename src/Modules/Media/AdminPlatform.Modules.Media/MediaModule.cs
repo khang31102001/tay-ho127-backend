@@ -34,11 +34,16 @@ public static class MediaModule
         services.Configure<MediaStorageOptions>(storageSection);
         var storage = storageSection.Get<MediaStorageOptions>() ?? new MediaStorageOptions();
 
-        // Local luôn có; Cloudinary chỉ đăng ký khi đủ khóa. MediaService chọn theo IFileStorage.Provider.
+        // Local luôn có; Cloudinary/S3 chỉ đăng ký khi đủ khóa. MediaService chọn theo IFileStorage.Provider.
         services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
         if (storage.Cloudinary.IsConfigured)
         {
             services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        }
+
+        if (storage.S3.IsConfigured)
+        {
+            services.AddSingleton<IFileStorage, S3FileStorage>();
         }
 
         if (string.Equals(storage.Provider, MediaStorageOptions.CloudinaryProvider, StringComparison.OrdinalIgnoreCase))
@@ -50,9 +55,17 @@ public static class MediaModule
                     "MediaStorage:Cloudinary:CloudName, ApiKey and ApiSecret are required when MediaStorage:Provider is Cloudinary.")
                 .ValidateOnStart();
         }
+        else if (string.Equals(storage.Provider, MediaStorageOptions.S3Provider, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddOptions<MediaStorageOptions>()
+                .Validate(
+                    o => o.S3.IsConfigured,
+                    "MediaStorage:S3:Bucket, AccessKey, SecretKey and PublicBaseUrl are required when MediaStorage:Provider is S3.")
+                .ValidateOnStart();
+        }
         else if (!string.Equals(storage.Provider, MediaStorageOptions.LocalProvider, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Unknown MediaStorage:Provider '{storage.Provider}'. Use 'Local' or 'Cloudinary'.");
+            throw new InvalidOperationException($"Unknown MediaStorage:Provider '{storage.Provider}'. Use 'Local', 'Cloudinary' or 'S3'.");
         }
 
         services.AddScoped<IMediaService, MediaService>();
