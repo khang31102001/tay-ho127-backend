@@ -18,7 +18,8 @@ internal static class ArticleRules
         Func<T, string?> featuredMediaId,
         Func<T, IReadOnlyList<Guid>?> tagIds,
         Func<T, string> authorName,
-        Func<T, string> status)
+        Func<T, string> status,
+        Func<T, int?> featuredOrder)
     {
         validator.RuleFor(x => title(x)).NotEmpty().MaximumLength(Article.MaxTitleLength);
         validator.RuleFor(x => slug(x)).Must(Slug.IsValid).When(x => !string.IsNullOrWhiteSpace(slug(x)))
@@ -33,6 +34,8 @@ internal static class ArticleRules
         validator.RuleFor(x => authorName(x)).NotEmpty().MaximumLength(Article.MaxAuthorLength);
         validator.RuleFor(x => status(x)).Must(value => ContentWireFormat.TryParseStatus(value, out _))
             .WithMessage("Status must be draft, published or archived.");
+        validator.RuleFor(x => featuredOrder(x)).InclusiveBetween(0, Article.MaxFeaturedOrder)
+            .When(x => featuredOrder(x) is not null);
     }
 }
 
@@ -41,7 +44,7 @@ public sealed class CreateArticleRequestValidator : AbstractValidator<CreateArti
     public CreateArticleRequestValidator()
     {
         ArticleRules.Apply(this, x => x.Title, x => x.Slug, x => x.Summary, x => x.Content, x => x.FeaturedMediaId,
-            x => x.TagIds, x => x.AuthorName, x => x.Status);
+            x => x.TagIds, x => x.AuthorName, x => x.Status, x => x.FeaturedOrder);
     }
 }
 
@@ -50,6 +53,6 @@ public sealed class UpdateArticleRequestValidator : AbstractValidator<UpdateArti
     public UpdateArticleRequestValidator()
     {
         ArticleRules.Apply(this, x => x.Title, x => x.Slug, x => x.Summary, x => x.Content, x => x.FeaturedMediaId,
-            x => x.TagIds, x => x.AuthorName, x => x.Status);
+            x => x.TagIds, x => x.AuthorName, x => x.Status, x => x.FeaturedOrder);
     }
 }
