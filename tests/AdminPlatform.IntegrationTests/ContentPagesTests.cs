@@ -105,6 +105,29 @@ public class ContentPagesTests
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/content/pages/{page.Id}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Award_section_is_public_with_its_badge_image()
+    {
+        using var admin = await AuthTestHelper.CreateAdminClientAsync(_factory);
+        using var anonymous = _factory.CreateClient();
+        var suffix = Guid.NewGuid().ToString("n")[..8];
+
+        var page = await CreateAsync<PageResponse>(admin, "/api/v1/content/pages", new CreatePageRequest($"Award test {suffix}", $"/award-{suffix}", "published"));
+        var award = await CreateAsync<PageSectionResponse>(admin, $"/api/v1/content/pages/{page.Id}/sections", new CreatePageSectionRequest(
+            "Award", null, "Bước chân đầu tiên", null, "Tháng 6/2026...", "media-book", null, null, 1, true,
+            new PageSectionSettingsRequest(["media-badge"])));
+        Assert.Equal("award", award.SectionKind);
+
+        var publicSections = (await anonymous.GetFromJsonAsync<List<PublicPageSectionResponse>>(
+            $"/api/v1/content/public/page-sections?pageSlug={Uri.EscapeDataString(page.Slug)}"))!;
+        var publicAward = Assert.Single(publicSections);
+        Assert.Equal("award", publicAward.SectionKind);
+        Assert.Equal("media-book", publicAward.MediaId);
+        Assert.Equal(["media-badge"], publicAward.Settings!.GalleryMediaIds);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/content/pages/{page.Id}")).StatusCode);
+    }
+
     private static async Task<T> CreateAsync<T>(HttpClient client, string url, object body)
     {
         var response = await client.PostAsJsonAsync(url, body);

@@ -272,18 +272,19 @@
       "isVisible": true
     },
     {
-      "key": "section-home-experience",
+      "key": "section-home-award",
       "pageKey": "page-home",
-      "sectionKind": "introduction",
+      "sectionKind": "award",
       "eyebrow": null,
-      "heading": "Trải nghiệm tại Tây Hồ 127",
+      "heading": "Bước chân đầu tiên mang bản sắc dân tộc đến nền ẩm thực quốc tế.",
       "subheading": null,
-      "body": "Không gian ấm cúng, phục vụ nhanh, phù hợp cho bữa sáng lẫn buổi họp mặt gia đình.",
-      "mediaId": "media-banh-cuon-dish",
+      "body": "Tháng 6/2026 đánh dấu một cột mốc đầy tự hào khi Bánh Cuốn Tây Hồ 127 được Cẩm nang MICHELIN Việt Nam trao danh hiệu Bib Gourmand, ghi nhận hành trình bền bỉ gìn giữ và lan tỏa hương vị truyền thống Việt Nam.",
+      "mediaId": null,
       "ctaLabel": null,
       "ctaUrl": null,
       "displayOrder": 5,
-      "isVisible": true
+      "isVisible": true,
+      "galleryMediaIds": []
     },
     {
       "key": "section-home-testimonials",
