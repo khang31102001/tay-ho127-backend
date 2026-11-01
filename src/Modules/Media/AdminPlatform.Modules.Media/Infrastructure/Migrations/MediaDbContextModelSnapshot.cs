@@ -71,6 +71,12 @@ namespace AdminPlatform.Modules.Media.Infrastructure.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("status");
 
+                    b.Property<string>("StorageProvider")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("storage_provider");
+
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
@@ -93,6 +99,9 @@ namespace AdminPlatform.Modules.Media.Infrastructure.Migrations
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_media_status");
+
+                    b.HasIndex("StorageProvider")
+                        .HasDatabaseName("ix_media_storage_provider");
 
                     b.ToTable("media", "media");
                 });

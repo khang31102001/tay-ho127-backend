@@ -49,7 +49,7 @@ services:
       Notification__Otp__HmacKey: ${NOTIFICATION_OTP_HMAC_KEY:-}
       # Origin công khai (không có dấu / cuối) dùng để dựng URL ảnh upload lưu vào DB, vd. http://IP hoặc https://domain.
       MediaStorage__PublicBaseUrl: ${PUBLIC_BASE_URL:-}
-      # Nơi lưu ảnh upload: Local (volume bên dưới) hoặc Cloudinary (cần 3 khóa CLOUDINARY_*).
+      # Nơi lưu ảnh upload mặc định: Local (volume bên dưới) hoặc Cloudinary. Có đủ 3 khóa CLOUDINARY_* thì Admin chọn được Cloudinary.
       MediaStorage__Provider: ${MEDIA_STORAGE_PROVIDER:-Local}
       MediaStorage__Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
       MediaStorage__Cloudinary__ApiKey: ${CLOUDINARY_API_KEY:-}

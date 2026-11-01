@@ -20,8 +20,10 @@ internal sealed class MediaConfiguration : IEntityTypeConfiguration<MediaEntity>
 
         builder.Property(m => m.Kind).HasConversion<string>().HasMaxLength(32).IsRequired();
         builder.Property(m => m.Status).HasConversion<string>().HasMaxLength(16).IsRequired();
+        builder.Property(m => m.StorageProvider).HasConversion<string>().HasMaxLength(16).IsRequired();
 
         builder.HasIndex(m => m.Kind);
         builder.HasIndex(m => m.Status);
+        builder.HasIndex(m => m.StorageProvider);
     }
 }

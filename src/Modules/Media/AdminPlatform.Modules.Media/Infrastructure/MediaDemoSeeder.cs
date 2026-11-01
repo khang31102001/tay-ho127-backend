@@ -32,7 +32,7 @@ public static class MediaDemoSeeder
         {
             if (!existingUrls.Contains(url))
             {
-                db.Media.Add(Domain.Media.Create(fileName, url, kind, altText, size));
+                db.Media.Add(Domain.Media.Create(fileName, url, kind, altText, size, MediaStorageProvider.External));
             }
         }
 

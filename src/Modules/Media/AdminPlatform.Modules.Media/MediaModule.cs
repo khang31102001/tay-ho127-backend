@@ -32,27 +32,29 @@ public static class MediaModule
 
         var storageSection = configuration.GetSection(MediaStorageOptions.SectionName);
         services.Configure<MediaStorageOptions>(storageSection);
-        var provider = storageSection.GetValue<string>(nameof(MediaStorageOptions.Provider)) ?? MediaStorageOptions.LocalProvider;
-        if (string.Equals(provider, MediaStorageOptions.CloudinaryProvider, StringComparison.OrdinalIgnoreCase))
+        var storage = storageSection.Get<MediaStorageOptions>() ?? new MediaStorageOptions();
+
+        // Local luôn có; Cloudinary chỉ đăng ký khi đủ khóa. MediaService chọn theo IFileStorage.Provider.
+        services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+        if (storage.Cloudinary.IsConfigured)
         {
-            // Thiếu khóa thì báo lỗi lúc khởi động, không đợi tới lần upload đầu tiên.
-            services.AddOptions<MediaStorageOptions>()
-                .Validate(
-                    o => !string.IsNullOrWhiteSpace(o.Cloudinary.CloudName)
-                        && !string.IsNullOrWhiteSpace(o.Cloudinary.ApiKey)
-                        && !string.IsNullOrWhiteSpace(o.Cloudinary.ApiSecret),
-                    "MediaStorage:Cloudinary:CloudName, ApiKey and ApiSecret are required when MediaStorage:Provider is Cloudinary.")
-                .ValidateOnStart();
             services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
         }
-        else if (string.Equals(provider, MediaStorageOptions.LocalProvider, StringComparison.OrdinalIgnoreCase))
+
+        if (string.Equals(storage.Provider, MediaStorageOptions.CloudinaryProvider, StringComparison.OrdinalIgnoreCase))
         {
-            services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+            // Mặc định là Cloudinary mà thiếu khóa thì báo lỗi lúc khởi động, không đợi tới lần upload đầu tiên.
+            services.AddOptions<MediaStorageOptions>()
+                .Validate(
+                    o => o.Cloudinary.IsConfigured,
+                    "MediaStorage:Cloudinary:CloudName, ApiKey and ApiSecret are required when MediaStorage:Provider is Cloudinary.")
+                .ValidateOnStart();
         }
-        else
+        else if (!string.Equals(storage.Provider, MediaStorageOptions.LocalProvider, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Unknown MediaStorage:Provider '{provider}'. Use 'Local' or 'Cloudinary'.");
+            throw new InvalidOperationException($"Unknown MediaStorage:Provider '{storage.Provider}'. Use 'Local' or 'Cloudinary'.");
         }
+
         services.AddScoped<IMediaService, MediaService>();
 
         services.AddValidatorsFromAssembly(typeof(MediaModule).Assembly);
