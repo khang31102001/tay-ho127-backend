@@ -66,6 +66,22 @@ public class MediaServiceTests
         Assert.StartsWith("https://cdn.example.com/uploads/", created.Url);
     }
 
+    private sealed class AbsoluteUrlFileStorage : IFileStorage
+    {
+        public Task<string> SaveAsync(string storedFileName, Stream content, CancellationToken cancellationToken) =>
+            Task.FromResult("https://res.cloudinary.com/demo/image/upload/v1/tayho127/" + storedFileName);
+    }
+
+    [Fact]
+    public async Task UploadAsync_keeps_absolute_url_returned_by_storage()
+    {
+        var sut = NewService(NewDb(), new AbsoluteUrlFileStorage(), new MediaStorageOptions { PublicBaseUrl = "https://api.example.com" });
+
+        var created = await sut.UploadAsync(PngFile(), null, "https://api.example.com", CancellationToken.None);
+
+        Assert.StartsWith("https://res.cloudinary.com/demo/image/upload/v1/tayho127/", created.Url);
+    }
+
     [Fact]
     public async Task UploadAsync_rejects_disallowed_extension()
     {

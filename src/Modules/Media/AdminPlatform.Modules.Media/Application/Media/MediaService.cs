@@ -112,10 +112,15 @@ public sealed class MediaService : IMediaService
 
         // Tên lưu trữ là Guid: không đoán được, không đụng tên, không mang ký tự lạ từ client.
         var storedFileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var publicPath = await _fileStorage.SaveAsync(storedFileName, file.Content, cancellationToken);
+        var location = await _fileStorage.SaveAsync(storedFileName, file.Content, cancellationToken);
 
-        var baseUrl = string.IsNullOrWhiteSpace(_storageOptions.PublicBaseUrl) ? publicBaseUrl : _storageOptions.PublicBaseUrl;
-        var url = $"{baseUrl.TrimEnd('/')}{publicPath}";
+        // Kiểm tra "/" thay vì Uri.IsAbsoluteUri: trên Linux "/uploads/x" cũng parse được thành file:// tuyệt đối.
+        var url = location;
+        if (location.StartsWith('/'))
+        {
+            var baseUrl = string.IsNullOrWhiteSpace(_storageOptions.PublicBaseUrl) ? publicBaseUrl : _storageOptions.PublicBaseUrl;
+            url = $"{baseUrl.TrimEnd('/')}{location}";
+        }
 
         var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length));
         _db.Media.Add(media);
