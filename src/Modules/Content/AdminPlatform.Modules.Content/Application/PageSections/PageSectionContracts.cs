@@ -1,6 +1,6 @@
 namespace AdminPlatform.Modules.Content.Application.PageSections;
 
-/// <summary>SectionKind: "hero" | "introduction" | "promotion" | "highlight" | "testimonial" | "cta" | "story" (case-insensitive).
+/// <summary>SectionKind: "hero" | "introduction" | "promotion" | "highlight" | "testimonial" | "cta" | "story" | "award" (case-insensitive).
 /// Body is plain text. CtaUrl must be a site path or an http(s) URL. Settings is optional: omitted or null clears it.</summary>
 public sealed record CreatePageSectionRequest(
     string SectionKind,

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Page sections: new kind `award` (the homepage award card — heading, text, main image, badge as the first
+  `settings.galleryMediaIds` entry, optional CTA). No schema change: the kind is stored as a string and the badge reuses
+  `settings`. Seed (fresh databases only): the homepage `section-home-experience` becomes `section-home-award` with the
+  current MICHELIN text.
+
 - Page sections: new kind `story` (the homepage brand story) and an optional `settings` object (`settings.galleryMediaIds`:
   up to 6 secondary images, in order) on create/update/response. Stored in `content.page_sections.settings` (jsonb, nullable)
   — migration `AddPageSectionSettings` uses `ADD COLUMN IF NOT EXISTS` because the column was added by hand on production
