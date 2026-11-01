@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using AdminPlatform.Common.Abstractions;
 using AdminPlatform.Common.Pagination;
 using AdminPlatform.Modules.Content.Application.Banners;
+using AdminPlatform.Modules.Content.Application.PageSections;
 using AdminPlatform.Modules.Content.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +97,26 @@ public sealed partial class PublicContentService : IPublicContentService
             .OrderBy(p => p.Slug)
             .Select(p => new PublicPageResponse(p.Id, p.Name, p.Slug))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(string pageSlug, CancellationToken cancellationToken)
+    {
+        var slug = pageSlug.Trim();
+        var pageId = await _db.Pages.AsNoTracking()
+            .Where(p => p.Slug == slug && p.Status == PublishStatus.Published)
+            .Select(p => (Guid?)p.Id)
+            .SingleOrDefaultAsync(cancellationToken)
+            ?? throw new NotFoundException(nameof(Page), slug);
+
+        var sections = await _db.PageSections.AsNoTracking()
+            .Where(s => s.PageId == pageId && s.IsVisible)
+            .OrderBy(s => s.DisplayOrder).ThenBy(s => s.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        return sections
+            .Select(s => new PublicPageSectionResponse(s.Id, ContentWireFormat.ToWire(s.Kind), s.Eyebrow, s.Heading, s.Subheading,
+                s.Body, s.MediaId, s.CtaLabel, s.CtaUrl, s.DisplayOrder, PageSectionService.ToSettingsResponse(s.Settings)))
+            .ToList();
     }
 
     public async Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken)

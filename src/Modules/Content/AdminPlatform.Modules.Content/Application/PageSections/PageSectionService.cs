@@ -34,7 +34,7 @@ public sealed class PageSectionService : IPageSectionService
         await EnsurePageExistsAsync(pageId, cancellationToken);
 
         var section = PageSection.Create(pageId, ToDetails(request.SectionKind, request.Eyebrow, request.Heading, request.Subheading,
-            request.Body, request.MediaId, request.CtaLabel, request.CtaUrl, request.DisplayOrder, request.IsVisible));
+            request.Body, request.MediaId, request.CtaLabel, request.CtaUrl, request.DisplayOrder, request.IsVisible, request.Settings));
 
         _db.PageSections.Add(section);
         await _db.SaveChangesAsync(cancellationToken);
@@ -46,7 +46,7 @@ public sealed class PageSectionService : IPageSectionService
         var section = await FindOrThrowAsync(pageId, id, cancellationToken);
 
         section.Update(ToDetails(request.SectionKind, request.Eyebrow, request.Heading, request.Subheading, request.Body,
-            request.MediaId, request.CtaLabel, request.CtaUrl, request.DisplayOrder, request.IsVisible));
+            request.MediaId, request.CtaLabel, request.CtaUrl, request.DisplayOrder, request.IsVisible, request.Settings));
 
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(section);
@@ -74,16 +74,20 @@ public sealed class PageSectionService : IPageSectionService
 
     private static SectionDetails ToDetails(
         string sectionKind, string? eyebrow, string? heading, string? subheading, string? body, string? mediaId,
-        string? ctaLabel, string? ctaUrl, int displayOrder, bool isVisible)
+        string? ctaLabel, string? ctaUrl, int displayOrder, bool isVisible, PageSectionSettingsRequest? settings)
     {
         // The validators already checked the kind; a failed parse here would be a programming error.
         ContentWireFormat.TryParseSectionKind(sectionKind, out var kind);
 
-        return new SectionDetails(kind, eyebrow, heading, subheading, body, mediaId, ctaLabel, ctaUrl, displayOrder, isVisible);
+        return new SectionDetails(kind, eyebrow, heading, subheading, body, mediaId, ctaLabel, ctaUrl, displayOrder, isVisible,
+            PageSectionSettings.Create(settings?.GalleryMediaIds));
     }
 
     private static PageSectionResponse ToResponse(PageSection section) => new(
         section.Id, section.PageId, ContentWireFormat.ToWire(section.Kind), section.Eyebrow, section.Heading, section.Subheading,
         section.Body, section.MediaId, section.CtaLabel, section.CtaUrl, section.DisplayOrder, section.IsVisible,
-        section.CreatedAtUtc, section.UpdatedAtUtc);
+        ToSettingsResponse(section.Settings), section.CreatedAtUtc, section.UpdatedAtUtc);
+
+    internal static PageSectionSettingsResponse? ToSettingsResponse(PageSectionSettings? settings) =>
+        settings == null ? null : new PageSectionSettingsResponse(settings.GalleryMediaIds);
 }

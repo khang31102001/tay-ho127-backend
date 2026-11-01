@@ -231,16 +231,17 @@
     {
       "key": "section-home-story",
       "pageKey": "page-home",
-      "sectionKind": "introduction",
+      "sectionKind": "story",
       "eyebrow": null,
-      "heading": "Hương vị gia đình Bắc giữa Sài Gòn",
-      "subheading": null,
-      "body": "Bánh Cuốn Tây Hồ 127 giữ nguyên công thức truyền thống, tráng bánh thủ công mỗi ngày để mang đến hương vị chuẩn vị Bắc cho thực khách Sài Gòn.",
-      "mediaId": "media-hero-cooking",
-      "ctaLabel": null,
-      "ctaUrl": null,
+      "heading": "Hơn 6 thập kỷ",
+      "subheading": "gìn giữ vị xưa",
+      "body": "Bánh Cuốn Tây Hồ bắt đầu từ năm 1961, khi một tiệm bánh cuốn nhỏ mở bán cạnh đền thờ cụ Phan Châu Trinh ở Sài Gòn. Thực khách quen gọi quán theo hiệu \"Tây Hồ\" của cụ, và cái tên ấy theo quán về tới số 127 Đinh Tiên Hoàng hôm nay.\n\nHơn 60 năm qua, quán vẫn giữ cách làm truyền thống: bánh tráng mỏng từ bột gạo mỗi ngày, nhân thịt thơm ngon và nước chấm theo công thức gia truyền.\n\nNăm 2026, Bánh Cuốn Tây Hồ 127 được Cẩm nang MICHELIN đưa vào danh sách Bib Gourmand, dành cho những quán ngon với giá hợp lý. Với chúng tôi, đó là lời nhắc tiếp tục giữ trọn hương vị đã làm nên tên quán.",
+      "mediaId": null,
+      "ctaLabel": "Đọc câu chuyện Tây Hồ 127",
+      "ctaUrl": "/gioi-thieu",
       "displayOrder": 2,
-      "isVisible": true
+      "isVisible": true,
+      "galleryMediaIds": []
     },
     {
       "key": "section-home-promotion",
