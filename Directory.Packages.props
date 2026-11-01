@@ -28,6 +28,8 @@
 
     <!-- Lưu file media upload lên Cloudinary (MediaStorage:Provider = Cloudinary) -->
     <PackageVersion Include="CloudinaryDotNet" Version="1.29.3" />
+    <!-- Lưu file media upload lên Object Storage chuẩn S3 (Vietnix...) (MediaStorage:Provider = S3) -->
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.2" />
 
     <!-- Validation -->
     <PackageVersion Include="FluentValidation" Version="11.9.2" />

@@ -25,8 +25,13 @@ public sealed record MediaResponse(
     string? AltText,
     int Size,
     string Status,
+    string Storage,
     DateTime CreatedAtUtc,
     DateTime? UpdatedAtUtc);
+
+/// <summary>Một nơi lưu Admin có thể chọn khi upload. Code = tên MediaStorageProvider ("Local", "Cloudinary");
+/// IsAvailable = false khi server chưa cấu hình (vd. thiếu khóa Cloudinary).</summary>
+public sealed record MediaStorageOptionResponse(string Code, bool IsAvailable, bool IsDefault);
 
 /// <summary>Public (anonymous) projection of an active media entry — only what a public page needs to
 /// render it. Status, size and audit timestamps stay admin-only.</summary>

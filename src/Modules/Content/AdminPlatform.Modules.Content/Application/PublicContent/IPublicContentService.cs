@@ -17,6 +17,10 @@ public interface IPublicContentService
     /// <summary>Published pages (id, name, URL path), by path. Drafts and archived pages are never listed.</summary>
     Task<IReadOnlyList<PublicPageResponse>> ListPublishedPagesAsync(CancellationToken cancellationToken);
 
+    /// <summary>Visible sections of the published page at <paramref name="pageSlug"/> (its URL path, e.g. "/"), by display
+    /// order. 404 (NotFoundException) unless the page exists AND is published.</summary>
+    Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(string pageSlug, CancellationToken cancellationToken);
+
     /// <summary>Banners that are live right now (active and inside their start/end window), by display order.
     /// <paramref name="placement"/> narrows to one placement wire name (e.g. "HOME_HERO"); null returns all.</summary>
     Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken);

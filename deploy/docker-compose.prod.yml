@@ -49,12 +49,21 @@ services:
       Notification__Otp__HmacKey: ${NOTIFICATION_OTP_HMAC_KEY:-}
       # Origin công khai (không có dấu / cuối) dùng để dựng URL ảnh upload lưu vào DB, vd. http://IP hoặc https://domain.
       MediaStorage__PublicBaseUrl: ${PUBLIC_BASE_URL:-}
-      # Nơi lưu ảnh upload: Local (volume bên dưới) hoặc Cloudinary (cần 3 khóa CLOUDINARY_*).
+      # Nơi lưu ảnh upload mặc định: Local (volume bên dưới), Cloudinary hoặc S3 (Vietnix Object Storage).
+      # Có đủ khóa CLOUDINARY_* / S3_* thì Admin chọn được nơi đó khi upload.
       MediaStorage__Provider: ${MEDIA_STORAGE_PROVIDER:-Local}
       MediaStorage__Cloudinary__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
       MediaStorage__Cloudinary__ApiKey: ${CLOUDINARY_API_KEY:-}
       MediaStorage__Cloudinary__ApiSecret: ${CLOUDINARY_API_SECRET:-}
       MediaStorage__Cloudinary__Folder: ${CLOUDINARY_FOLDER:-tayho127}
+      MediaStorage__S3__ServiceUrl: ${S3_SERVICE_URL:-}
+      MediaStorage__S3__Region: ${S3_REGION:-us-east-1}
+      MediaStorage__S3__Bucket: ${S3_BUCKET:-}
+      MediaStorage__S3__AccessKey: ${S3_ACCESS_KEY:-}
+      MediaStorage__S3__SecretKey: ${S3_SECRET_KEY:-}
+      MediaStorage__S3__Folder: ${S3_FOLDER:-tayho127}
+      MediaStorage__S3__PublicBaseUrl: ${S3_PUBLIC_BASE_URL:-}
+      MediaStorage__S3__ObjectAcl: ${S3_OBJECT_ACL-public-read}
     volumes:
       # Ảnh Admin upload (MediaStorage:RootPath = uploads, tính từ /app). Không có volume thì mất ảnh mỗi lần deploy.
       - adminplatform_uploads:/app/uploads

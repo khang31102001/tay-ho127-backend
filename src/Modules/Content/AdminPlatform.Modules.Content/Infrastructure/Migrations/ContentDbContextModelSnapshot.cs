@@ -492,6 +492,10 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<string>("Settings")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("settings");
+
                     b.Property<string>("Subheading")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")

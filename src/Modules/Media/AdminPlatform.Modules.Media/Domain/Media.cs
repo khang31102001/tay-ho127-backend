@@ -18,12 +18,14 @@ public sealed class Media : AuditableEntity
 
     public MediaStatus Status { get; private set; } = MediaStatus.Active;
 
+    public MediaStorageProvider StorageProvider { get; private set; } = MediaStorageProvider.External;
+
     private Media()
     {
         // EF Core
     }
 
-    public static Media Create(string fileName, string url, MediaKind kind, string? altText, int size)
+    public static Media Create(string fileName, string url, MediaKind kind, string? altText, int size, MediaStorageProvider storageProvider)
     {
         if (size < 0)
         {
@@ -39,13 +41,22 @@ public sealed class Media : AuditableEntity
             AltText = NormalizeAltText(altText),
             Size = size,
             Status = MediaStatus.Active,
+            StorageProvider = storageProvider,
         };
     }
 
     public void UpdateMetadata(string fileName, string url, MediaKind kind, string? altText)
     {
         FileName = Guard.NotNullOrWhiteSpace(fileName, nameof(fileName)).Trim();
-        Url = Guard.NotNullOrWhiteSpace(url, nameof(url)).Trim();
+        var newUrl = Guard.NotNullOrWhiteSpace(url, nameof(url)).Trim();
+
+        // Đổi URL của file đã upload = trỏ sang file khác mà hệ thống không quản lý.
+        if (newUrl != Url)
+        {
+            StorageProvider = MediaStorageProvider.External;
+        }
+
+        Url = newUrl;
         Kind = kind;
         AltText = NormalizeAltText(altText);
     }

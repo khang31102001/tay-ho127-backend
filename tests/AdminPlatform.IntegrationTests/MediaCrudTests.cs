@@ -25,6 +25,7 @@ public class MediaCrudTests
         var media = (await createResponse.Content.ReadFromJsonAsync<MediaResponse>())!;
         Assert.Equal("Image", media.Type);
         Assert.Equal("Active", media.Status);
+        Assert.Equal("External", media.Storage);
 
         var updateResponse = await client.PutAsJsonAsync($"/api/v1/media/{media.Id}", new UpdateMediaRequest("renamed.pdf", url, "document", null));
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
@@ -78,6 +79,37 @@ public class MediaCrudTests
         var page = (await response.Content.ReadFromJsonAsync<PagedResultDto<PublicMediaResponse>>())!;
         Assert.Contains(page.Items, m => m.Url == activeUrl);
         Assert.DoesNotContain(page.Items, m => m.Url == inactiveUrl);
+    }
+
+    [Fact]
+    public async Task Storage_options_report_local_as_default_and_unconfigured_cloudinary()
+    {
+        using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
+
+        var options = await client.GetFromJsonAsync<List<MediaStorageOptionResponse>>("/api/v1/media/storage-options");
+
+        Assert.Equal(
+            [
+                new MediaStorageOptionResponse("Local", true, true),
+                new MediaStorageOptionResponse("Cloudinary", false, false),
+                new MediaStorageOptionResponse("S3", false, false),
+            ],
+            options);
+    }
+
+    [Fact]
+    public async Task Uploading_to_an_unconfigured_storage_returns_400()
+    {
+        using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
+        using var form = new MultipartFormDataContent
+        {
+            { new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0]), "file", "photo.png" },
+            { new StringContent("Cloudinary"), "storage" },
+        };
+
+        var response = await client.PostAsync("/api/v1/media/upload", form);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
