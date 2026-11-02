@@ -5,8 +5,11 @@ namespace AdminPlatform.Modules.Content.Application.Pages;
 
 internal static class PageRules
 {
-    public static void Apply<T>(AbstractValidator<T> validator, Func<T, string> name, Func<T, string?> slug, Func<T, string> status)
+    public static void Apply<T>(
+        AbstractValidator<T> validator, Func<T, string> name, Func<T, string?> slug, Func<T, string> status, Func<T, string?> pageKey)
     {
+        validator.RuleFor(x => pageKey(x)).Must(key => ContentKey.IsValid(ContentKey.Clean(key)))
+            .WithMessage($"PageKey must be lowercase words joined by hyphens, at most {ContentKey.MaxLength} characters.");
         validator.RuleFor(x => name(x)).NotEmpty().MaximumLength(Page.MaxNameLength);
         validator.RuleFor(x => slug(x)).Must(Page.IsValidPath).When(x => !string.IsNullOrWhiteSpace(slug(x)))
             .WithMessage("Slug must be '/' or lowercase /segments joined by hyphens (e.g. /thuc-don).");
@@ -19,7 +22,7 @@ public sealed class CreatePageRequestValidator : AbstractValidator<CreatePageReq
 {
     public CreatePageRequestValidator()
     {
-        PageRules.Apply(this, x => x.Name, x => x.Slug, x => x.Status);
+        PageRules.Apply(this, x => x.Name, x => x.Slug, x => x.Status, x => x.PageKey);
     }
 }
 
@@ -27,6 +30,6 @@ public sealed class UpdatePageRequestValidator : AbstractValidator<UpdatePageReq
 {
     public UpdatePageRequestValidator()
     {
-        PageRules.Apply(this, x => x.Name, x => x.Slug, x => x.Status);
+        PageRules.Apply(this, x => x.Name, x => x.Slug, x => x.Status, x => x.PageKey);
     }
 }

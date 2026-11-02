@@ -12,5 +12,8 @@ public interface IPageSectionService
 
     Task<PageSectionResponse> UpdateAsync(Guid pageId, Guid id, UpdatePageSectionRequest request, CancellationToken cancellationToken);
 
+    /// <summary>Re-numbers the page's sections in the given order. 400 unless every section id appears exactly once.</summary>
+    Task<IReadOnlyList<PageSectionResponse>> ReorderAsync(Guid pageId, ReorderPageSectionsRequest request, CancellationToken cancellationToken);
+
     Task DeleteAsync(Guid pageId, Guid id, CancellationToken cancellationToken);
 }

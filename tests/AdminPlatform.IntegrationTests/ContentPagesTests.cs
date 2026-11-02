@@ -128,6 +128,45 @@ public class ContentPagesTests
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/content/pages/{page.Id}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Slots_are_keyed_ordered_by_the_admin_and_public_with_their_key_and_items()
+    {
+        using var admin = await AuthTestHelper.CreateAdminClientAsync(_factory);
+        using var anonymous = _factory.CreateClient();
+        var suffix = Guid.NewGuid().ToString("n")[..8];
+
+        var page = await CreateAsync<PageResponse>(admin, "/api/v1/content/pages", new CreatePageRequest($"Slot test {suffix}", $"/slot-{suffix}", "published"));
+        var sectionsUrl = $"/api/v1/content/pages/{page.Id}/sections";
+        var hero = await CreateAsync<PageSectionResponse>(admin, sectionsUrl, new CreatePageSectionRequest(
+            "hero", null, "TÂY HỒ", null, null, null, null, null, 1, true, null, "hero"));
+        var stats = await CreateAsync<PageSectionResponse>(admin, sectionsUrl, new CreatePageSectionRequest(
+            "stats", null, "Hơn 60 năm", null, null, null, null, null, 2, true,
+            new PageSectionSettingsRequest(null, [new PageSectionItemRequest("Năm kinh nghiệm", "60+", null, null, null)]), "stats"));
+
+        // A key is unique per page (409); a malformed key or an item on the wrong kind is a 400.
+        Assert.Equal(HttpStatusCode.Conflict, (await admin.PostAsJsonAsync(sectionsUrl, new CreatePageSectionRequest(
+            "hero", null, "Trùng", null, null, null, null, null, 3, true, null, "hero"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync(sectionsUrl, new CreatePageSectionRequest(
+            "hero", null, "Sai", null, null, null, null, null, 3, true, null, "Sai Key"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync(sectionsUrl, new CreatePageSectionRequest(
+            "cta", null, "Sai", null, null, null, null, null, 3, true,
+            new PageSectionSettingsRequest(null, [new PageSectionItemRequest("a", "b", "c", null, null)])))).StatusCode);
+
+        // The admin's order is what the public list returns; a partial list is a 400.
+        var reorder = await admin.PutAsJsonAsync($"{sectionsUrl}/order", new ReorderPageSectionsRequest([stats.Id, hero.Id]));
+        Assert.Equal(HttpStatusCode.OK, reorder.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.PutAsJsonAsync($"{sectionsUrl}/order", new ReorderPageSectionsRequest([hero.Id]))).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PutAsJsonAsync($"{sectionsUrl}/order", new ReorderPageSectionsRequest([hero.Id, stats.Id]))).StatusCode);
+
+        var publicSections = (await anonymous.GetFromJsonAsync<List<PublicPageSectionResponse>>(
+            $"/api/v1/content/public/page-sections?pageSlug={Uri.EscapeDataString(page.Slug)}"))!;
+        Assert.Equal(["stats", "hero"], publicSections.Select(s => s.SectionKey));
+        var publicItem = Assert.Single(publicSections[0].Settings!.Items);
+        Assert.Equal(("Năm kinh nghiệm", "60+"), (publicItem.Label, publicItem.Title));
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/v1/content/pages/{page.Id}")).StatusCode);
+    }
+
     private static async Task<T> CreateAsync<T>(HttpClient client, string url, object body)
     {
         var response = await client.PostAsJsonAsync(url, body);

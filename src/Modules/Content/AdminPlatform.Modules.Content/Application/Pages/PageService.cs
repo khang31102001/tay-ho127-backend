@@ -37,7 +37,9 @@ public sealed class PageService : IPageService
             query = query.Where(p => EF.Functions.ILike(p.Name, pattern) || EF.Functions.ILike(p.Slug, pattern));
         }
 
-        query = request.IsDescending ? query.OrderByDescending(p => p.Slug) : query.OrderBy(p => p.Slug);
+        query = request.IsDescending
+            ? query.OrderByDescending(p => p.SortOrder).ThenByDescending(p => p.Slug)
+            : query.OrderBy(p => p.SortOrder).ThenBy(p => p.Slug);
 
         var page = await query.ToPagedResultAsync(request, cancellationToken);
         return new PagedResult<PageResponse>(page.Items.Select(ToResponse).ToList(), page.Page, page.PageSize, page.TotalItems);
@@ -52,7 +54,8 @@ public sealed class PageService : IPageService
     {
         var slug = await ResolveSlugAsync(request.Slug, request.Name, pageId: null, cancellationToken);
 
-        var page = Page.Create(request.Name, slug, ParseStatus(request.Status), _dateTimeProvider.UtcNow);
+        var page = Page.Create(request.Name, slug, ParseStatus(request.Status), _dateTimeProvider.UtcNow, request.PageKey, request.SortOrder);
+        await EnsureKeyIsFreeAsync(page, cancellationToken);
         _db.Pages.Add(page);
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(page);
@@ -68,6 +71,8 @@ public sealed class PageService : IPageService
             : await ResolveSlugAsync(request.Slug, request.Name, id, cancellationToken);
 
         page.Update(request.Name, slug, ParseStatus(request.Status), _dateTimeProvider.UtcNow);
+        page.SetKeyAndOrder(ContentKey.Clean(request.PageKey) ?? page.PageKey, request.SortOrder ?? page.SortOrder);
+        await EnsureKeyIsFreeAsync(page, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         return ToResponse(page);
     }
@@ -112,6 +117,15 @@ public sealed class PageService : IPageService
         return candidate;
     }
 
+    /// <summary>The unique index backs this up; checking first turns a duplicate key into a readable 409.</summary>
+    private async Task EnsureKeyIsFreeAsync(Page page, CancellationToken cancellationToken)
+    {
+        if (page.PageKey is not null && await _db.Pages.AnyAsync(p => p.PageKey == page.PageKey && p.Id != page.Id, cancellationToken))
+        {
+            throw new ConflictException($"Another page already uses the key '{page.PageKey}'.");
+        }
+    }
+
     private async Task<Page> FindOrThrowAsync(Guid id, CancellationToken cancellationToken) =>
         await _db.Pages.SingleOrDefaultAsync(p => p.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(Page), id);
@@ -124,5 +138,6 @@ public sealed class PageService : IPageService
     }
 
     private static PageResponse ToResponse(Page page) =>
-        new(page.Id, page.Name, page.Slug, ContentWireFormat.ToWire(page.Status), page.PublishedAtUtc, page.CreatedAtUtc, page.UpdatedAtUtc);
+        new(page.Id, page.Name, page.Slug, ContentWireFormat.ToWire(page.Status), page.PublishedAtUtc, page.CreatedAtUtc, page.UpdatedAtUtc,
+            page.PageKey, page.SortOrder);
 }
