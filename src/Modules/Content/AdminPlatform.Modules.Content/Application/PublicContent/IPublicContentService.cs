@@ -19,7 +19,8 @@ public interface IPublicContentService
 
     /// <summary>Visible sections of the published page at <paramref name="pageSlug"/> (its URL path, e.g. "/"), by display
     /// order. 404 (NotFoundException) unless the page exists AND is published.</summary>
-    Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(string pageSlug, CancellationToken cancellationToken);
+    /// <summary>The page is found by <paramref name="pageKey"/> when given, otherwise by <paramref name="pageSlug"/>.</summary>
+    Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(string? pageSlug, string? pageKey, CancellationToken cancellationToken);
 
     /// <summary>Banners that are live right now (active and inside their start/end window), by display order.
     /// <paramref name="placement"/> narrows to one placement wire name (e.g. "HOME_HERO"); null returns all.</summary>
