@@ -383,6 +383,11 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("PageKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("page_key");
+
                     b.Property<DateTime?>("PublishedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("published_at_utc");
@@ -398,6 +403,12 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("slug");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("sort_order");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -415,6 +426,11 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_pages");
+
+                    b.HasIndex("PageKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_pages_page_key")
+                        .HasFilter("page_key IS NOT NULL");
 
                     b.HasIndex("Slug")
                         .IsUnique()
@@ -492,6 +508,11 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<string>("SectionKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("section_key");
+
                     b.Property<string>("Settings")
                         .HasColumnType("jsonb")
                         .HasColumnName("settings");
@@ -514,6 +535,11 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
 
                     b.HasIndex("PageId", "DisplayOrder")
                         .HasDatabaseName("ix_page_sections_page_id_display_order");
+
+                    b.HasIndex("PageId", "SectionKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_page_sections_page_id_section_key")
+                        .HasFilter("section_key IS NOT NULL");
 
                     b.ToTable("page_sections", "content");
                 });

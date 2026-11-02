@@ -53,6 +53,17 @@ public sealed class PageSectionsController : ControllerBase
         return Ok(await _sectionService.UpdateAsync(pageId, id, request, cancellationToken));
     }
 
+    /// <summary>Saves the admin's drag-and-drop order: SectionIds lists every section of the page exactly once, first
+    /// to last. Returns the sections in their new order; 400 when the list is not exactly the page's sections.</summary>
+    [HttpPut("order")]
+    [RequirePermission(ContentPermissions.PagesUpdate)]
+    [ProducesResponseType<IReadOnlyList<PageSectionResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<PageSectionResponse>>> Reorder(
+        Guid pageId, [FromBody] ReorderPageSectionsRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _sectionService.ReorderAsync(pageId, request, cancellationToken));
+    }
+
     [HttpDelete("{id:guid}")]
     [RequirePermission(ContentPermissions.PagesDelete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

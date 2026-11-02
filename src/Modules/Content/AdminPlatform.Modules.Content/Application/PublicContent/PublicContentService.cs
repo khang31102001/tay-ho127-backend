@@ -94,19 +94,27 @@ public sealed partial class PublicContentService : IPublicContentService
     {
         return await _db.Pages.AsNoTracking()
             .Where(p => p.Status == PublishStatus.Published)
-            .OrderBy(p => p.Slug)
-            .Select(p => new PublicPageResponse(p.Id, p.Name, p.Slug))
+            .OrderBy(p => p.SortOrder).ThenBy(p => p.Slug)
+            .Select(p => new PublicPageResponse(p.Id, p.Name, p.Slug, p.PageKey))
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(string pageSlug, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PublicPageSectionResponse>> ListPageSectionsAsync(
+        string? pageSlug, string? pageKey, CancellationToken cancellationToken)
     {
-        var slug = pageSlug.Trim();
-        var pageId = await _db.Pages.AsNoTracking()
-            .Where(p => p.Slug == slug && p.Status == PublishStatus.Published)
+        var key = ContentKey.Clean(pageKey);
+        var slug = pageSlug?.Trim();
+        if (key is null && string.IsNullOrEmpty(slug))
+        {
+            throw new BusinessRuleValidationException("Provide pageKey or pageSlug.");
+        }
+
+        var pages = _db.Pages.AsNoTracking().Where(p => p.Status == PublishStatus.Published);
+        pages = key is not null ? pages.Where(p => p.PageKey == key) : pages.Where(p => p.Slug == slug);
+        var pageId = await pages
             .Select(p => (Guid?)p.Id)
             .SingleOrDefaultAsync(cancellationToken)
-            ?? throw new NotFoundException(nameof(Page), slug);
+            ?? throw new NotFoundException(nameof(Page), key ?? slug!);
 
         var sections = await _db.PageSections.AsNoTracking()
             .Where(s => s.PageId == pageId && s.IsVisible)
@@ -114,7 +122,7 @@ public sealed partial class PublicContentService : IPublicContentService
             .ToListAsync(cancellationToken);
 
         return sections
-            .Select(s => new PublicPageSectionResponse(s.Id, ContentWireFormat.ToWire(s.Kind), s.Eyebrow, s.Heading, s.Subheading,
+            .Select(s => new PublicPageSectionResponse(s.Id, s.SectionKey, ContentWireFormat.ToWire(s.Kind), s.Eyebrow, s.Heading, s.Subheading,
                 s.Body, s.MediaId, s.CtaLabel, s.CtaUrl, s.DisplayOrder, PageSectionService.ToSettingsResponse(s.Settings)))
             .ToList();
     }

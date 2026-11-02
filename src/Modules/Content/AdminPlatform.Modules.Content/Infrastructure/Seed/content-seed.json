@@ -196,41 +196,67 @@
       "name": "Trang chủ",
       "slug": "/",
       "status": "published",
-      "publishedAt": "2026-01-05T00:00:00.000Z"
+      "publishedAt": "2026-01-05T00:00:00.000Z",
+      "pageKey": "home",
+      "sortOrder": 10
+    },
+    {
+      "key": "page-gioi-thieu",
+      "name": "Giới thiệu",
+      "slug": "/gioi-thieu",
+      "status": "published",
+      "publishedAt": "2026-01-05T00:00:00.000Z",
+      "pageKey": "gioi-thieu",
+      "sortOrder": 20
     },
     {
       "key": "page-thuc-don",
       "name": "Thực đơn",
       "slug": "/thuc-don",
       "status": "published",
-      "publishedAt": "2026-01-05T00:00:00.000Z"
+      "publishedAt": "2026-01-05T00:00:00.000Z",
+      "pageKey": "thuc-don",
+      "sortOrder": 30
+    },
+    {
+      "key": "page-tin-tuc",
+      "name": "Tin tức",
+      "slug": "/tin-tuc",
+      "status": "published",
+      "publishedAt": "2026-01-05T00:00:00.000Z",
+      "pageKey": "tin-tuc",
+      "sortOrder": 40
     },
     {
       "key": "page-lien-he",
       "name": "Liên hệ",
       "slug": "/lien-he",
-      "status": "draft",
-      "publishedAt": null
+      "status": "published",
+      "publishedAt": "2026-01-05T00:00:00.000Z",
+      "pageKey": "lien-he",
+      "sortOrder": 50
     }
   ],
   "pageSections": [
     {
       "key": "section-home-hero",
       "pageKey": "page-home",
+      "sectionKey": "hero",
       "sectionKind": "hero",
       "eyebrow": "Bánh cuốn",
       "heading": "TÂY HỒ",
-      "subheading": "Từ bàn tay khéo léo, mỗi phần bánh là một câu chuyện Việt.",
-      "body": null,
+      "subheading": null,
+      "body": "Từ bàn tay khéo léo,\nmỗi phần bánh là một câu chuyện Việt.",
       "mediaId": "media-hero-platter",
-      "ctaLabel": "Đặt ngay",
-      "ctaUrl": "/menu",
-      "displayOrder": 1,
+      "ctaLabel": "Xem thực đơn",
+      "ctaUrl": "/thuc-don",
+      "displayOrder": 10,
       "isVisible": true
     },
     {
       "key": "section-home-story",
       "pageKey": "page-home",
+      "sectionKey": "story",
       "sectionKind": "story",
       "eyebrow": null,
       "heading": "Hơn 6 thập kỷ",
@@ -239,13 +265,14 @@
       "mediaId": null,
       "ctaLabel": "Đọc câu chuyện Tây Hồ 127",
       "ctaUrl": "/gioi-thieu",
-      "displayOrder": 2,
+      "displayOrder": 20,
       "isVisible": true,
       "galleryMediaIds": []
     },
     {
       "key": "section-home-promotion",
       "pageKey": "page-home",
+      "sectionKey": "promotion",
       "sectionKind": "promotion",
       "eyebrow": null,
       "heading": "Ưu đãi tuần này",
@@ -254,12 +281,13 @@
       "mediaId": null,
       "ctaLabel": "Xem thực đơn",
       "ctaUrl": "/thuc-don",
-      "displayOrder": 3,
+      "displayOrder": 30,
       "isVisible": true
     },
     {
       "key": "section-home-favorites",
       "pageKey": "page-home",
+      "sectionKey": "favorites",
       "sectionKind": "highlight",
       "eyebrow": null,
       "heading": "Những lựa chọn được yêu thích nhất",
@@ -268,12 +296,58 @@
       "mediaId": null,
       "ctaLabel": "Xem thực đơn",
       "ctaUrl": "/menu",
-      "displayOrder": 4,
+      "displayOrder": 40,
       "isVisible": true
+    },
+    {
+      "key": "section-home-stats",
+      "pageKey": "page-home",
+      "sectionKey": "stats",
+      "sectionKind": "stats",
+      "eyebrow": null,
+      "heading": "Hơn 60 năm đồng hành và phục vụ",
+      "subheading": null,
+      "body": "chúng tôi tự hào về chất lượng và sự tin tưởng từ khách hàng",
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 50,
+      "isVisible": true,
+      "items": [
+        {
+          "label": "Năm kinh nghiệm",
+          "title": "60+",
+          "text": null,
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "Món ăn đa dạng",
+          "title": "50+",
+          "text": null,
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "Khách hàng hài lòng",
+          "title": "5000+",
+          "text": null,
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "Đánh giá 5 sao",
+          "title": "50+",
+          "text": null,
+          "mediaId": null,
+          "url": null
+        }
+      ]
     },
     {
       "key": "section-home-award",
       "pageKey": "page-home",
+      "sectionKey": "award",
       "sectionKind": "award",
       "eyebrow": null,
       "heading": "Bước chân đầu tiên mang bản sắc dân tộc đến nền ẩm thực quốc tế.",
@@ -282,13 +356,14 @@
       "mediaId": null,
       "ctaLabel": null,
       "ctaUrl": null,
-      "displayOrder": 5,
+      "displayOrder": 60,
       "isVisible": true,
       "galleryMediaIds": []
     },
     {
       "key": "section-home-testimonials",
       "pageKey": "page-home",
+      "sectionKey": "testimonials",
       "sectionKind": "testimonial",
       "eyebrow": null,
       "heading": "Khách hàng nói gì về chúng tôi",
@@ -297,7 +372,255 @@
       "mediaId": "media-review-card",
       "ctaLabel": null,
       "ctaUrl": null,
-      "displayOrder": 6,
+      "displayOrder": 70,
+      "isVisible": true
+    },
+    {
+      "key": "section-about-hero",
+      "pageKey": "page-gioi-thieu",
+      "sectionKey": "hero",
+      "sectionKind": "hero",
+      "eyebrow": "Về Tây Hồ 127",
+      "heading": "Câu chuyện Bánh Cuốn Tây Hồ",
+      "subheading": null,
+      "body": "Hơn 60 năm, ba thế hệ một gia đình giữ nghề bánh cuốn giữa Sài Gòn, từ tiệm nhỏ cạnh đền thờ cụ Phan Châu Trinh đến danh hiệu MICHELIN Bib Gourmand.",
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 10,
+      "isVisible": true
+    },
+    {
+      "key": "section-about-timeline",
+      "pageKey": "page-gioi-thieu",
+      "sectionKey": "timeline",
+      "sectionKind": "timeline",
+      "eyebrow": "Từ 1961 đến nay",
+      "heading": "Hơn 60 năm một tiệm bánh cuốn",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 20,
+      "isVisible": true,
+      "items": [
+        {
+          "label": "1961",
+          "title": "Tiệm bánh cuốn cạnh đền thờ cụ Phan Châu Trinh",
+          "text": "Bà Trần Thị Cà, người gốc Hà Nam, mở một tiệm bánh cuốn nhỏ chưa có tên bên cạnh đền thờ cụ Phan Châu Trinh, trên đường Gallimard xưa (nay là 23 Nguyễn Huy Tự, TP. Hồ Chí Minh).",
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "Tên gọi",
+          "title": "Thực khách gọi là \"bánh cuốn Tây Hồ\"",
+          "text": "Tây Hồ là hiệu của cụ Phan Châu Trinh. Khách quen gọi tiệm theo tên đền thờ ngay bên cạnh, và cái tên ấy gắn với quán từ đó.",
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "127 Đinh Tiên Hoàng",
+          "title": "Bánh Cuốn Tây Hồ 127",
+          "text": "Quán chuyển về số 127 Đinh Tiên Hoàng, cách chỗ cũ không xa, và chính thức mang tên Bánh Cuốn Tây Hồ 127. Từ một tiệm nhỏ, nay là căn tiệm hai tầng quen thuộc của người Sài Gòn.",
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "Hôm nay",
+          "title": "Ba thế hệ cùng giữ nghề",
+          "text": "Chị Trần Thị Thúy Loan, con dâu bà Cà, đã gắn bó với quán khoảng 30 năm. Thế hệ thứ ba trong gia đình nay cùng tham gia quản lý, tiếp tục gìn giữ hương vị và hình ảnh của quán.",
+          "mediaId": null,
+          "url": null
+        },
+        {
+          "label": "06/2026",
+          "title": "MICHELIN Bib Gourmand",
+          "text": "Cẩm nang MICHELIN Việt Nam 2026 đưa Bánh Cuốn Tây Hồ 127 vào danh sách Bib Gourmand, danh hiệu dành cho những quán ăn ngon với giá hợp lý.",
+          "mediaId": null,
+          "url": null
+        }
+      ]
+    },
+    {
+      "key": "section-about-signature-dish",
+      "pageKey": "page-gioi-thieu",
+      "sectionKey": "signature-dish",
+      "sectionKind": "introduction",
+      "eyebrow": "Món làm nên tên quán",
+      "heading": "Đĩa bánh cuốn Tây Hồ",
+      "subheading": null,
+      "body": "Bánh tráng mỏng từ bột gạo, cuộn nhân thịt heo, mộc nhĩ và hành.\nMỗi đĩa bốn cuốn, rắc hành phi giòn, ăn cùng rau và giá.\nChả lụa, chả quế dọn riêng một đĩa bên cạnh.\nNước mắm chấm điểm thêm vài giọt tinh dầu cà cuống, đúng kiểu bánh cuốn Bắc.",
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 30,
+      "isVisible": true
+    },
+    {
+      "key": "section-about-michelin",
+      "pageKey": "page-gioi-thieu",
+      "sectionKey": "michelin",
+      "sectionKind": "award",
+      "eyebrow": "Ghi nhận",
+      "heading": "MICHELIN Bib Gourmand 2026",
+      "subheading": null,
+      "body": "Tháng 6/2026, Cẩm nang MICHELIN Việt Nam công bố danh sách Bib Gourmand, trong đó có Bánh Cuốn Tây Hồ 127 cùng bốn quán ăn khác của TP. Hồ Chí Minh lần đầu được ghi nhận. Các thanh tra MICHELIN nhắc đến quán như một tiệm nhỏ năm nào, nay thành căn tiệm hai tầng nổi tiếng với những cuốn bánh mỏng mềm.\n\nVới gia đình, danh hiệu đến như một bất ngờ: quán chưa bao giờ chạy theo giải thưởng, chỉ cố gắng giữ trọn hương vị và hình ảnh đã làm nên tên Tây Hồ.",
+      "mediaId": null,
+      "ctaLabel": "Xem thực đơn",
+      "ctaUrl": "/thuc-don",
+      "displayOrder": 40,
+      "isVisible": true,
+      "items": [
+        {
+          "label": null,
+          "title": "Cẩm nang MICHELIN Việt Nam 2026",
+          "text": null,
+          "mediaId": null,
+          "url": "https://guide.michelin.com/en/article/michelin-guide-ceremony/michelin-guide-vietnam-2026"
+        },
+        {
+          "label": null,
+          "title": "Báo Đà Nẵng: Bánh cuốn Tây Hồ 127 được Michelin vinh danh",
+          "text": null,
+          "mediaId": null,
+          "url": "https://baodanang.vn/banh-cuon-tay-ho-127-duoc-michelin-vinh-danh-3340407.html"
+        }
+      ]
+    },
+    {
+      "key": "section-menu-hero",
+      "pageKey": "page-thuc-don",
+      "sectionKey": "hero",
+      "sectionKind": "hero",
+      "eyebrow": "Thực đơn Tây Hồ 127",
+      "heading": "Chọn món nhanh,",
+      "subheading": "xem giá dễ dàng",
+      "body": "Khám phá thực đơn Bánh Cuốn Tây Hồ 127 với những món ăn mang đậm hương vị truyền thống Việt Nam, được chuẩn bị chỉn chu và minh bạch về giá.",
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 10,
+      "isVisible": true
+    },
+    {
+      "key": "section-menu-core",
+      "pageKey": "page-thuc-don",
+      "sectionKey": "menu",
+      "sectionKind": "core",
+      "eyebrow": null,
+      "heading": "Thực đơn",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 20,
+      "isVisible": true
+    },
+    {
+      "key": "section-news-hero",
+      "pageKey": "page-tin-tuc",
+      "sectionKey": "hero",
+      "sectionKind": "hero",
+      "eyebrow": "Tin tức Tây Hồ 127",
+      "heading": "Tin tức",
+      "subheading": null,
+      "body": "Công thức, câu chuyện thương hiệu, ưu đãi và hoạt động mới nhất từ Bánh Cuốn Tây Hồ 127.",
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 10,
+      "isVisible": true
+    },
+    {
+      "key": "section-news-core",
+      "pageKey": "page-tin-tuc",
+      "sectionKey": "articles",
+      "sectionKind": "core",
+      "eyebrow": null,
+      "heading": "Danh sách bài viết",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 20,
+      "isVisible": true
+    },
+    {
+      "key": "section-contact-hero",
+      "pageKey": "page-lien-he",
+      "sectionKey": "hero",
+      "sectionKind": "hero",
+      "eyebrow": "Liên hệ & chỉ đường",
+      "heading": "Liên hệ & chỉ đường",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 10,
+      "isVisible": true
+    },
+    {
+      "key": "section-contact-info",
+      "pageKey": "page-lien-he",
+      "sectionKey": "contact-info",
+      "sectionKind": "core",
+      "eyebrow": null,
+      "heading": "Thông tin liên hệ & bản đồ",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 20,
+      "isVisible": true
+    },
+    {
+      "key": "section-contact-visit-intro",
+      "pageKey": "page-lien-he",
+      "sectionKey": "visit-intro",
+      "sectionKind": "introduction",
+      "eyebrow": "Ghé quán",
+      "heading": "Ăn sáng ở Bánh Cuốn Tây Hồ 127",
+      "subheading": null,
+      "body": "Quán bán bánh cuốn từ năm 1961: bánh tráng mỏng, nhân thịt mộc nhĩ, ăn cùng chả lụa, chả quế và nước mắm thơm cà cuống. Khách ghé ăn sáng, ăn trưa hay đặt mang về đều được phục vụ nhanh.\n\nNăm 2026, quán được Cẩm nang MICHELIN Việt Nam trao danh hiệu Bib Gourmand, dành cho những quán ngon với giá hợp lý.",
+      "mediaId": null,
+      "ctaLabel": "Đọc câu chuyện hơn 60 năm của quán",
+      "ctaUrl": "/gioi-thieu",
+      "displayOrder": 30,
+      "isVisible": true
+    },
+    {
+      "key": "section-contact-featured-dishes",
+      "pageKey": "page-lien-he",
+      "sectionKey": "featured-dishes",
+      "sectionKind": "highlight",
+      "eyebrow": "Gọi món gì",
+      "heading": "Món được gọi nhiều nhất",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": "Xem toàn bộ thực đơn",
+      "ctaUrl": "/thuc-don",
+      "displayOrder": 40,
+      "isVisible": true
+    },
+    {
+      "key": "section-contact-faq",
+      "pageKey": "page-lien-he",
+      "sectionKey": "faq",
+      "sectionKind": "faq",
+      "eyebrow": "Hỏi nhanh",
+      "heading": "Câu hỏi thường gặp",
+      "subheading": null,
+      "body": null,
+      "mediaId": null,
+      "ctaLabel": null,
+      "ctaUrl": null,
+      "displayOrder": 50,
       "isVisible": true
     }
   ]

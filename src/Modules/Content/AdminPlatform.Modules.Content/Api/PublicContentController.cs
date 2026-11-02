@@ -43,15 +43,16 @@ public sealed class PublicContentController : ControllerBase
         return Ok(await _publicContentService.ListPublishedPagesAsync(cancellationToken));
     }
 
-    /// <summary>Visible sections of a published page, by display order — <paramref name="pageSlug"/> is the page's URL path
-    /// (e.g. "/" for the homepage). 404 for an unknown or unpublished page.</summary>
+    /// <summary>Visible sections of a published page, by display order. The page is named by its stable
+    /// <paramref name="pageKey"/> ("home", "gioi-thieu") or, when no key is given, by <paramref name="pageSlug"/> — its URL
+    /// path (e.g. "/"). 404 for an unknown or unpublished page; 400 when neither is given.</summary>
     [HttpGet("page-sections")]
     [ProducesResponseType<IReadOnlyList<PublicPageSectionResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IReadOnlyList<PublicPageSectionResponse>>> ListPageSections(
-        [FromQuery] string pageSlug, CancellationToken cancellationToken)
+        [FromQuery] string? pageSlug, [FromQuery] string? pageKey, CancellationToken cancellationToken)
     {
-        return Ok(await _publicContentService.ListPageSectionsAsync(pageSlug, cancellationToken));
+        return Ok(await _publicContentService.ListPageSectionsAsync(pageSlug, pageKey, cancellationToken));
     }
 
     /// <summary>Banners live right now, optionally for one placement (HOME_HERO, HOME_PROMOTION, MENU_HERO, ARTICLE_BANNER).</summary>

@@ -59,13 +59,15 @@ public sealed record PublicBannerResponse(
     string Placement,
     int DisplayOrder);
 
-/// <summary>A published page's identity — enough for the navigation to turn a page reference into its URL (Slug is the page's URL path).</summary>
-public sealed record PublicPageResponse(Guid Id, string Name, string Slug);
+/// <summary>A published page's identity — enough for the navigation to turn a page reference into its URL (Slug is the page's URL path).
+/// PageKey is the stable identifier the website looks the page up by (null for a page it does not place itself).</summary>
+public sealed record PublicPageResponse(Guid Id, string Name, string Slug, string? PageKey = null);
 
 /// <summary>A visible section of a published page (no admin-only fields). SectionKind is the wire name, e.g. "story";
-/// Body is plain text.</summary>
+/// SectionKey is the website slot it fills (null for a free section). Body is plain text.</summary>
 public sealed record PublicPageSectionResponse(
     Guid Id,
+    string? SectionKey,
     string SectionKind,
     string? Eyebrow,
     string? Heading,
