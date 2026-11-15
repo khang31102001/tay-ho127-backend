@@ -35,6 +35,7 @@ public static class CatalogModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<ICatalogDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Catalog.Application.Products.CatalogMediaUsageSource>();
 
         // Thread-safe configured whitelist, so one instance serves all requests.
         services.AddSingleton<IProductContentSanitizer, ProductContentSanitizer>();

@@ -70,6 +70,7 @@ public static class MediaModule
 
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IMediaReferenceQueryService, MediaReferenceQueryService>();
+        services.AddScoped<IMediaPurgeService, MediaPurgeService>();
 
         services.AddValidatorsFromAssembly(typeof(MediaModule).Assembly);
 

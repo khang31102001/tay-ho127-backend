@@ -34,6 +34,7 @@ public static class ContentModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<IContentDbContext>(sp => sp.GetRequiredService<ContentDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Content.Application.ContentMediaUsageSource>();
 
         // The sanitizer holds a configured whitelist and is thread-safe, so one instance serves all requests.
         services.AddSingleton<IHtmlContentSanitizer, HtmlContentSanitizer>();

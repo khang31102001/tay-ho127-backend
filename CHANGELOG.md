@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Media: permanent deletion to clean up storage. `GET /api/v1/media/{id}/usages` lists where a media is used;
+  `POST /api/v1/media/purge` `{ ids }` (max 100) deletes the stored file (Local / S3 / Cloudinary; External = record
+  only) and then the record, per id `deleted | inUse | notFound | failed`. Media still referenced anywhere is skipped
+  (`inUse`), found through the new Common port `IMediaUsageSource` implemented by Catalog, Content, Customer,
+  Organization, Sales (payment-method icon; order snapshots do not block) and Seo. A storage error keeps the record so
+  the purge can be retried. New permission `media.purge` (seeded; granted to Super Admin only). `IFileStorage` gains
+  `DeleteAsync(url, kind)`.
+
 - Catalog: product thumbnail `catalog.products.thumbnail_media_id` (uuid, nullable, FK → `media.media(id)` ON DELETE
   SET NULL; migration `AddProductThumbnailMedia`, idempotent SQL — safe when the column was already added by hand).
   Product requests take `thumbnailMediaId`; product and public-catalog responses add `thumbnailMediaId` +

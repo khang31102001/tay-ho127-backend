@@ -11,10 +11,12 @@ namespace AdminPlatform.Modules.Media.Api;
 public sealed class MediaController : ControllerBase
 {
     private readonly IMediaService _mediaService;
+    private readonly IMediaPurgeService _purgeService;
 
-    public MediaController(IMediaService mediaService)
+    public MediaController(IMediaService mediaService, IMediaPurgeService purgeService)
     {
         _mediaService = mediaService;
+        _purgeService = purgeService;
     }
 
     [HttpGet]
@@ -83,6 +85,25 @@ public sealed class MediaController : ControllerBase
     public async Task<ActionResult<MediaResponse>> Update(Guid id, [FromBody] UpdateMediaRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _mediaService.UpdateAsync(id, request, cancellationToken));
+    }
+
+    /// <summary>Những nơi còn dùng media này (sản phẩm, bài viết, banner, section, thương hiệu, SEO, ...).</summary>
+    [HttpGet("{id:guid}/usages")]
+    [RequirePermission(MediaPermissions.MediaView)]
+    [ProducesResponseType<IReadOnlyList<MediaUsageResponse>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<MediaUsageResponse>>> GetUsages(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _purgeService.GetUsagesAsync(id, cancellationToken));
+    }
+
+    /// <summary>Xóa vĩnh viễn tối đa 100 media: xóa file trên nơi lưu rồi xóa bản ghi. Không hoàn tác được.
+    /// Media đang được dùng bị bỏ qua (status "inUse" kèm danh sách nơi dùng); kết quả trả theo từng id.</summary>
+    [HttpPost("purge")]
+    [RequirePermission(MediaPermissions.MediaPurge)]
+    [ProducesResponseType<PurgeMediaResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<PurgeMediaResponse>> Purge([FromBody] PurgeMediaRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _purgeService.PurgeAsync(request, cancellationToken));
     }
 
     [HttpDelete("{id:guid}")]
