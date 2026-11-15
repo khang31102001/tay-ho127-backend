@@ -23,9 +23,17 @@ public interface IFileStorage
 /// <summary>Tách tên file lưu trữ ("&lt;guid&gt;.png") ở cuối URL — dùng chung cho các nơi lưu.</summary>
 public static class StoredFileUrl
 {
+    /// <summary>Phần path của URL, bỏ query/fragment. Chỉ coi http(s) là URL tuyệt đối: trên Linux,
+    /// <c>Uri.TryCreate("/uploads/a.png?x=1", Absolute)</c> thành công dưới dạng file:// và giữ "?x=1" trong path.</summary>
+    public static string PathOf(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+            && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)
+            ? absolute.AbsolutePath
+            : url.Split('?', '#')[0];
+
     public static string LastSegment(string url)
     {
-        var path = Uri.TryCreate(url, UriKind.Absolute, out var absolute) ? absolute.AbsolutePath : url.Split('?', '#')[0];
+        var path = PathOf(url);
         // Tên lưu trữ luôn là "<guid>.<đuôi>": URL kết thúc bằng "/" hay không có đuôi file = không trỏ tới file.
         var segment = Uri.UnescapeDataString(path.Split('/').LastOrDefault() ?? string.Empty);
         if (segment.Length == 0 || segment != Path.GetFileName(segment) || segment.Contains("..") || !Path.HasExtension(segment))

@@ -152,6 +152,8 @@ public class MediaPurgeServiceTests
     [Theory]
     [InlineData("https://tayho127.com/uploads/abc.png", "abc.png")]
     [InlineData("/uploads/abc.png?x=1", "abc.png")]
+    [InlineData("/uploads/abc.png#top", "abc.png")]
+    [InlineData("https://tayho127.com/uploads/abc.png?v=2", "abc.png")]
     public void Stored_file_name_is_the_last_url_segment(string url, string expected)
     {
         Assert.Equal(expected, StoredFileUrl.LastSegment(url));

@@ -42,7 +42,7 @@ public sealed class LocalDiskFileStorage : IFileStorage
 
     public Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken)
     {
-        var path = Uri.TryCreate(url, UriKind.Absolute, out var absolute) ? absolute.AbsolutePath : url;
+        var path = StoredFileUrl.PathOf(url);
         if (!path.StartsWith(_requestPath + "/", StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("The media URL is not a local upload.", nameof(url));
