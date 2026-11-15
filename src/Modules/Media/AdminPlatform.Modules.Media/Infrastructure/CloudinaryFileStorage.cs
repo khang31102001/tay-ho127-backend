@@ -57,4 +57,54 @@ public sealed class CloudinaryFileStorage : IFileStorage
 
         return result.SecureUrl.ToString();
     }
+
+    public async Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken)
+    {
+        var publicId = PublicIdFromUrl(url, keepExtension: kind == MediaKind.Document);
+        var resourceType = kind switch
+        {
+            MediaKind.Image => ResourceType.Image,
+            MediaKind.Video => ResourceType.Video,
+            _ => ResourceType.Raw,
+        };
+
+        var result = await _cloudinary.DestroyAsync(new DeletionParams(publicId) { ResourceType = resourceType, Invalidate = true });
+        // "not found" = file đã không còn trên Cloudinary → coi như đã xóa.
+        if (result.Error is not null || (result.Result != "ok" && result.Result != "not found"))
+        {
+            throw new InvalidOperationException($"Cloudinary delete failed: {result.Error?.Message ?? result.Result}.");
+        }
+    }
+
+    /// <summary>".../image/upload/v1712345678/tayho127/abc.png" → "tayho127/abc" (raw giữ đuôi: "tayho127/abc.pdf").</summary>
+    public static string PublicIdFromUrl(string url, bool keepExtension)
+    {
+        var path = StoredFileUrl.PathOf(url);
+        var marker = path.IndexOf("/upload/", StringComparison.Ordinal);
+        if (marker < 0)
+        {
+            throw new ArgumentException("The media URL is not a Cloudinary upload URL.", nameof(url));
+        }
+
+        var segments = path[(marker + "/upload/".Length)..].Split('/', StringSplitOptions.RemoveEmptyEntries).ToList();
+        // Bỏ phần version "v123..." nếu có (public_id không chứa nó).
+        if (segments.Count > 0 && segments[0].Length > 1 && segments[0][0] == 'v' && segments[0][1..].All(char.IsDigit))
+        {
+            segments.RemoveAt(0);
+        }
+
+        if (segments.Count == 0)
+        {
+            throw new ArgumentException("The media URL is not a Cloudinary upload URL.", nameof(url));
+        }
+
+        var publicId = Uri.UnescapeDataString(string.Join('/', segments));
+        if (!keepExtension)
+        {
+            var extension = Path.GetExtension(publicId);
+            publicId = publicId[..^extension.Length];
+        }
+
+        return publicId;
+    }
 }

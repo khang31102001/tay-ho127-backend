@@ -218,7 +218,7 @@ public class PromotionTests
         var leaf = await categories.CreateAsync(new CreateCategoryRequest("Bánh cuốn nhân", banhCuon.Id, 1, true), None);
         var drinks = await categories.CreateAsync(new CreateCategoryRequest("Đồ uống", null, 2, true), None);
 
-        var products = new ProductService(db, new ProductContentSanitizer());
+        var products = new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup());
         ProductDetailsRequest(out var make);
         var inScope = await products.CreateAsync(make("Bánh cuốn thịt", leaf.Id), None);
         var outOfScope = await products.CreateAsync(make("Trà đá", drinks.Id), None);

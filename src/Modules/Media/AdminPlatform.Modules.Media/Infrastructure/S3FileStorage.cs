@@ -100,5 +100,31 @@ public sealed class S3FileStorage : IFileStorage, IDisposable
         return $"{_publicBaseUrl}/{key}";
     }
 
+    public async Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken)
+    {
+        // Key = phần URL sau S3_PUBLIC_BASE_URL; URL cũ khác base (đã đổi cấu hình) thì dựng lại theo Folder hiện tại.
+        var key = url.StartsWith(_publicBaseUrl + "/", StringComparison.Ordinal)
+            ? Uri.UnescapeDataString(url[(_publicBaseUrl.Length + 1)..].Split('?', '#')[0])
+            : _prefix + StoredFileUrl.LastSegment(url);
+        if (key.Length == 0 || key.Contains(".."))
+        {
+            throw new ArgumentException("The media URL is not an S3 object.", nameof(url));
+        }
+
+        try
+        {
+            // S3 trả 204 cả khi object không còn → không cần kiểm tra tồn tại trước.
+            await _client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = _options.Bucket, Key = key }, cancellationToken);
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Không còn object = đã xóa.
+        }
+        catch (AmazonS3Exception ex)
+        {
+            throw new InvalidOperationException($"S3 delete failed: {ex.ErrorCode} {ex.Message}", ex);
+        }
+    }
+
     public void Dispose() => _client.Dispose();
 }

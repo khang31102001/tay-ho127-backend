@@ -32,6 +32,12 @@ public class MediaServiceTests
             Files[storedFileName] = buffer.ToArray();
             return "/uploads/" + storedFileName;
         }
+
+        public Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken)
+        {
+            Files.Remove(StoredFileUrl.LastSegment(url));
+            return Task.CompletedTask;
+        }
     }
 
     private static MediaService NewService(IMediaDbContext db, IFileStorage? storage = null, MediaStorageOptions? options = null) =>
@@ -78,6 +84,8 @@ public class MediaServiceTests
 
         public Task<string> SaveAsync(string storedFileName, Stream content, CancellationToken cancellationToken) =>
             Task.FromResult("https://res.cloudinary.com/demo/image/upload/v1/tayho127/" + storedFileName);
+
+        public Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     [Fact]

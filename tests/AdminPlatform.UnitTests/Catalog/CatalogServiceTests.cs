@@ -59,7 +59,7 @@ public class CatalogServiceTests
         var categories = new CategoryService(db);
         var group = await categories.CreateAsync(new CreateCategoryRequest("Món ăn", null, 1, true), None);
         var leaf = await categories.CreateAsync(new CreateCategoryRequest("Bánh cuốn", group.Id, 1, true), None);
-        await new ProductService(db, new ProductContentSanitizer()).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
+        await new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup()).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
 
         await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(group.Id, None));
         await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(leaf.Id, None));
@@ -70,7 +70,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var sut = new ProductService(db, new ProductContentSanitizer());
+        var sut = new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup());
 
         var first = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
         var second = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
@@ -89,7 +89,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var sut = new ProductService(db, new ProductContentSanitizer());
+        var sut = new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup());
 
         var created = await sut.CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id) with
         {
@@ -112,7 +112,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var sut = new ProductService(db, new ProductContentSanitizer());
+        var sut = new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup());
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(() => sut.CreateAsync(ProductRequest("X", Guid.NewGuid()), None));
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
@@ -124,7 +124,7 @@ public class CatalogServiceTests
     {
         var db = NewDb();
         var category = await new CategoryService(db).CreateAsync(new CreateCategoryRequest("Bánh cuốn", null, 1, true), None);
-        var product = await new ProductService(db, new ProductContentSanitizer()).CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
+        var product = await new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup()).CreateAsync(ProductRequest("Bánh cuốn thịt", category.Id), None);
         var menus = new SalesMenuService(db);
         var menu = await menus.CreateAsync(new CreateSalesMenuRequest("thuc-don-chinh", "Thực đơn chính", true), None);
         var sut = new SalesMenuProductService(db);

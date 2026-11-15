@@ -40,6 +40,11 @@ public sealed class Product : AuditableEntity
 
     public int? RatingCount { get; private set; }
 
+    /// <summary>Ảnh đại diện: id của một bản ghi media.media (cột catalog.products.thumbnail_media_id, FK
+    /// ON DELETE SET NULL). Null = chưa chọn, khi đó Site dùng ảnh đầu tiên của <see cref="Media"/>.
+    /// Không lưu URL ở đây — URL được tra từ module Media khi đọc.</summary>
+    public Guid? ThumbnailMediaId { get; private set; }
+
     public IReadOnlyList<ProductMedia> Media => _media;
     public IReadOnlyList<ProductModifierGroup> ModifierGroups => _modifierGroups;
 
@@ -89,6 +94,9 @@ public sealed class Product : AuditableEntity
         Rating = details.Rating;
         RatingCount = details.RatingCount;
     }
+
+    public void SetThumbnail(Guid? mediaId) =>
+        ThumbnailMediaId = mediaId == Guid.Empty ? null : mediaId;
 
     /// <summary>Replaces the ordered image list. Links still present keep their row (only the sort order
     /// changes), so EF never deletes and re-inserts the same composite key in one save.</summary>

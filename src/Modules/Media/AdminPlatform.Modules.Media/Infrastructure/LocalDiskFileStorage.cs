@@ -39,4 +39,30 @@ public sealed class LocalDiskFileStorage : IFileStorage
 
         return $"{_requestPath}/{storedFileName}";
     }
+
+    public Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken)
+    {
+        var path = StoredFileUrl.PathOf(url);
+        if (!path.StartsWith(_requestPath + "/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("The media URL is not a local upload.", nameof(url));
+        }
+
+        // Chỉ lấy tên file (không thư mục) để không bao giờ xóa ra ngoài thư mục uploads.
+        var fullPath = Path.Combine(_rootPath, StoredFileUrl.LastSegment(url));
+        try
+        {
+            File.Delete(fullPath); // Không có file thì File.Delete không ném lỗi.
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException($"Local delete failed: {ex.Message}", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new InvalidOperationException($"Local delete failed: {ex.Message}", ex);
+        }
+
+        return Task.CompletedTask;
+    }
 }
