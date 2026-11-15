@@ -24,7 +24,9 @@ public sealed record PublicProductResponse(
     decimal? Rating,
     int? RatingCount,
     IReadOnlyList<string> MediaIds,
-    IReadOnlyList<Guid> ModifierGroupIds);
+    IReadOnlyList<Guid> ModifierGroupIds,
+    Guid? ThumbnailMediaId = null,
+    string? ThumbnailUrl = null);
 
 /// <summary>The rich-text detail of one product, fetched only by its product page (kept out of the
 /// snapshot so listing pages never download it).</summary>

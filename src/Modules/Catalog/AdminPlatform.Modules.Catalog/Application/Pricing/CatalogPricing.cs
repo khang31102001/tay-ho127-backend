@@ -62,7 +62,7 @@ public sealed class CatalogPricingQueryService : ICatalogPricingQueryService
             p.Name,
             p.Price,
             p.IsActive,
-            p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).FirstOrDefault(),
+            p.ThumbnailMediaId?.ToString() ?? p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).FirstOrDefault(),
             p.ModifierGroups
                 .OrderBy(link => link.SortOrder)
                 .Select(link => groups.GetValueOrDefault(link.ModifierGroupId))

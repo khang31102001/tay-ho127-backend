@@ -32,6 +32,7 @@ public static class CustomerModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<ICustomerDbContext>(sp => sp.GetRequiredService<CustomerDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Customer.Application.CustomerMediaUsageSource>();
 
         // Same Jwt:* configuration section Identity binds — Customer tokens are issued by the shared
         // Common.Security.IJwtTokenService using the exact same issuer/audience/signing key (§6: "Reuse Auth

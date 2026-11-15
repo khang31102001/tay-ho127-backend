@@ -31,6 +31,7 @@ public static class SeoModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<ISeoDbContext>(sp => sp.GetRequiredService<SeoDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Seo.Application.SeoMediaUsageSource>();
 
         services.AddScoped<ISeoSettingsService, SeoSettingsService>();
         services.AddScoped<ISeoMetadataService, SeoMetadataService>();

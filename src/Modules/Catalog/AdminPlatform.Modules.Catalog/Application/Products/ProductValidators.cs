@@ -25,6 +25,7 @@ public sealed class CreateProductRequestValidator : AbstractValidator<CreateProd
             .WithMessage($"A product can have at most {Product.MaxMediaCount} images.");
         RuleForEach(x => x.MediaIds).NotEmpty().MaximumLength(ProductMedia.MaxMediaIdLength);
         RuleForEach(x => x.ModifierGroupIds).NotEmpty();
+        RuleFor(x => x.ThumbnailMediaId).NotEqual(Guid.Empty).When(x => x.ThumbnailMediaId is not null);
     }
 }
 
@@ -49,5 +50,6 @@ public sealed class UpdateProductRequestValidator : AbstractValidator<UpdateProd
             .WithMessage($"A product can have at most {Product.MaxMediaCount} images.");
         RuleForEach(x => x.MediaIds).NotEmpty().MaximumLength(ProductMedia.MaxMediaIdLength);
         RuleForEach(x => x.ModifierGroupIds).NotEmpty();
+        RuleFor(x => x.ThumbnailMediaId).NotEqual(Guid.Empty).When(x => x.ThumbnailMediaId is not null);
     }
 }

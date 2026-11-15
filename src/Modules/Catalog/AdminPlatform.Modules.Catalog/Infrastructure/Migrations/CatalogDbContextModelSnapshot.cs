@@ -242,6 +242,10 @@ namespace AdminPlatform.Modules.Catalog.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("slug");
 
+                    b.Property<Guid?>("ThumbnailMediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("thumbnail_media_id");
+
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
@@ -259,6 +263,9 @@ namespace AdminPlatform.Modules.Catalog.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique()
                         .HasDatabaseName("ix_products_slug");
+
+                    b.HasIndex("ThumbnailMediaId")
+                        .HasDatabaseName("ix_products_thumbnail_media_id");
 
                     b.ToTable("products", "catalog", t =>
                         {

@@ -13,4 +13,34 @@ public interface IFileStorage
     /// đường dẫn bắt đầu bằng "/" (vd. "/uploads/abc.jpg", MediaService ghép thêm origin) hoặc URL tuyệt đối
     /// (vd. URL Cloudinary, dùng nguyên).</summary>
     Task<string> SaveAsync(string storedFileName, Stream content, CancellationToken cancellationToken);
+
+    /// <summary>Xóa vĩnh viễn file đã lưu, tìm theo URL mà <see cref="SaveAsync"/> từng trả về (DB chỉ lưu URL).
+    /// File không còn trên nơi lưu = coi như đã xóa. Lỗi của nơi lưu (mạng, sai khóa...) → ném
+    /// <see cref="InvalidOperationException"/>; URL không thuộc nơi lưu này → <see cref="ArgumentException"/>.</summary>
+    Task DeleteAsync(string url, MediaKind kind, CancellationToken cancellationToken);
+}
+
+/// <summary>Tách tên file lưu trữ ("&lt;guid&gt;.png") ở cuối URL — dùng chung cho các nơi lưu.</summary>
+public static class StoredFileUrl
+{
+    /// <summary>Phần path của URL, bỏ query/fragment. Chỉ coi http(s) là URL tuyệt đối: trên Linux,
+    /// <c>Uri.TryCreate("/uploads/a.png?x=1", Absolute)</c> thành công dưới dạng file:// và giữ "?x=1" trong path.</summary>
+    public static string PathOf(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+            && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)
+            ? absolute.AbsolutePath
+            : url.Split('?', '#')[0];
+
+    public static string LastSegment(string url)
+    {
+        var path = PathOf(url);
+        // Tên lưu trữ luôn là "<guid>.<đuôi>": URL kết thúc bằng "/" hay không có đuôi file = không trỏ tới file.
+        var segment = Uri.UnescapeDataString(path.Split('/').LastOrDefault() ?? string.Empty);
+        if (segment.Length == 0 || segment != Path.GetFileName(segment) || segment.Contains("..") || !Path.HasExtension(segment))
+        {
+            throw new ArgumentException("The media URL does not point to a stored file.", nameof(url));
+        }
+
+        return segment;
+    }
 }

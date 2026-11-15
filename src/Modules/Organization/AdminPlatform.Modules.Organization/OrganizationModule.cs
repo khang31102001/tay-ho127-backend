@@ -30,6 +30,7 @@ public static class OrganizationModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<IOrganizationDbContext>(sp => sp.GetRequiredService<OrganizationDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Organization.Application.OrganizationMediaUsageSource>();
 
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
