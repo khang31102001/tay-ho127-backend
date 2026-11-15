@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Media: permanent deletion to clean up storage. `GET /api/v1/media/{id}/usages` lists where a media is used;
+  `POST /api/v1/media/purge` `{ ids }` (max 100) deletes the stored file (Local / S3 / Cloudinary; External = record
+  only) and then the record, per id `deleted | inUse | notFound | failed`. Media still referenced anywhere is skipped
+  (`inUse`), found through the new Common port `IMediaUsageSource` implemented by Catalog, Content, Customer,
+  Organization, Sales (payment-method icon; order snapshots do not block) and Seo. A storage error keeps the record so
+  the purge can be retried. New permission `media.purge` (seeded; granted to Super Admin only). `IFileStorage` gains
+  `DeleteAsync(url, kind)`.
+
+- Catalog: product thumbnail `catalog.products.thumbnail_media_id` (uuid, nullable, FK → `media.media(id)` ON DELETE
+  SET NULL; migration `AddProductThumbnailMedia`, idempotent SQL — safe when the column was already added by hand).
+  Product requests take `thumbnailMediaId`; product and public-catalog responses add `thumbnailMediaId` +
+  `thumbnailUrl` (resolved from Media, never stored). New port `ICatalogMediaLookup` (Host adapter → Media
+  `IMediaReferenceQueryService`): saving a product rejects (400) a thumbnail that is missing / not an image / inactive,
+  and gallery GUID ids that are missing or not images. Sample text keys (`media-...`) in `mediaIds` are still accepted.
+  Order snapshots use the thumbnail first, then the first gallery image.
+
 - Page sections: new kind `award` (the homepage award card — heading, text, main image, badge as the first
   `settings.galleryMediaIds` entry, optional CTA). No schema change: the kind is stored as a string and the badge reuses
   `settings`. Seed (fresh databases only): the homepage `section-home-experience` becomes `section-home-award` with the

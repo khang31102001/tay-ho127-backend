@@ -37,6 +37,7 @@ public static class SalesModule
                 sp.GetRequiredService<AuditLogSinkInterceptor>());
         });
         services.AddScoped<ISalesDbContext>(sp => sp.GetRequiredService<SalesDbContext>());
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Sales.Application.SalesMediaUsageSource>();
 
         services.AddScoped<IDeliveryMethodService, DeliveryMethodService>();
         services.AddScoped<IPaymentMethodService, PaymentMethodService>();

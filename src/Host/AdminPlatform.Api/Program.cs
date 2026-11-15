@@ -77,6 +77,7 @@ try
         services.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>()));
     builder.Services.AddScoped<IUserScopeValidator, IdentityUserScopeAdapter>();
     builder.Services.AddScoped<ICatalogPricingProvider, SalesCatalogPricingAdapter>();
+    builder.Services.AddScoped<AdminPlatform.Modules.Catalog.Application.Ports.ICatalogMediaLookup, CatalogMediaLookupAdapter>();
     builder.Services.AddScoped<IPromotionPricing, SalesPromotionPricingAdapter>();
     builder.Services.AddScoped<ICustomerDirectory, SalesCustomerDirectoryAdapter>();
     builder.Services.AddScoped<AdminPlatform.Modules.Notification.Application.Ports.IIntegrationConnectionProvider, NotificationIntegrationConnectionAdapter>();
