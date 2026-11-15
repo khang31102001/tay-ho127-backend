@@ -79,7 +79,7 @@ public sealed class CloudinaryFileStorage : IFileStorage
     /// <summary>".../image/upload/v1712345678/tayho127/abc.png" → "tayho127/abc" (raw giữ đuôi: "tayho127/abc.pdf").</summary>
     public static string PublicIdFromUrl(string url, bool keepExtension)
     {
-        var path = Uri.TryCreate(url, UriKind.Absolute, out var absolute) ? absolute.AbsolutePath : url;
+        var path = StoredFileUrl.PathOf(url);
         var marker = path.IndexOf("/upload/", StringComparison.Ordinal);
         if (marker < 0)
         {
