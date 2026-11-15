@@ -1,3 +1,4 @@
+using AdminPlatform.Modules.Catalog.Application.Ports;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +10,12 @@ namespace AdminPlatform.Modules.Catalog.Application.PublicCatalog;
 public sealed class PublicCatalogService : IPublicCatalogService
 {
     private readonly ICatalogDbContext _db;
+    private readonly ICatalogMediaLookup _mediaLookup;
 
-    public PublicCatalogService(ICatalogDbContext db)
+    public PublicCatalogService(ICatalogDbContext db, ICatalogMediaLookup mediaLookup)
     {
         _db = db;
+        _mediaLookup = mediaLookup;
     }
 
     public async Task<PublicCatalogResponse> GetAsync(CancellationToken cancellationToken)
@@ -40,9 +43,23 @@ public sealed class PublicCatalogService : IPublicCatalogService
                 p.Rating,
                 p.RatingCount,
                 p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).ToList(),
-                p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList()))
+                p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList(),
+                p.ThumbnailMediaId,
+                null))
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
+
+        // URL ảnh đại diện tra từ module Media; media đã ẩn/không còn thì bỏ (Site quay về ảnh đầu của MediaIds).
+        var thumbnailIds = products.Select(p => p.ThumbnailMediaId).OfType<Guid>().Distinct().ToList();
+        if (thumbnailIds.Count > 0)
+        {
+            var media = await _mediaLookup.FindAsync(thumbnailIds, cancellationToken);
+            products = products
+                .Select(p => p.ThumbnailMediaId is { } id && media.TryGetValue(id, out var info) && info.IsActive
+                    ? p with { ThumbnailUrl = info.Url }
+                    : p)
+                .ToList();
+        }
 
         var salesMenus = await _db.SalesMenus.AsNoTracking()
             .Where(m => m.IsActive)

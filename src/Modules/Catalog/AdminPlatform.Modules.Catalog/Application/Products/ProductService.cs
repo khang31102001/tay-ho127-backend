@@ -1,4 +1,5 @@
 using AdminPlatform.Common.Pagination;
+using AdminPlatform.Modules.Catalog.Application.Ports;
 using AdminPlatform.Modules.Catalog.Domain;
 using AdminPlatform.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +10,13 @@ public sealed class ProductService : IProductService
 {
     private readonly ICatalogDbContext _db;
     private readonly IProductContentSanitizer _sanitizer;
+    private readonly ICatalogMediaLookup _mediaLookup;
 
-    public ProductService(ICatalogDbContext db, IProductContentSanitizer sanitizer)
+    public ProductService(ICatalogDbContext db, IProductContentSanitizer sanitizer, ICatalogMediaLookup mediaLookup)
     {
         _db = db;
         _sanitizer = sanitizer;
+        _mediaLookup = mediaLookup;
     }
 
     public async Task<PagedResult<ProductResponse>> ListAsync(PagedRequest request, Guid? categoryId, bool? isActive, CancellationToken cancellationToken)
@@ -41,7 +44,7 @@ public sealed class ProductService : IProductService
         // Projected so the rich-text Content column is never read for a list (only the editor needs it).
         // Links come from a split query: a single JOIN would multiply every product row by
         // (images × modifier groups) before paging.
-        return await query
+        var page = await query
             .Select(p => new ProductResponse(
                 p.Id,
                 p.Name,
@@ -58,35 +61,54 @@ public sealed class ProductService : IProductService
                 p.Media.OrderBy(m => m.SortOrder).Select(m => m.MediaId).ToList(),
                 p.ModifierGroups.OrderBy(g => g.SortOrder).Select(g => g.ModifierGroupId).ToList(),
                 p.CreatedAtUtc,
-                p.UpdatedAtUtc))
+                p.UpdatedAtUtc,
+                p.ThumbnailMediaId,
+                null))
             .AsSplitQuery()
             .ToPagedResultAsync(request, cancellationToken);
+
+        // URL ảnh đại diện lấy từ module Media (một truy vấn cho cả trang), không lưu trong catalog.
+        var thumbnailIds = page.Items.Select(p => p.ThumbnailMediaId).OfType<Guid>().Distinct().ToList();
+        if (thumbnailIds.Count == 0)
+        {
+            return page;
+        }
+
+        var media = await _mediaLookup.FindAsync(thumbnailIds, cancellationToken);
+        var items = page.Items
+            .Select(p => p.ThumbnailMediaId is { } id && media.TryGetValue(id, out var info) ? p with { ThumbnailUrl = info.Url } : p)
+            .ToList();
+        return new PagedResult<ProductResponse>(items, page.Page, page.PageSize, page.TotalItems);
     }
 
     public async Task<ProductResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return ToResponse(await FindOrThrowAsync(id, cancellationToken));
+        return await ToResponseAsync(await FindOrThrowAsync(id, cancellationToken), cancellationToken);
     }
 
     public async Task<ProductResponse> CreateAsync(CreateProductRequest request, CancellationToken cancellationToken)
     {
         await EnsureReferencesExistAsync(request.CategoryId, request.ModifierGroupIds, cancellationToken);
+        await EnsureMediaExistsAsync(request.ThumbnailMediaId, request.MediaIds, new HashSet<string>(), null, cancellationToken);
         var slug = await ResolveSlugAsync(request.Slug, request.Name, productId: null, cancellationToken);
 
         var product = Product.Create(request.Name, slug, request.CategoryId, ToDetails(request.Price, request.OldPrice,
             request.Description, request.Content, request.IsActive, request.Badge, request.Rating, request.RatingCount));
+        product.SetThumbnail(request.ThumbnailMediaId);
         product.ReplaceMedia(request.MediaIds ?? []);
         product.ReplaceModifierGroups(request.ModifierGroupIds ?? []);
 
         _db.Products.Add(product);
         await _db.SaveChangesAsync(cancellationToken);
-        return ToResponse(product);
+        return await ToResponseAsync(product, cancellationToken);
     }
 
     public async Task<ProductResponse> UpdateAsync(Guid id, UpdateProductRequest request, CancellationToken cancellationToken)
     {
         var product = await FindOrThrowAsync(id, cancellationToken);
         await EnsureReferencesExistAsync(request.CategoryId, request.ModifierGroupIds, cancellationToken);
+        await EnsureMediaExistsAsync(request.ThumbnailMediaId, request.MediaIds,
+            product.Media.Select(m => m.MediaId).ToHashSet(StringComparer.OrdinalIgnoreCase), product.ThumbnailMediaId, cancellationToken);
         // A blank slug keeps the current one: renaming a product must not silently change its public URL.
         var slug = string.IsNullOrWhiteSpace(request.Slug)
             ? product.Slug
@@ -97,11 +119,12 @@ public sealed class ProductService : IProductService
         var content = request.Content is null ? product.Content : request.Content;
         product.Update(request.Name, slug, request.CategoryId, ToDetails(request.Price, request.OldPrice,
             request.Description, content, request.IsActive, request.Badge, request.Rating, request.RatingCount));
+        product.SetThumbnail(request.ThumbnailMediaId);
         product.ReplaceMedia(request.MediaIds ?? []);
         product.ReplaceModifierGroups(request.ModifierGroupIds ?? []);
 
         await _db.SaveChangesAsync(cancellationToken);
-        return ToResponse(product);
+        return await ToResponseAsync(product, cancellationToken);
     }
 
     /// <summary>Hard delete. Image/modifier links and the product's places on sales menus go with it
@@ -130,6 +153,60 @@ public sealed class ProductService : IProductService
         if (existingCount != requestedGroupIds.Count)
         {
             throw new BusinessRuleValidationException("One or more modifier groups do not exist.");
+        }
+    }
+
+    /// <summary>Không cho lưu liên kết tới media không tồn tại:
+    /// - Ảnh đại diện phải là media loại ảnh và đang hoạt động (giữ nguyên ảnh cũ đã bị ẩn thì vẫn cho).
+    /// - Id dạng GUID trong danh sách ảnh phải có trong Media và là ảnh; media đã ẩn chỉ được giữ nếu đã liên kết sẵn.
+    /// - Key dạng chữ (ảnh mẫu đóng gói cùng website, vd. "media-banh-cuon-dish") không nằm trong bảng Media, Site tự
+    ///   tra — giữ nguyên hành vi cũ, không kiểm tra ở đây.</summary>
+    private async Task EnsureMediaExistsAsync(Guid? thumbnailMediaId, IReadOnlyList<string>? mediaIds,
+        IReadOnlySet<string> currentMediaIds, Guid? currentThumbnailId, CancellationToken cancellationToken)
+    {
+        var galleryIds = (mediaIds ?? []).Select(id => id.Trim()).Where(id => id.Length > 0).Distinct().ToList();
+        var guidIds = new List<Guid>();
+        foreach (var id in galleryIds)
+        {
+            if (Guid.TryParse(id, out var guid))
+            {
+                guidIds.Add(guid);
+            }
+        }
+
+        var thumbnail = thumbnailMediaId is { } thumbId && thumbId != Guid.Empty ? thumbId : (Guid?)null;
+        var lookupIds = thumbnail is { } t ? guidIds.Append(t).Distinct().ToList() : guidIds;
+        if (lookupIds.Count == 0)
+        {
+            return;
+        }
+
+        var media = await _mediaLookup.FindAsync(lookupIds, cancellationToken);
+
+        if (thumbnail is { } thumbnailId)
+        {
+            if (!media.TryGetValue(thumbnailId, out var info) || !info.IsImage)
+            {
+                throw new BusinessRuleValidationException("The thumbnail media does not exist or is not an image.");
+            }
+
+            if (!info.IsActive && thumbnailId != currentThumbnailId)
+            {
+                throw new BusinessRuleValidationException("The thumbnail media is inactive.");
+            }
+        }
+
+        foreach (var id in guidIds)
+        {
+            if (!media.TryGetValue(id, out var info) || !info.IsImage)
+            {
+                throw new BusinessRuleValidationException($"Media '{id}' does not exist or is not an image.");
+            }
+
+            if (!info.IsActive && !currentMediaIds.Contains(id.ToString()))
+            {
+                throw new BusinessRuleValidationException($"Media '{id}' is inactive.");
+            }
         }
     }
 
@@ -191,6 +268,18 @@ public sealed class ProductService : IProductService
             .AsSplitQuery()
             .SingleOrDefaultAsync(p => p.Id == id, cancellationToken)
             ?? throw new NotFoundException(nameof(Product), id);
+
+    private async Task<ProductResponse> ToResponseAsync(Product product, CancellationToken cancellationToken)
+    {
+        string? thumbnailUrl = null;
+        if (product.ThumbnailMediaId is { } thumbnailId)
+        {
+            var media = await _mediaLookup.FindAsync([thumbnailId], cancellationToken);
+            thumbnailUrl = media.TryGetValue(thumbnailId, out var info) ? info.Url : null;
+        }
+
+        return ToResponse(product) with { ThumbnailMediaId = product.ThumbnailMediaId, ThumbnailUrl = thumbnailUrl };
+    }
 
     private static ProductResponse ToResponse(Product product) => new(
         product.Id,

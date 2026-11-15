@@ -28,6 +28,11 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Badge).HasMaxLength(64);
         builder.Property(p => p.Rating).HasPrecision(3, 1);
 
+        // FK tới media.media(id) được tạo bằng SQL trong migration AddProductThumbnailMedia (Media là
+        // module khác, không có entity trong CatalogDbContext). Ở đây chỉ khai báo cột + index.
+        builder.Property(p => p.ThumbnailMediaId).HasColumnName("thumbnail_media_id");
+        builder.HasIndex(p => p.ThumbnailMediaId);
+
         builder.HasOne<Category>()
             .WithMany()
             .HasForeignKey(p => p.CategoryId)
