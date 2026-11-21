@@ -13,6 +13,7 @@ public interface IContentDbContext
     DbSet<Banner> Banners { get; }
     DbSet<Page> Pages { get; }
     DbSet<PageSection> PageSections { get; }
+    DbSet<BannerSectionLink> BannerSectionLinks { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

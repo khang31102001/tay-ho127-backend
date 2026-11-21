@@ -58,7 +58,7 @@ public class MediaServiceTests
         var storage = new InMemoryFileStorage();
         var sut = NewService(NewDb(), storage);
 
-        var created = await sut.UploadAsync(PngFile(), "Alt", null, "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), "Alt", null, null, "https://api.example.com", CancellationToken.None);
 
         Assert.Equal("Image", created.Type);
         Assert.Equal("photo.png", created.FileName);
@@ -73,7 +73,7 @@ public class MediaServiceTests
     {
         var sut = NewService(NewDb(), options: new MediaStorageOptions { PublicBaseUrl = "https://cdn.example.com/" });
 
-        var created = await sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), null, null, null, "https://api.example.com", CancellationToken.None);
 
         Assert.StartsWith("https://cdn.example.com/uploads/", created.Url);
     }
@@ -93,7 +93,7 @@ public class MediaServiceTests
     {
         var sut = NewService(NewDb(), new AbsoluteUrlFileStorage(), new MediaStorageOptions { Provider = "Cloudinary", PublicBaseUrl = "https://api.example.com" });
 
-        var created = await sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), null, null, null, "https://api.example.com", CancellationToken.None);
 
         Assert.StartsWith("https://res.cloudinary.com/demo/image/upload/v1/tayho127/", created.Url);
     }
@@ -105,7 +105,7 @@ public class MediaServiceTests
         var cloud = new InMemoryFileStorage(MediaStorageProvider.Cloudinary);
         var sut = NewService(NewDb(), [local, cloud]);
 
-        var created = await sut.UploadAsync(PngFile(), null, "cloudinary", "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), null, "cloudinary", null, "https://api.example.com", CancellationToken.None);
 
         Assert.Equal("Cloudinary", created.Storage);
         Assert.Single(cloud.Files);
@@ -119,7 +119,7 @@ public class MediaServiceTests
         var s3 = new InMemoryFileStorage(MediaStorageProvider.S3);
         var sut = NewService(NewDb(), [local, s3], new MediaStorageOptions { Provider = "S3" });
 
-        var created = await sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), null, null, null, "https://api.example.com", CancellationToken.None);
 
         Assert.Equal("S3", created.Storage);
         Assert.Single(s3.Files);
@@ -133,7 +133,7 @@ public class MediaServiceTests
         var cloud = new InMemoryFileStorage(MediaStorageProvider.Cloudinary);
         var sut = NewService(NewDb(), [local, cloud], new MediaStorageOptions { Provider = "Cloudinary" });
 
-        var created = await sut.UploadAsync(PngFile(), null, " ", "https://api.example.com", CancellationToken.None);
+        var created = await sut.UploadAsync(PngFile(), null, " ", null, "https://api.example.com", CancellationToken.None);
 
         Assert.Equal("Cloudinary", created.Storage);
         Assert.Single(cloud.Files);
@@ -151,7 +151,7 @@ public class MediaServiceTests
         var sut = NewService(NewDb(), local);
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
-            () => sut.UploadAsync(PngFile(), null, storage, "https://api.example.com", CancellationToken.None));
+            () => sut.UploadAsync(PngFile(), null, storage, null, "https://api.example.com", CancellationToken.None));
         Assert.Empty(local.Files);
     }
 
@@ -187,13 +187,13 @@ public class MediaServiceTests
         var db = NewDb();
         var sut = NewService(db);
         await sut.CreateAsync(ValidCreateRequest(), CancellationToken.None);
-        var uploaded = await sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None);
+        var uploaded = await sut.UploadAsync(PngFile(), null, null, null, "https://api.example.com", CancellationToken.None);
 
-        var local = await sut.ListAsync(new PagedRequest(), null, null, "Local", CancellationToken.None);
+        var local = await sut.ListAsync(new PagedRequest(), null, null, "Local", null, CancellationToken.None);
 
         Assert.Equal(uploaded.Id, Assert.Single(local.Items).Id);
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
-            () => sut.ListAsync(new PagedRequest(), null, null, "Nowhere", CancellationToken.None));
+            () => sut.ListAsync(new PagedRequest(), null, null, "Nowhere", null, CancellationToken.None));
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public class MediaServiceTests
         var file = new MediaUploadFile(new MemoryStream(new byte[] { 1, 2, 3 }), "malware.exe", 3);
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
-            () => sut.UploadAsync(file, null, null, "https://api.example.com", CancellationToken.None));
+            () => sut.UploadAsync(file, null, null, null, "https://api.example.com", CancellationToken.None));
     }
 
     [Fact]
@@ -213,7 +213,7 @@ public class MediaServiceTests
         var file = new MediaUploadFile(new MemoryStream(new byte[] { 0x4D, 0x5A, 0x90, 0x00, 1, 2, 3, 4 }), "fake.png", 8);
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
-            () => sut.UploadAsync(file, null, null, "https://api.example.com", CancellationToken.None));
+            () => sut.UploadAsync(file, null, null, null, "https://api.example.com", CancellationToken.None));
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public class MediaServiceTests
         var sut = NewService(NewDb(), options: new MediaStorageOptions { MaxFileBytes = 16 });
 
         await Assert.ThrowsAsync<BusinessRuleValidationException>(
-            () => sut.UploadAsync(PngFile(), null, null, "https://api.example.com", CancellationToken.None));
+            () => sut.UploadAsync(PngFile(), null, null, null, "https://api.example.com", CancellationToken.None));
     }
 
     [Fact]
@@ -294,11 +294,11 @@ public class MediaServiceTests
         await sut.CreateAsync(ValidCreateRequest("clip.mp4") with { Type = "Video" }, CancellationToken.None);
         await sut.DeleteAsync(image.Id, CancellationToken.None);
 
-        var videos = await sut.ListAsync(new PagedRequest(), "Video", null, null, CancellationToken.None);
+        var videos = await sut.ListAsync(new PagedRequest(), "Video", null, null, null, CancellationToken.None);
         Assert.Single(videos.Items);
         Assert.Equal("Video", videos.Items[0].Type);
 
-        var active = await sut.ListAsync(new PagedRequest(), null, "Active", null, CancellationToken.None);
+        var active = await sut.ListAsync(new PagedRequest(), null, "Active", null, null, CancellationToken.None);
         Assert.DoesNotContain(active.Items, m => m.Id == image.Id);
     }
 

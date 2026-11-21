@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Content: banners are shown through banner sections of pages (many-to-many) instead of fixed placements. New section kind `banner`, table `content.banner_section_links` (migration `AddBannerSectionLinks`), `BannerPlacement.Sections` (`SECTIONS`, the default). `POST/PUT /content/banners` take `sectionIds` (null keeps, [] unlinks, a non-banner section is 400); `BannerResponse.sections` lists them; `GET /content/public/page-sections` returns the live `banners` of each banner section. Existing `HOME_PROMOTION` banners are linked to the home page `promotion` section (now a banner section); `HOME_HERO`/`MENU_HERO` become `SECTIONS` (never rendered by the site). `ARTICLE_BANNER` is unchanged. See document/04-nghiep-vu/de-xuat/QUAN-LY-BANNER-THEO-SECTION.md.
+
+- Media: media groups by where an image was added from (Products, Articles, Banners, Page sections, Brand, Customers, Payments, SEO, General) — table `media.media_categories` + nullable `media.media.category_id` (migration `AddMediaCategories`, fixed system rows). `POST /media/upload` takes a `category` code (default `general`; unknown code → 400), `POST/PUT /media` take `categoryCode`, `GET /media?category=<code>` filters, `GET /media/categories` lists groups, and `MediaResponse`/`PublicMediaResponse` return the category. Existing media stay uncategorized until the Migrator `seed` runs `MediaCategoryBackfill` (group by first usage, else General; never overwrites an existing group).
+
 - Media: permanent deletion to clean up storage. `GET /api/v1/media/{id}/usages` lists where a media is used;
   `POST /api/v1/media/purge` `{ ids }` (max 100) deletes the stored file (Local / S3 / Cloudinary; External = record
   only) and then the record, per id `deleted | inUse | notFound | failed`. Media still referenced anywhere is skipped

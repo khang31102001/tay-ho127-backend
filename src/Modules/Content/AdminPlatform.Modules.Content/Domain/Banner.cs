@@ -74,6 +74,9 @@ public sealed class Banner : AuditableEntity
         IsActive = details.IsActive;
     }
 
+    /// <summary>Marks the banner as shown through its section links (<see cref="BannerSectionLink"/>), not a fixed placement.</summary>
+    public void UseSections() => Placement = BannerPlacement.Sections;
+
     /// <summary>Live = switched on and inside the optional start/end window (both ends inclusive).</summary>
     public bool IsLiveAt(DateTime nowUtc) =>
         IsActive && (StartAtUtc is not { } start || nowUtc >= start) && (EndAtUtc is not { } end || nowUtc <= end);
