@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Media: media groups by where an image was added from (Products, Articles, Banners, Page sections, Brand, Customers, Payments, SEO, General) — table `media.media_categories` + nullable `media.media.category_id` (migration `AddMediaCategories`, fixed system rows). `POST /media/upload` takes a `category` code (default `general`; unknown code → 400), `POST/PUT /media` take `categoryCode`, `GET /media?category=<code>` filters, `GET /media/categories` lists groups, and `MediaResponse`/`PublicMediaResponse` return the category. Existing media stay uncategorized until the Migrator `seed` runs `MediaCategoryBackfill` (group by first usage, else General; never overwrites an existing group).
+
 - Media: permanent deletion to clean up storage. `GET /api/v1/media/{id}/usages` lists where a media is used;
   `POST /api/v1/media/purge` `{ ids }` (max 100) deletes the stored file (Local / S3 / Cloudinary; External = record
   only) and then the record, per id `deleted | inUse | notFound | failed`. Media still referenced anywhere is skipped

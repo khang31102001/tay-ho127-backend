@@ -35,6 +35,10 @@ namespace AdminPlatform.Modules.Media.Infrastructure.Migrations
                         .HasColumnType("character varying(512)")
                         .HasColumnName("alt_text");
 
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -94,6 +98,9 @@ namespace AdminPlatform.Modules.Media.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_media");
 
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_media_category_id");
+
                     b.HasIndex("Kind")
                         .HasDatabaseName("ix_media_kind");
 
@@ -104,6 +111,70 @@ namespace AdminPlatform.Modules.Media.Infrastructure.Migrations
                         .HasDatabaseName("ix_media_storage_provider");
 
                     b.ToTable("media", "media");
+                });
+
+            modelBuilder.Entity("AdminPlatform.Modules.Media.Domain.MediaCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_media_categories");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_media_categories_code");
+
+                    b.ToTable("media_categories", "media");
+                });
+
+            modelBuilder.Entity("AdminPlatform.Modules.Media.Domain.Media", b =>
+                {
+                    b.HasOne("AdminPlatform.Modules.Media.Domain.MediaCategory", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_media_media_categories_category_id");
                 });
 #pragma warning restore 612, 618
         }

@@ -220,6 +220,10 @@ static async Task SeedAsync(IServiceProvider services, ILogger logger)
     var integrationsCreated = await IntegrationSeeder.SeedAsync(services, cancellationToken);
     logger.LogInformation("{Count} integration connection(s) created.", integrationsCreated);
 
+    logger.LogInformation("Assigning media categories to existing media (only media without one)...");
+    var mediaCategorized = await MediaCategoryBackfill.RunAsync(services, cancellationToken);
+    logger.LogInformation("{Count} media categorized.", mediaCategorized);
+
     logger.LogInformation("Seed complete.");
 }
 

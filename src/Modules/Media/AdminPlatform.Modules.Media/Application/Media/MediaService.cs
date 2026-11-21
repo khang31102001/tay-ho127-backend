@@ -22,7 +22,7 @@ public sealed class MediaService : IMediaService
         _storageOptions = storageOptions.Value;
     }
 
-    public async Task<PagedResult<MediaResponse>> ListAsync(PagedRequest request, string? kind, string? status, string? storage, CancellationToken cancellationToken)
+    public async Task<PagedResult<MediaResponse>> ListAsync(PagedRequest request, string? kind, string? status, string? storage, string? category, CancellationToken cancellationToken)
     {
         var query = _db.Media.AsNoTracking().AsQueryable();
 
@@ -47,6 +47,12 @@ public sealed class MediaService : IMediaService
             query = query.Where(m => m.StorageProvider == parsedStorage);
         }
 
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            var categoryId = await ResolveCategoryIdAsync(category, cancellationToken);
+            query = query.Where(m => m.CategoryId == categoryId);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var pattern = $"%{request.Search}%";
@@ -60,27 +66,30 @@ public sealed class MediaService : IMediaService
         // turn into SQL — see FiscalYearService/SystemSettingService for the inline-Select pattern this
         // deviates from, justified by these two enum-valued columns.
         var pagedMedia = await query.ToPagedResultAsync(request, cancellationToken);
-        var items = pagedMedia.Items.Select(ToResponse).ToList();
+        var categories = await LoadCategoriesAsync(cancellationToken);
+        var items = pagedMedia.Items.Select(m => ToResponse(m, categories)).ToList();
         return new PagedResult<MediaResponse>(items, pagedMedia.Page, pagedMedia.PageSize, pagedMedia.TotalItems);
     }
 
     public async Task<MediaResponse> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var media = await FindOrThrowAsync(id, cancellationToken);
-        return ToResponse(media);
+        return ToResponse(media, await LoadCategoriesAsync(cancellationToken));
     }
 
     public async Task<MediaResponse> CreateAsync(CreateMediaRequest request, CancellationToken cancellationToken)
     {
-        var media = MediaEntity.Create(request.FileName, request.Url, ParseKind(request.Type), request.AltText, request.Size, MediaStorageProvider.External);
+        var categoryId = await ResolveNewMediaCategoryIdAsync(request.CategoryCode, cancellationToken);
+        var media = MediaEntity.Create(request.FileName, request.Url, ParseKind(request.Type), request.AltText, request.Size, MediaStorageProvider.External, categoryId);
         _db.Media.Add(media);
         await _db.SaveChangesAsync(cancellationToken);
-        return ToResponse(media);
+        return ToResponse(media, await LoadCategoriesAsync(cancellationToken));
     }
 
-    public async Task<MediaResponse> UploadAsync(MediaUploadFile file, string? altText, string? storage, string publicBaseUrl, CancellationToken cancellationToken)
+    public async Task<MediaResponse> UploadAsync(MediaUploadFile file, string? altText, string? storage, string? category, string publicBaseUrl, CancellationToken cancellationToken)
     {
         var fileStorage = ResolveUploadStorage(storage);
+        var categoryId = await ResolveNewMediaCategoryIdAsync(category, cancellationToken);
 
         if (file.Length <= 0)
         {
@@ -132,10 +141,10 @@ public sealed class MediaService : IMediaService
             url = $"{baseUrl.TrimEnd('/')}{location}";
         }
 
-        var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length), fileStorage.Provider);
+        var media = MediaEntity.Create(originalName, url, kind, altText, checked((int)file.Length), fileStorage.Provider, categoryId);
         _db.Media.Add(media);
         await _db.SaveChangesAsync(cancellationToken);
-        return ToResponse(media);
+        return ToResponse(media, await LoadCategoriesAsync(cancellationToken));
     }
 
     public IReadOnlyList<MediaStorageOptionResponse> GetStorageOptions()
@@ -150,8 +159,15 @@ public sealed class MediaService : IMediaService
     {
         var media = await FindOrThrowAsync(id, cancellationToken);
         media.UpdateMetadata(request.FileName, request.Url, ParseKind(request.Type), request.AltText);
+
+        // CategoryCode trống = giữ nhóm hiện tại.
+        if (!string.IsNullOrWhiteSpace(request.CategoryCode))
+        {
+            media.AssignCategory(await ResolveCategoryIdAsync(request.CategoryCode, cancellationToken));
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
-        return ToResponse(media);
+        return ToResponse(media, await LoadCategoriesAsync(cancellationToken));
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
@@ -161,6 +177,11 @@ public sealed class MediaService : IMediaService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<MediaCategoryResponse>> ListCategoriesAsync(CancellationToken cancellationToken) =>
+        (await _db.MediaCategories.AsNoTracking().OrderBy(c => c.SortOrder).ThenBy(c => c.Name).ToListAsync(cancellationToken))
+        .Select(c => new MediaCategoryResponse(c.Id, c.Code, c.Name, c.SortOrder))
+        .ToList();
+
     public async Task<PagedResult<PublicMediaResponse>> ListPublicAsync(PagedRequest request, CancellationToken cancellationToken)
     {
         var query = _db.Media.AsNoTracking()
@@ -168,10 +189,40 @@ public sealed class MediaService : IMediaService
             .OrderBy(m => m.CreatedAtUtc);
 
         var pagedMedia = await query.ToPagedResultAsync(request, cancellationToken);
+        var categories = await LoadCategoriesAsync(cancellationToken);
         var items = pagedMedia.Items
-            .Select(m => new PublicMediaResponse(m.Id, m.FileName, m.Url, m.Kind.ToString(), m.AltText))
+            .Select(m => new PublicMediaResponse(m.Id, m.FileName, m.Url, m.Kind.ToString(), m.AltText, FindCategory(m, categories)?.Code))
             .ToList();
         return new PagedResult<PublicMediaResponse>(items, pagedMedia.Page, pagedMedia.PageSize, pagedMedia.TotalItems);
+    }
+
+    private async Task<Dictionary<Guid, MediaCategory>> LoadCategoriesAsync(CancellationToken cancellationToken) =>
+        await _db.MediaCategories.AsNoTracking().ToDictionaryAsync(c => c.Id, cancellationToken);
+
+    /// <summary>Nhóm cho media mới: code trống → nhóm Chung (nếu dữ liệu hệ thống thiếu thì để chưa phân nhóm, không chặn upload).</summary>
+    private async Task<Guid?> ResolveNewMediaCategoryIdAsync(string? code, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(code))
+        {
+            return await ResolveCategoryIdAsync(code, cancellationToken);
+        }
+
+        return await _db.MediaCategories.AsNoTracking()
+            .Where(c => c.Code == MediaCategoryCodes.General)
+            .Select(c => (Guid?)c.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>Code nhóm → id; code lạ là lỗi 400 (không âm thầm bỏ nhóm).</summary>
+    private async Task<Guid> ResolveCategoryIdAsync(string code, CancellationToken cancellationToken)
+    {
+        var normalized = code.Trim().ToLowerInvariant();
+        var id = await _db.MediaCategories.AsNoTracking()
+            .Where(c => c.Code == normalized)
+            .Select(c => (Guid?)c.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        return id ?? throw new BusinessRuleValidationException($"'{code}' is not a valid media category.");
     }
 
     private async Task<MediaEntity> FindOrThrowAsync(Guid id, CancellationToken cancellationToken) =>
@@ -213,7 +264,7 @@ public sealed class MediaService : IMediaService
             ? parsed
             : throw new BusinessRuleValidationException($"'{status}' is not a valid status.");
 
-    private static MediaResponse ToResponse(MediaEntity media) => new(
+    private static MediaResponse ToResponse(MediaEntity media, IReadOnlyDictionary<Guid, MediaCategory> categories) => new(
         media.Id,
         media.FileName,
         media.Url,
@@ -223,5 +274,11 @@ public sealed class MediaService : IMediaService
         media.Status.ToString(),
         media.StorageProvider.ToString(),
         media.CreatedAtUtc,
-        media.UpdatedAtUtc);
+        media.UpdatedAtUtc,
+        media.CategoryId,
+        FindCategory(media, categories)?.Code,
+        FindCategory(media, categories)?.Name);
+
+    private static MediaCategory? FindCategory(MediaEntity media, IReadOnlyDictionary<Guid, MediaCategory> categories) =>
+        media.CategoryId is { } id && categories.TryGetValue(id, out var category) ? category : null;
 }

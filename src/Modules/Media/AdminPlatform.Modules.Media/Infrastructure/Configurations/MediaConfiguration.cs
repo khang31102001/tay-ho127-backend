@@ -1,3 +1,4 @@
+using AdminPlatform.Modules.Media.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MediaEntity = AdminPlatform.Modules.Media.Domain.Media;
@@ -25,5 +26,9 @@ internal sealed class MediaConfiguration : IEntityTypeConfiguration<MediaEntity>
         builder.HasIndex(m => m.Kind);
         builder.HasIndex(m => m.Status);
         builder.HasIndex(m => m.StorageProvider);
+
+        // Nhóm nghiệp vụ (nơi thêm vào). Xóa nhóm thì media về "chưa phân nhóm" chứ không bị xóa theo.
+        builder.HasOne<MediaCategory>().WithMany().HasForeignKey(m => m.CategoryId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(m => m.CategoryId);
     }
 }
