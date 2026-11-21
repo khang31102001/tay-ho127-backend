@@ -20,12 +20,15 @@ public sealed class Media : AuditableEntity
 
     public MediaStorageProvider StorageProvider { get; private set; } = MediaStorageProvider.External;
 
+    /// <summary>Nhóm nghiệp vụ = nơi media được thêm vào (xem <see cref="MediaCategory"/>). Null = chưa phân nhóm (dữ liệu cũ).</summary>
+    public Guid? CategoryId { get; private set; }
+
     private Media()
     {
         // EF Core
     }
 
-    public static Media Create(string fileName, string url, MediaKind kind, string? altText, int size, MediaStorageProvider storageProvider)
+    public static Media Create(string fileName, string url, MediaKind kind, string? altText, int size, MediaStorageProvider storageProvider, Guid? categoryId = null)
     {
         if (size < 0)
         {
@@ -42,6 +45,7 @@ public sealed class Media : AuditableEntity
             Size = size,
             Status = MediaStatus.Active,
             StorageProvider = storageProvider,
+            CategoryId = categoryId,
         };
     }
 
@@ -60,6 +64,8 @@ public sealed class Media : AuditableEntity
         Kind = kind;
         AltText = NormalizeAltText(altText);
     }
+
+    public void AssignCategory(Guid? categoryId) => CategoryId = categoryId;
 
     public void Activate() => Status = MediaStatus.Active;
 

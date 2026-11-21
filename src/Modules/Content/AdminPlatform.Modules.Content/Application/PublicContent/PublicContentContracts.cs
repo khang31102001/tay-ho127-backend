@@ -64,7 +64,8 @@ public sealed record PublicBannerResponse(
 public sealed record PublicPageResponse(Guid Id, string Name, string Slug, string? PageKey = null);
 
 /// <summary>A visible section of a published page (no admin-only fields). SectionKind is the wire name, e.g. "story";
-/// SectionKey is the website slot it fills (null for a free section). Body is plain text.</summary>
+/// SectionKey is the website slot it fills (null for a free section). Body is plain text. Banners is set for a banner
+/// section only: the banners linked to it that are live right now, by display order.</summary>
 public sealed record PublicPageSectionResponse(
     Guid Id,
     string? SectionKey,
@@ -77,4 +78,5 @@ public sealed record PublicPageSectionResponse(
     string? CtaLabel,
     string? CtaUrl,
     int DisplayOrder,
-    PageSectionSettingsResponse? Settings);
+    PageSectionSettingsResponse? Settings,
+    IReadOnlyList<PublicBannerResponse>? Banners = null);

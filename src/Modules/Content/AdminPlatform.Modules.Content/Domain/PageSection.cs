@@ -85,6 +85,9 @@ public sealed class PageSection : AuditableEntity
     /// <summary>Moves the section without touching its content (admin drag-and-drop ordering).</summary>
     public void MoveTo(int displayOrder) => DisplayOrder = displayOrder;
 
+    /// <summary>Turns a legacy promotion section into a banner section (its banners come from <see cref="BannerSectionLink"/>).</summary>
+    public void ConvertToBannerKind() => Kind = SectionKind.Banner;
+
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 

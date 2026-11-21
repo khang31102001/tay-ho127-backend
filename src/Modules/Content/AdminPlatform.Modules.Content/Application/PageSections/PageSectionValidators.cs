@@ -21,7 +21,7 @@ internal static class PageSectionRules
         validator.RuleFor(x => sectionKey(x)).Must(key => PageSection.IsValidKey(string.IsNullOrWhiteSpace(key) ? null : key.Trim()))
             .WithMessage($"SectionKey must be lowercase words joined by hyphens, at most {PageSection.MaxKeyLength} characters.");
         validator.RuleFor(x => sectionKind(x)).Must(value => ContentWireFormat.TryParseSectionKind(value, out _))
-            .WithMessage("SectionKind must be hero, introduction, promotion, highlight, testimonial, cta, story, award, stats, timeline, faq or core.");
+            .WithMessage("SectionKind must be hero, introduction, promotion, highlight, testimonial, cta, story, award, stats, timeline, faq, core or banner.");
         validator.RuleFor(x => eyebrow(x)).MaximumLength(PageSection.MaxTextLength);
         validator.RuleFor(x => heading(x)).MaximumLength(PageSection.MaxTextLength);
         validator.RuleFor(x => subheading(x)).MaximumLength(PageSection.MaxTextLength);

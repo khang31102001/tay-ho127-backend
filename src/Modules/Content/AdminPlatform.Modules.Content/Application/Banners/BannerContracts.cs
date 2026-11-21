@@ -2,7 +2,9 @@ using AdminPlatform.Modules.Content.Domain;
 
 namespace AdminPlatform.Modules.Content.Application.Banners;
 
-/// <summary>Placement: "HOME_HERO" | "HOME_PROMOTION" | "MENU_HERO" | "ARTICLE_BANNER" (case-insensitive).
+/// <summary>Placement: "SECTIONS" (shown in the banner sections listed in SectionIds) | "ARTICLE_BANNER" | the legacy "HOME_HERO" |
+/// "HOME_PROMOTION" | "MENU_HERO" (case-insensitive). SectionIds = the banner sections (PageSection of kind banner) the banner is
+/// shown in; omitted or null keeps the current links on update, an empty list unlinks it everywhere.
 /// StartAt/EndAt are optional UTC instants (no bound = unlimited). CtaUrl must be a site path or an http(s) URL.</summary>
 public sealed record CreateBannerRequest(
     string Name,
@@ -17,7 +19,8 @@ public sealed record CreateBannerRequest(
     DateTime? StartAt,
     DateTime? EndAt,
     int DisplayOrder,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<Guid>? SectionIds = null);
 
 public sealed record UpdateBannerRequest(
     string Name,
@@ -32,7 +35,8 @@ public sealed record UpdateBannerRequest(
     DateTime? StartAt,
     DateTime? EndAt,
     int DisplayOrder,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<Guid>? SectionIds = null);
 
 public sealed record BannerResponse(
     Guid Id,
@@ -50,7 +54,11 @@ public sealed record BannerResponse(
     int DisplayOrder,
     bool IsActive,
     DateTime CreatedAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    IReadOnlyList<BannerSectionRef>? Sections = null);
+
+/// <summary>A banner section a banner is shown in: the page it belongs to and a readable label of the section.</summary>
+public sealed record BannerSectionRef(Guid SectionId, Guid PageId, string PageName, string SectionLabel);
 
 /// <summary>Maps <see cref="BannerPlacement"/> to/from the SCREAMING_SNAKE names used on the wire.</summary>
 public static class BannerWireFormat
@@ -61,6 +69,7 @@ public static class BannerWireFormat
         BannerPlacement.HomePromotion => "HOME_PROMOTION",
         BannerPlacement.MenuHero => "MENU_HERO",
         BannerPlacement.ArticleBanner => "ARTICLE_BANNER",
+        BannerPlacement.Sections => "SECTIONS",
         _ => throw new ArgumentOutOfRangeException(nameof(placement), placement, null),
     };
 

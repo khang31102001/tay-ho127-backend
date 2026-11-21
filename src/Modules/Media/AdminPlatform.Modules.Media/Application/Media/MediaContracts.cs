@@ -9,13 +9,15 @@ public sealed record CreateMediaRequest(
     string Url,
     string Type,
     string? AltText,
-    int Size);
+    int Size,
+    string? CategoryCode = null);
 
 public sealed record UpdateMediaRequest(
     string FileName,
     string Url,
     string Type,
-    string? AltText);
+    string? AltText,
+    string? CategoryCode = null);
 
 public sealed record MediaResponse(
     Guid Id,
@@ -27,7 +29,13 @@ public sealed record MediaResponse(
     string Status,
     string Storage,
     DateTime CreatedAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    Guid? CategoryId = null,
+    string? CategoryCode = null,
+    string? CategoryName = null);
+
+/// <summary>Nhóm nghiệp vụ của kho ảnh (nơi media được thêm vào). Code cố định, dùng để lọc và khi upload.</summary>
+public sealed record MediaCategoryResponse(Guid Id, string Code, string Name, int SortOrder);
 
 /// <summary>Một nơi lưu Admin có thể chọn khi upload. Code = tên MediaStorageProvider ("Local", "Cloudinary");
 /// IsAvailable = false khi server chưa cấu hình (vd. thiếu khóa Cloudinary).</summary>
@@ -40,7 +48,8 @@ public sealed record PublicMediaResponse(
     string FileName,
     string Url,
     string Type,
-    string? AltText);
+    string? AltText,
+    string? CategoryCode = null);
 
 /// <summary>File được client upload, tách khỏi IFormFile để Application không phụ thuộc vào lớp web.</summary>
 public sealed record MediaUploadFile(Stream Content, string FileName, long Length);

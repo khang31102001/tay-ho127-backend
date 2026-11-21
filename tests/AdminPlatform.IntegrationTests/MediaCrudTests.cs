@@ -121,4 +121,27 @@ public class MediaCrudTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Media_categories_are_seeded_and_new_media_can_be_grouped_and_filtered()
+    {
+        using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
+
+        var categories = (await client.GetFromJsonAsync<List<MediaCategoryResponse>>("/api/v1/media/categories"))!;
+        Assert.Contains(categories, c => c.Code == "products");
+        Assert.Contains(categories, c => c.Code == "general");
+
+        var url = $"https://cdn.integration.test/{Guid.NewGuid():n}.png";
+        var created = await client.PostAsJsonAsync("/api/v1/media", new CreateMediaRequest("grouped.png", url, "image", null, 1, "products"));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var media = (await created.Content.ReadFromJsonAsync<MediaResponse>())!;
+        Assert.Equal("products", media.CategoryCode);
+
+        var page = await client.GetFromJsonAsync<PagedResultDto<MediaResponse>>("/api/v1/media?page=1&pageSize=100&category=products");
+        Assert.Contains(page!.Items, m => m.Id == media.Id);
+        Assert.All(page.Items, m => Assert.Equal("products", m.CategoryCode));
+
+        var bad = await client.PostAsJsonAsync("/api/v1/media", new CreateMediaRequest("x.png", url + "x", "image", null, 1, "nowhere"));
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+    }
 }

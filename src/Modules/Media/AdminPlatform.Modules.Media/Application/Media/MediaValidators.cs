@@ -11,6 +11,7 @@ public sealed class CreateMediaRequestValidator : AbstractValidator<CreateMediaR
         RuleFor(x => x.Url).NotEmpty().MaximumLength(2048);
         RuleFor(x => x.Type).NotEmpty().IsEnumName(typeof(MediaKind), caseSensitive: false);
         RuleFor(x => x.AltText).MaximumLength(512);
+        RuleFor(x => x.CategoryCode).MaximumLength(MediaCategory.MaxCodeLength);
         RuleFor(x => x.Size).GreaterThanOrEqualTo(0);
     }
 }
@@ -23,5 +24,6 @@ public sealed class UpdateMediaRequestValidator : AbstractValidator<UpdateMediaR
         RuleFor(x => x.Url).NotEmpty().MaximumLength(2048);
         RuleFor(x => x.Type).NotEmpty().IsEnumName(typeof(MediaKind), caseSensitive: false);
         RuleFor(x => x.AltText).MaximumLength(512);
+        RuleFor(x => x.CategoryCode).MaximumLength(MediaCategory.MaxCodeLength);
     }
 }

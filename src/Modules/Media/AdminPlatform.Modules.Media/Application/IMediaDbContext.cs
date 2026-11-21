@@ -8,5 +8,7 @@ public interface IMediaDbContext
 {
     DbSet<Domain.Media> Media { get; }
 
+    DbSet<Domain.MediaCategory> MediaCategories { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
