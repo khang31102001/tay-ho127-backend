@@ -6,6 +6,9 @@ namespace AdminPlatform.Modules.Content.Domain;
 /// Story is the homepage brand story block (heading, paragraphs, main image + gallery, CTA).
 /// Award is the homepage award card (heading, text, main image, badge as the first gallery image, optional CTA).
 /// Stats, Timeline and Faq carry their rows in <see cref="PageSectionSettings.Items"/>.
+/// Banner is a container of banners: the banners linked to it (<see cref="BannerSectionLink"/>) are shown in order
+/// (one image, or a carousel when there are several); the section only holds its position, optional heading and
+/// visibility.
 /// Core is a page's main content rendered from another module (menu grid, article list…): the section only holds
 /// its position and optional heading.</summary>
 public enum SectionKind
@@ -22,4 +25,5 @@ public enum SectionKind
     Timeline,
     Faq,
     Core,
+    Banner,
 }

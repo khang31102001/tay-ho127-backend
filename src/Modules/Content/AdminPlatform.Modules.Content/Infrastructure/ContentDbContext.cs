@@ -14,6 +14,7 @@ public sealed class ContentDbContext : DbContext, IContentDbContext
     public DbSet<Banner> Banners => Set<Banner>();
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<PageSection> PageSections => Set<PageSection>();
+    public DbSet<BannerSectionLink> BannerSectionLinks => Set<BannerSectionLink>();
 
     public ContentDbContext(DbContextOptions<ContentDbContext> options) : base(options)
     {

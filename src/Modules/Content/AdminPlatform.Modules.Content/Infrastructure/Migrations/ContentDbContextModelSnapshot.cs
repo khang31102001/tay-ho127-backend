@@ -362,6 +362,25 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                     b.ToTable("banners", "content");
                 });
 
+            modelBuilder.Entity("AdminPlatform.Modules.Content.Domain.BannerSectionLink", b =>
+                {
+                    b.Property<Guid>("BannerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("banner_id");
+
+                    b.Property<Guid>("PageSectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("page_section_id");
+
+                    b.HasKey("BannerId", "PageSectionId")
+                        .HasName("pk_banner_section_links");
+
+                    b.HasIndex("PageSectionId")
+                        .HasDatabaseName("ix_banner_section_links_page_section_id");
+
+                    b.ToTable("banner_section_links", "content");
+                });
+
             modelBuilder.Entity("AdminPlatform.Modules.Content.Domain.Page", b =>
                 {
                     b.Property<Guid>("Id")
@@ -577,6 +596,23 @@ namespace AdminPlatform.Modules.Content.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_article_tag_links_article_tags_tag_id");
+                });
+
+            modelBuilder.Entity("AdminPlatform.Modules.Content.Domain.BannerSectionLink", b =>
+                {
+                    b.HasOne("AdminPlatform.Modules.Content.Domain.Banner", null)
+                        .WithMany()
+                        .HasForeignKey("BannerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_banner_section_links_banners_banner_id");
+
+                    b.HasOne("AdminPlatform.Modules.Content.Domain.PageSection", null)
+                        .WithMany()
+                        .HasForeignKey("PageSectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_banner_section_links_page_sections_page_section_id");
                 });
 
             modelBuilder.Entity("AdminPlatform.Modules.Content.Domain.PageSection", b =>

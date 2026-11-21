@@ -1,7 +1,7 @@
 namespace AdminPlatform.Modules.Content.Application.PageSections;
 
 /// <summary>SectionKind: "hero" | "introduction" | "promotion" | "highlight" | "testimonial" | "cta" | "story" | "award" |
-/// "stats" | "timeline" | "faq" | "core" (case-insensitive).
+/// "stats" | "timeline" | "faq" | "core" | "banner" (case-insensitive).
 /// Body is plain text. CtaUrl must be a site path or an http(s) URL. Settings is optional: omitted or null clears it.
 /// SectionKey is the website slot the section fills ("hero", "signature-dish"), unique per page; omitted or null = a
 /// free section.</summary>

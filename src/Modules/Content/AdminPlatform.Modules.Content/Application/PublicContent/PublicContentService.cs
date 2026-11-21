@@ -121,10 +121,43 @@ public sealed partial class PublicContentService : IPublicContentService
             .OrderBy(s => s.DisplayOrder).ThenBy(s => s.CreatedAtUtc)
             .ToListAsync(cancellationToken);
 
+        var bannersBySection = await LoadLiveBannersAsync(
+            sections.Where(s => s.Kind == SectionKind.Banner).Select(s => s.Id).ToList(), cancellationToken);
+
         return sections
             .Select(s => new PublicPageSectionResponse(s.Id, s.SectionKey, ContentWireFormat.ToWire(s.Kind), s.Eyebrow, s.Heading, s.Subheading,
-                s.Body, s.MediaId, s.CtaLabel, s.CtaUrl, s.DisplayOrder, PageSectionService.ToSettingsResponse(s.Settings)))
+                s.Body, s.MediaId, s.CtaLabel, s.CtaUrl, s.DisplayOrder, PageSectionService.ToSettingsResponse(s.Settings),
+                s.Kind == SectionKind.Banner ? bannersBySection.GetValueOrDefault(s.Id) ?? [] : null))
             .ToList();
+    }
+
+    /// <summary>Live banners (active and inside their window) of each given banner section, by display order — one query for all sections.</summary>
+    private async Task<Dictionary<Guid, IReadOnlyList<PublicBannerResponse>>> LoadLiveBannersAsync(
+        IReadOnlyCollection<Guid> sectionIds, CancellationToken cancellationToken)
+    {
+        if (sectionIds.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await (from link in _db.BannerSectionLinks.AsNoTracking()
+                          join banner in _db.Banners.AsNoTracking() on link.BannerId equals banner.Id
+                          where sectionIds.Contains(link.PageSectionId) && banner.IsActive
+                          orderby banner.DisplayOrder, banner.Name
+                          select new { link.PageSectionId, Banner = banner })
+            .ToListAsync(cancellationToken);
+
+        var nowUtc = DateTime.UtcNow;
+        return rows
+            .Where(r => r.Banner.IsLiveAt(nowUtc))
+            .GroupBy(r => r.PageSectionId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<PublicBannerResponse>)g
+                    .Select(r => new PublicBannerResponse(r.Banner.Id, r.Banner.Name, r.Banner.DesktopMediaId, r.Banner.MobileMediaId,
+                        r.Banner.AltText, r.Banner.Heading, r.Banner.Subheading, r.Banner.CtaLabel, r.Banner.CtaUrl,
+                        BannerWireFormat.ToWire(r.Banner.Placement), r.Banner.DisplayOrder))
+                    .ToList());
     }
 
     public async Task<IReadOnlyList<PublicBannerResponse>> ListBannersAsync(string? placement, CancellationToken cancellationToken)

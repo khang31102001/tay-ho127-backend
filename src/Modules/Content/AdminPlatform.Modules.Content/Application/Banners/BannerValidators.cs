@@ -28,7 +28,7 @@ internal static class BannerRules
         validator.RuleFor(x => ctaLabel(x)).MaximumLength(Banner.MaxTextLength);
         validator.RuleFor(x => ctaUrl(x)).MaximumLength(Banner.MaxUrlLength);
         validator.RuleFor(x => placement(x)).Must(value => BannerWireFormat.TryParsePlacement(value, out _))
-            .WithMessage("Placement must be HOME_HERO, HOME_PROMOTION, MENU_HERO or ARTICLE_BANNER.");
+            .WithMessage("Placement must be SECTIONS, ARTICLE_BANNER, HOME_HERO, HOME_PROMOTION or MENU_HERO.");
     }
 }
 

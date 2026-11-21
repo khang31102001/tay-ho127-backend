@@ -29,7 +29,8 @@ public static class ContentSeeder
         var seededBanners = await SeedBannersAsync(db, seed, cancellationToken);
         var seededPages = await SeedPagesAsync(db, seed, cancellationToken);
         var seededSlots = await SeedMissingSlotsAsync(db, seed, cancellationToken);
-        return seededArticles || seededBanners || seededPages || seededSlots;
+        var linkedBanners = await LinkLegacyPromotionBannersAsync(db, cancellationToken);
+        return seededArticles || seededBanners || seededPages || seededSlots || linkedBanners;
     }
 
     private static async Task<bool> SeedArticlesAsync(IContentDbContext db, ContentSeed seed, CancellationToken cancellationToken)
@@ -184,6 +185,37 @@ public static class ContentSeeder
         }
 
         return hasChanges;
+    }
+
+    /// <summary>Banners still on the legacy HOME_PROMOTION placement (the seed's, or created before banner sections existed on a
+    /// database the migration did not reach) are linked to the home page's "promotion" section, which becomes a banner section;
+    /// the banner then uses its section links. Idempotent: a banner that was already moved is not touched.</summary>
+    private static async Task<bool> LinkLegacyPromotionBannersAsync(IContentDbContext db, CancellationToken cancellationToken)
+    {
+        var legacy = await db.Banners.Where(b => b.Placement == BannerPlacement.HomePromotion).ToListAsync(cancellationToken);
+        if (legacy.Count == 0)
+        {
+            return false;
+        }
+
+        var section = await (from s in db.PageSections
+                             join p in db.Pages on s.PageId equals p.Id
+                             where p.PageKey == "home" && s.SectionKey == "promotion"
+                             select s).FirstOrDefaultAsync(cancellationToken);
+        if (section is null)
+        {
+            return false;
+        }
+
+        section.ConvertToBannerKind();
+        foreach (var banner in legacy)
+        {
+            db.BannerSectionLinks.Add(BannerSectionLink.Create(banner.Id, section.Id));
+            banner.UseSections();
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private static PageSection ToSection(Guid pageId, SeedPageSection seedSection)
