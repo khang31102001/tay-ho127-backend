@@ -36,6 +36,7 @@ public static class CatalogModule
         });
         services.AddScoped<ICatalogDbContext>(sp => sp.GetRequiredService<CatalogDbContext>());
         services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Catalog.Application.Products.CatalogMediaUsageSource>();
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageDetacher, AdminPlatform.Modules.Catalog.Application.Products.CatalogMediaUsageSource>();
 
         // Thread-safe configured whitelist, so one instance serves all requests.
         services.AddSingleton<IProductContentSanitizer, ProductContentSanitizer>();

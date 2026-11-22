@@ -5,7 +5,7 @@ namespace AdminPlatform.Modules.Sales.Application;
 
 /// <summary>Phương thức thanh toán dùng media ở icon. Ảnh trong đơn hàng cũ (bản chụp lúc đặt) KHÔNG chặn xóa —
 /// đơn cũ chỉ hiện ảnh mặc định — nên không tra ở đây.</summary>
-public sealed class SalesMediaUsageSource : IMediaUsageSource
+public sealed class SalesMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private readonly ISalesDbContext _db;
 
@@ -31,5 +31,17 @@ public sealed class SalesMediaUsageSource : IMediaUsageSource
         return methods
             .Select(m => new MediaUsage(byIdText[m.IconMediaId!], "Phương thức thanh toán", m.Id.ToString(), m.Name, "Icon"))
             .ToList();
+    }
+
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        await _db.PaymentMethods.Where(m => m.IconMediaId != null && idTexts.Contains(m.IconMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.IconMediaId, (string?)null), cancellationToken);
     }
 }

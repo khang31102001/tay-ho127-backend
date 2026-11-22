@@ -53,16 +53,21 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task A_category_with_children_or_products_cannot_be_deleted()
+    public async Task Deleting_a_category_moves_children_up_and_leaves_products_uncategorized()
     {
         var db = NewDb();
         var categories = new CategoryService(db);
         var group = await categories.CreateAsync(new CreateCategoryRequest("Món ăn", null, 1, true), None);
         var leaf = await categories.CreateAsync(new CreateCategoryRequest("Bánh cuốn", group.Id, 1, true), None);
-        await new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup()).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
+        var product = await new ProductService(db, new ProductContentSanitizer(), new FakeCatalogMediaLookup()).CreateAsync(ProductRequest("Bánh cuốn thịt", leaf.Id), None);
 
-        await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(group.Id, None));
-        await Assert.ThrowsAsync<ConflictException>(() => categories.DeleteAsync(leaf.Id, None));
+        Assert.Equal(new CategoryDeleteImpactResponse(1, 0), await categories.GetDeleteImpactAsync(group.Id, None));
+        await categories.DeleteAsync(group.Id, None);
+        Assert.Null((await categories.GetByIdAsync(leaf.Id, None)).ParentId);
+
+        Assert.Equal(new CategoryDeleteImpactResponse(0, 1), await categories.GetDeleteImpactAsync(leaf.Id, None));
+        await categories.DeleteAsync(leaf.Id, None);
+        Assert.Null((await db.Products.AsNoTracking().SingleAsync(p => p.Id == product.Id)).CategoryId);
     }
 
     [Fact]

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AdminPlatform.Modules.Seo.Application;
 
 /// <summary>SEO dùng media ở ảnh OG/Twitter của từng trang và ảnh OG mặc định của site.</summary>
-public sealed class SeoMediaUsageSource : IMediaUsageSource
+public sealed class SeoMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private readonly ISeoDbContext _db;
 
@@ -50,5 +50,21 @@ public sealed class SeoMediaUsageSource : IMediaUsageSource
         usages.AddRange(settings.Select(s => new MediaUsage(byIdText[s.DefaultOgImageMediaId!], "SEO", s.Id.ToString(), "Cài đặt SEO", "Ảnh OG mặc định")));
 
         return usages;
+    }
+
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        await _db.SeoMetadata.Where(m => m.OgImageMediaId != null && idTexts.Contains(m.OgImageMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.OgImageMediaId, (string?)null), cancellationToken);
+        await _db.SeoMetadata.Where(m => m.TwitterImageMediaId != null && idTexts.Contains(m.TwitterImageMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(m => m.TwitterImageMediaId, (string?)null), cancellationToken);
+        await _db.SeoSettings.Where(x => x.DefaultOgImageMediaId != null && idTexts.Contains(x.DefaultOgImageMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.DefaultOgImageMediaId, (string?)null), cancellationToken);
     }
 }

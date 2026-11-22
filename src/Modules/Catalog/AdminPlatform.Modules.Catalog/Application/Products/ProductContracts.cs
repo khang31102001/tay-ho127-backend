@@ -42,7 +42,7 @@ public sealed record ProductResponse(
     Guid Id,
     string Name,
     string Slug,
-    Guid CategoryId,
+    Guid? CategoryId,
     decimal Price,
     decimal? OldPrice,
     string? Description,

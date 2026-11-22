@@ -180,7 +180,7 @@ namespace AdminPlatform.Modules.Catalog.Infrastructure.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("badge");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
@@ -614,8 +614,7 @@ namespace AdminPlatform.Modules.Catalog.Infrastructure.Migrations
                     b.HasOne("AdminPlatform.Modules.Catalog.Domain.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
+                        .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_products_categories_category_id");
                 });
 

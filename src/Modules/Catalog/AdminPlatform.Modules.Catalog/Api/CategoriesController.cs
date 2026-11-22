@@ -51,7 +51,14 @@ public sealed class CategoriesController : ControllerBase
         return Ok(await _categoryService.UpdateAsync(id, request, cancellationToken));
     }
 
-    /// <summary>409 while the category still has sub-categories or products.</summary>
+    /// <summary>Xem trước ảnh hưởng của việc xóa: bao nhiêu danh mục con dời lên, bao nhiêu sản phẩm thành "chưa phân loại".</summary>
+    [HttpGet("{id:guid}/delete-impact")]
+    [RequirePermission(CatalogPermissions.CategoriesDelete)]
+    [ProducesResponseType<CategoryDeleteImpactResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<CategoryDeleteImpactResponse>> GetDeleteImpact(Guid id, CancellationToken cancellationToken) =>
+        Ok(await _categoryService.GetDeleteImpactAsync(id, cancellationToken));
+
+    /// <summary>Always allowed: sub-categories move up one level and products become uncategorized.</summary>
     [HttpDelete("{id:guid}")]
     [RequirePermission(CatalogPermissions.CategoriesDelete)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

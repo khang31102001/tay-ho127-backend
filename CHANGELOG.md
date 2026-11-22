@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Delete rule "linked records detach instead of blocking" (phase 1: product categories + media).
+  Catalog: `catalog.products.category_id` is now nullable with FK ON DELETE SET NULL (migration `ProductCategoryNullable`).
+  `DELETE /catalog/categories/{id}` is never blocked any more: sub-categories move up one level, products become
+  uncategorized (`categoryId` null in `ProductResponse` / `PublicProductResponse`); saving a product still requires a category.
+  New `GET /catalog/categories/{id}/delete-impact` -> `{ childCount, productCount }` for the confirmation popup.
+  Media: `POST /media/purge` no longer skips media that is in use — each module's new `IMediaUsageDetacher` (Common port,
+  implemented next to `IMediaUsageSource` in Catalog, Content, Customer, Organization, Sales, Seo) clears the references
+  (null / removed from lists) after the stored file is deleted. Only references embedded in HTML (product description,
+  article content) cannot be detached, so those still return `inUse`. `MediaUsageResponse` gains `canDetach`; a `deleted`
+  result now lists the places it was detached from in `usages`.
+
 - Content: banners are shown through banner sections of pages (many-to-many) instead of fixed placements. New section kind `banner`, table `content.banner_section_links` (migration `AddBannerSectionLinks`), `BannerPlacement.Sections` (`SECTIONS`, the default). `POST/PUT /content/banners` take `sectionIds` (null keeps, [] unlinks, a non-banner section is 400); `BannerResponse.sections` lists them; `GET /content/public/page-sections` returns the live `banners` of each banner section. Existing `HOME_PROMOTION` banners are linked to the home page `promotion` section (now a banner section); `HOME_HERO`/`MENU_HERO` become `SECTIONS` (never rendered by the site). `ARTICLE_BANNER` is unchanged. See document/04-nghiep-vu/de-xuat/QUAN-LY-BANNER-THEO-SECTION.md.
 
 - Media: media groups by where an image was added from (Products, Articles, Banners, Page sections, Brand, Customers, Payments, SEO, General) — table `media.media_categories` + nullable `media.media.category_id` (migration `AddMediaCategories`, fixed system rows). `POST /media/upload` takes a `category` code (default `general`; unknown code → 400), `POST/PUT /media` take `categoryCode`, `GET /media?category=<code>` filters, `GET /media/categories` lists groups, and `MediaResponse`/`PublicMediaResponse` return the category. Existing media stay uncategorized until the Migrator `seed` runs `MediaCategoryBackfill` (group by first usage, else General; never overwrites an existing group).
