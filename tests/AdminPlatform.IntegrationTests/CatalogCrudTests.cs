@@ -70,12 +70,23 @@ public class CatalogCrudTests
         Assert.DoesNotContain(snapshot.Products, p => p.Id == product.Id);
         Assert.DoesNotContain(snapshot.SalesMenuProducts, mp => mp.Id == placement.Id);
 
-        // A category with sub-categories/products cannot be deleted; deleting the product cascades its placement.
-        Assert.Equal(HttpStatusCode.Conflict, (await client.DeleteAsync($"/api/v1/catalog/categories/{group.Id}")).StatusCode);
+        // Deleting a category is never blocked: sub-categories move up one level, products become uncategorized.
+        var groupImpact = (await client.GetFromJsonAsync<CategoryDeleteImpactResponse>($"/api/v1/catalog/categories/{group.Id}/delete-impact"))!;
+        Assert.Equal(1, groupImpact.ChildCount);
+        Assert.Equal(0, groupImpact.ProductCount);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/categories/{group.Id}")).StatusCode);
+        var movedLeaf = (await client.GetFromJsonAsync<CategoryResponse>($"/api/v1/catalog/categories/{leaf.Id}"))!;
+        Assert.Null(movedLeaf.ParentId);
+
+        var leafImpact = (await client.GetFromJsonAsync<CategoryDeleteImpactResponse>($"/api/v1/catalog/categories/{leaf.Id}/delete-impact"))!;
+        Assert.Equal(1, leafImpact.ProductCount);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/categories/{leaf.Id}")).StatusCode);
+        var orphan = (await client.GetFromJsonAsync<ProductResponse>($"/api/v1/catalog/products/{product.Id}"))!;
+        Assert.Null(orphan.CategoryId);
+
+        // Deleting the product cascades its placement.
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/products/{product.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/v1/catalog/sales-menu-products/{placement.Id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/categories/{leaf.Id}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/categories/{group.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/sales-menus/{menu.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/v1/catalog/modifier-groups/{modifierGroup.Id}")).StatusCode);
     }

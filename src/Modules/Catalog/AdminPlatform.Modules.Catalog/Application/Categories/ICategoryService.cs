@@ -12,5 +12,8 @@ public interface ICategoryService
 
     Task<CategoryResponse> UpdateAsync(Guid id, UpdateCategoryRequest request, CancellationToken cancellationToken);
 
+    /// <summary>Số danh mục con và sản phẩm sẽ bị ảnh hưởng nếu xóa danh mục (để Admin xem trước khi xác nhận).</summary>
+    Task<CategoryDeleteImpactResponse> GetDeleteImpactAsync(Guid id, CancellationToken cancellationToken);
+
     Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

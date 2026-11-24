@@ -18,7 +18,8 @@ public sealed class Product : AuditableEntity
 
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
-    public Guid CategoryId { get; private set; }
+    /// <summary>Null = chưa phân loại (danh mục của sản phẩm đã bị xóa). Lưu/sửa sản phẩm vẫn bắt buộc chọn danh mục.</summary>
+    public Guid? CategoryId { get; private set; }
     public decimal Price { get; private set; }
 
     /// <summary>Pre-discount price shown struck through next to <see cref="Price"/>.</summary>
@@ -95,11 +96,17 @@ public sealed class Product : AuditableEntity
         RatingCount = details.RatingCount;
     }
 
+    /// <summary>Danh mục bị xóa: sản phẩm không bị chặn mà chuyển sang "chưa phân loại".</summary>
+    public void ClearCategory() => CategoryId = null;
+
     public void SetThumbnail(Guid? mediaId) =>
         ThumbnailMediaId = mediaId == Guid.Empty ? null : mediaId;
 
     /// <summary>Replaces the ordered image list. Links still present keep their row (only the sort order
     /// changes), so EF never deletes and re-inserts the same composite key in one save.</summary>
+    /// <summary>Media bị xóa vĩnh viễn: bỏ khỏi danh sách ảnh, các ảnh còn lại giữ nguyên thứ tự.</summary>
+    public void RemoveMedia(IReadOnlyCollection<string> mediaIds) => _media.RemoveAll(link => mediaIds.Contains(link.MediaId));
+
     public void ReplaceMedia(IReadOnlyList<string> mediaIds)
     {
         var orderedIds = mediaIds.Select(id => id.Trim()).Where(id => id.Length > 0).Distinct().ToList();

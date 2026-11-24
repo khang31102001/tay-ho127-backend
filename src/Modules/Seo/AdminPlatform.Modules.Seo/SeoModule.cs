@@ -32,6 +32,7 @@ public static class SeoModule
         });
         services.AddScoped<ISeoDbContext>(sp => sp.GetRequiredService<SeoDbContext>());
         services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Seo.Application.SeoMediaUsageSource>();
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageDetacher, AdminPlatform.Modules.Seo.Application.SeoMediaUsageSource>();
 
         services.AddScoped<ISeoSettingsService, SeoSettingsService>();
         services.AddScoped<ISeoMetadataService, SeoMetadataService>();

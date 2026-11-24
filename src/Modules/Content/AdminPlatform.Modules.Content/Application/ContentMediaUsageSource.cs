@@ -5,7 +5,7 @@ namespace AdminPlatform.Modules.Content.Application;
 
 /// <summary>Nội dung dùng media ở: ảnh bài viết + ảnh chèn trong nội dung bài, banner (desktop/mobile),
 /// section trang (ảnh chính, gallery và ảnh từng item trong settings).</summary>
-public sealed class ContentMediaUsageSource : IMediaUsageSource
+public sealed class ContentMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private readonly IContentDbContext _db;
 
@@ -37,7 +37,7 @@ public sealed class ContentMediaUsageSource : IMediaUsageSource
                 .Where(a => a.Content.Contains(target.Url))
                 .Select(a => new { a.Id, a.Title })
                 .ToListAsync(cancellationToken);
-            usages.AddRange(inContent.Select(a => new MediaUsage(target.MediaId, "Bài viết", a.Id.ToString(), a.Title, "Nội dung bài")));
+            usages.AddRange(inContent.Select(a => new MediaUsage(target.MediaId, "Bài viết", a.Id.ToString(), a.Title, "Nội dung bài", CanDetach: false)));
         }
 
         var banners = await _db.Banners.AsNoTracking()
@@ -90,5 +90,31 @@ public sealed class ContentMediaUsageSource : IMediaUsageSource
         }
 
         return usages;
+    }
+
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        await _db.Articles.Where(a => a.FeaturedMediaId != null && idTexts.Contains(a.FeaturedMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(a => a.FeaturedMediaId, (string?)null), cancellationToken);
+        await _db.Banners.Where(b => b.DesktopMediaId != null && idTexts.Contains(b.DesktopMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.DesktopMediaId, (string?)null), cancellationToken);
+        await _db.Banners.Where(b => b.MobileMediaId != null && idTexts.Contains(b.MobileMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.MobileMediaId, (string?)null), cancellationToken);
+
+        // Settings là JSON (gallery + item): bảng section nhỏ nên tải về và sửa trong bộ nhớ.
+        var idSet = idTexts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sections = await _db.PageSections.ToListAsync(cancellationToken);
+        foreach (var section in sections)
+        {
+            section.RemoveMedia(idSet);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

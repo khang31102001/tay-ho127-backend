@@ -78,18 +78,30 @@ public sealed class CategoryService : ICategoryService
         return ToResponse(category);
     }
 
+    public async Task<CategoryDeleteImpactResponse> GetDeleteImpactAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await FindOrThrowAsync(id, cancellationToken);
+        var childCount = await _db.Categories.CountAsync(c => c.ParentId == id, cancellationToken);
+        var productCount = await _db.Products.CountAsync(p => p.CategoryId == id, cancellationToken);
+        return new CategoryDeleteImpactResponse(childCount, productCount);
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var category = await FindOrThrowAsync(id, cancellationToken);
 
-        if (await _db.Categories.AnyAsync(c => c.ParentId == id, cancellationToken))
+        // Quy tắc xóa: không chặn vì còn liên kết. Danh mục con dời lên cấp của danh mục bị xóa (cùng cha),
+        // sản phẩm chuyển sang "chưa phân loại" (CategoryId = null). Tất cả lưu trong một SaveChanges.
+        var children = await _db.Categories.Where(c => c.ParentId == id).ToListAsync(cancellationToken);
+        foreach (var child in children)
         {
-            throw new ConflictException("The category has sub-categories. Move or delete them first.");
+            child.Update(child.Name, category.ParentId, child.SortOrder, child.IsActive);
         }
 
-        if (await _db.Products.AnyAsync(p => p.CategoryId == id, cancellationToken))
+        var products = await _db.Products.Where(p => p.CategoryId == id).ToListAsync(cancellationToken);
+        foreach (var product in products)
         {
-            throw new ConflictException("The category still has products. Move or delete them first.");
+            product.ClearCategory();
         }
 
         _db.Categories.Remove(category);

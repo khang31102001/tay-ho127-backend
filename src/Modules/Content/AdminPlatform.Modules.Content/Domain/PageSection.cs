@@ -82,6 +82,33 @@ public sealed class PageSection : AuditableEntity
         Settings = details.Settings;
     }
 
+    /// <summary>Media bị xóa vĩnh viễn: bỏ ảnh chính, ảnh trong gallery và ảnh của từng dòng; dòng chỉ còn mỗi ảnh thì bỏ luôn.</summary>
+    public void RemoveMedia(IReadOnlySet<string> mediaIds)
+    {
+        if (MediaId is { } mainId && mediaIds.Contains(mainId))
+        {
+            MediaId = null;
+        }
+
+        if (Settings is not { } settings)
+        {
+            return;
+        }
+
+        var gallery = settings.GalleryMediaIds.Where(id => !mediaIds.Contains(id)).ToList();
+        var hasRemovedItemMedia = settings.Items.Any(item => item.MediaId is { } id && mediaIds.Contains(id));
+        if (gallery.Count == settings.GalleryMediaIds.Count && !hasRemovedItemMedia)
+        {
+            return;
+        }
+
+        var items = settings.Items
+            .Select(item => item.MediaId is { } id && mediaIds.Contains(id) ? item with { MediaId = null } : item)
+            .Where(item => item is not { Label: null, Title: null, Text: null, MediaId: null, Url: null })
+            .ToList();
+        Settings = gallery.Count == 0 && items.Count == 0 ? null : settings with { GalleryMediaIds = gallery, Items = items };
+    }
+
     /// <summary>Moves the section without touching its content (admin drag-and-drop ordering).</summary>
     public void MoveTo(int displayOrder) => DisplayOrder = displayOrder;
 

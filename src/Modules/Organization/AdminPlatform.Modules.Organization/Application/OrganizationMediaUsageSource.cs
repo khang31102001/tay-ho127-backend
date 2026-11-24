@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AdminPlatform.Modules.Organization.Application;
 
 /// <summary>Thông tin thương hiệu dùng media ở logo (thường/tối/sáng), favicon và ảnh chia sẻ (OG).</summary>
-public sealed class OrganizationMediaUsageSource : IMediaUsageSource
+public sealed class OrganizationMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private readonly IOrganizationDbContext _db;
 
@@ -50,5 +50,25 @@ public sealed class OrganizationMediaUsageSource : IMediaUsageSource
         }
 
         return usages;
+    }
+
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        await _db.BrandProfiles.Where(b => b.LogoMediaId != null && idTexts.Contains(b.LogoMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.LogoMediaId, (string?)null), cancellationToken);
+        await _db.BrandProfiles.Where(b => b.LogoDarkMediaId != null && idTexts.Contains(b.LogoDarkMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.LogoDarkMediaId, (string?)null), cancellationToken);
+        await _db.BrandProfiles.Where(b => b.LogoLightMediaId != null && idTexts.Contains(b.LogoLightMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.LogoLightMediaId, (string?)null), cancellationToken);
+        await _db.BrandProfiles.Where(b => b.FaviconMediaId != null && idTexts.Contains(b.FaviconMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.FaviconMediaId, (string?)null), cancellationToken);
+        await _db.BrandProfiles.Where(b => b.OgImageMediaId != null && idTexts.Contains(b.OgImageMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.OgImageMediaId, (string?)null), cancellationToken);
     }
 }

@@ -38,6 +38,7 @@ public static class SalesModule
         });
         services.AddScoped<ISalesDbContext>(sp => sp.GetRequiredService<SalesDbContext>());
         services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageSource, AdminPlatform.Modules.Sales.Application.SalesMediaUsageSource>();
+        services.AddScoped<AdminPlatform.Common.Abstractions.IMediaUsageDetacher, AdminPlatform.Modules.Sales.Application.SalesMediaUsageSource>();
 
         services.AddScoped<IDeliveryMethodService, DeliveryMethodService>();
         services.AddScoped<IPaymentMethodService, PaymentMethodService>();

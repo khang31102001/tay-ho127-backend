@@ -50,6 +50,24 @@ public class MediaPurgeServiceTests
                 .ToList());
     }
 
+    /// <summary>Source giả lập cả việc dùng (có thể không gỡ được) lẫn việc tự gỡ.</summary>
+    private sealed class FixedUsageSourceAndDetacher(bool canDetach, params Guid[] usedIds) : IMediaUsageSource, IMediaUsageDetacher
+    {
+        public List<Guid> Detached { get; } = [];
+
+        public Task<IReadOnlyList<MediaUsage>> FindUsagesAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<MediaUsage>>(targets
+                .Where(t => usedIds.Contains(t.MediaId))
+                .Select(t => new MediaUsage(t.MediaId, "Sản phẩm", "p-1", "Bánh cuốn", "Ảnh đại diện", canDetach))
+                .ToList());
+
+        public Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+        {
+            Detached.AddRange(targets.Select(t => t.MediaId));
+            return Task.CompletedTask;
+        }
+    }
+
     private static async Task<MediaEntity> AddAsync(IMediaDbContext db, MediaStorageProvider provider, string name = "a.png")
     {
         var media = MediaEntity.Create(name, $"https://tayho127.test/uploads/{Guid.NewGuid():N}.png", MediaKind.Image, null, 10, provider);
@@ -59,7 +77,7 @@ public class MediaPurgeServiceTests
     }
 
     private static MediaPurgeService NewService(IMediaDbContext db, IFileStorage storage, params IMediaUsageSource[] sources) =>
-        new(db, [storage], sources, NullLogger<MediaPurgeService>.Instance);
+        new(db, [storage], sources, sources.OfType<IMediaUsageDetacher>().ToList(), NullLogger<MediaPurgeService>.Instance);
 
     [Fact]
     public async Task Unused_media_is_deleted_from_storage_and_database()
@@ -77,19 +95,37 @@ public class MediaPurgeServiceTests
     }
 
     [Fact]
-    public async Task Media_in_use_is_skipped_with_its_usages()
+    public async Task Media_in_use_is_detached_from_its_usages_then_deleted()
     {
         var db = NewDb();
         var storage = new RecordingStorage(MediaStorageProvider.Local);
         var used = await AddAsync(db, MediaStorageProvider.Local, "used.png");
         var free = await AddAsync(db, MediaStorageProvider.Local, "free.png");
+        var module = new FixedUsageSourceAndDetacher(canDetach: true, used.Id);
 
-        var response = await NewService(db, storage, new FixedUsageSource(used.Id)).PurgeAsync(new PurgeMediaRequest([used.Id, free.Id]), None);
+        var response = await NewService(db, storage, module).PurgeAsync(new PurgeMediaRequest([used.Id, free.Id]), None);
 
-        Assert.Equal(1, response.DeletedCount);
-        var skipped = response.Results.Single(r => r.Id == used.Id);
+        Assert.Equal(2, response.DeletedCount);
+        var deleted = response.Results.Single(r => r.Id == used.Id);
+        Assert.Equal(PurgeMediaStatus.Deleted, deleted.Status);
+        Assert.Equal("Ảnh đại diện", Assert.Single(deleted.Usages).Field);
+        Assert.Contains(used.Id, module.Detached);
+        Assert.False(await db.Media.AnyAsync(m => m.Id == used.Id));
+    }
+
+    [Fact]
+    public async Task Media_embedded_in_html_cannot_be_detached_so_it_stays()
+    {
+        var db = NewDb();
+        var storage = new RecordingStorage(MediaStorageProvider.Local);
+        var used = await AddAsync(db, MediaStorageProvider.Local, "used.png");
+        var module = new FixedUsageSourceAndDetacher(canDetach: false, used.Id);
+
+        var response = await NewService(db, storage, module).PurgeAsync(new PurgeMediaRequest([used.Id]), None);
+
+        var skipped = Assert.Single(response.Results);
         Assert.Equal(PurgeMediaStatus.InUse, skipped.Status);
-        Assert.Equal("Ảnh đại diện", Assert.Single(skipped.Usages).Field);
+        Assert.Empty(module.Detached);
         Assert.True(await db.Media.AnyAsync(m => m.Id == used.Id));
         Assert.DoesNotContain(used.Url, storage.DeletedUrls);
     }
