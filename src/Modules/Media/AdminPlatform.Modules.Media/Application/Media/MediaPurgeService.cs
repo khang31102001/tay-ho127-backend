@@ -14,13 +14,14 @@ public interface IMediaPurgeService
     /// <summary>Những nơi còn dùng media (ở mọi module đã đăng ký <see cref="IMediaUsageSource"/>).</summary>
     Task<IReadOnlyList<MediaUsageResponse>> GetUsagesAsync(Guid id, CancellationToken cancellationToken);
 
-    /// <summary>Xóa file trên nơi lưu rồi xóa bản ghi, từng media một. Media đang được dùng thì bỏ qua (inUse).</summary>
+    /// <summary>Xóa file trên nơi lưu rồi xóa bản ghi, từng media một. Nơi đang dùng media được tự gỡ tham chiếu; chỉ khi còn
+    /// tham chiếu không gỡ được (ảnh chèn trong HTML) thì bỏ qua (inUse).</summary>
     Task<PurgeMediaResponse> PurgeAsync(PurgeMediaRequest request, CancellationToken cancellationToken);
 }
 
 public sealed record PurgeMediaRequest(IReadOnlyList<Guid> Ids);
 
-public sealed record MediaUsageResponse(string Module, string EntityId, string EntityName, string Field);
+public sealed record MediaUsageResponse(string Module, string EntityId, string EntityName, string Field, bool CanDetach = true);
 
 /// <param name="Status">deleted | inUse | notFound | failed.</param>
 public sealed record PurgeMediaResult(Guid Id, string Status, string? FileName, string? Message, IReadOnlyList<MediaUsageResponse> Usages);
@@ -51,17 +52,20 @@ public sealed class MediaPurgeService : IMediaPurgeService
     private readonly IMediaDbContext _db;
     private readonly IReadOnlyDictionary<MediaStorageProvider, IFileStorage> _fileStorages;
     private readonly IReadOnlyList<IMediaUsageSource> _usageSources;
+    private readonly IReadOnlyList<IMediaUsageDetacher> _usageDetachers;
     private readonly ILogger<MediaPurgeService> _logger;
 
     public MediaPurgeService(
         IMediaDbContext db,
         IEnumerable<IFileStorage> fileStorages,
         IEnumerable<IMediaUsageSource> usageSources,
+        IEnumerable<IMediaUsageDetacher> usageDetachers,
         ILogger<MediaPurgeService> logger)
     {
         _db = db;
         _fileStorages = fileStorages.ToDictionary(s => s.Provider);
         _usageSources = usageSources.ToList();
+        _usageDetachers = usageDetachers.ToList();
         _logger = logger;
     }
 
@@ -89,14 +93,16 @@ public sealed class MediaPurgeService : IMediaPurgeService
                 continue;
             }
 
-            if (usages.TryGetValue(id, out var mediaUsages) && mediaUsages.Count > 0)
+            var mediaUsages = usages.GetValueOrDefault(id) ?? [];
+            var blocking = mediaUsages.Where(u => !u.CanDetach).ToList();
+            if (blocking.Count > 0)
             {
                 results.Add(new PurgeMediaResult(id, PurgeMediaStatus.InUse, media.FileName,
-                    "Media đang được sử dụng, hãy gỡ khỏi các nơi bên dưới trước khi xóa vĩnh viễn.", mediaUsages));
+                    "Media đang được chèn trong nội dung (HTML) nên không tự gỡ được, hãy xóa ảnh khỏi nội dung ở các nơi bên dưới trước.", blocking));
                 continue;
             }
 
-            results.Add(await PurgeOneAsync(media, cancellationToken));
+            results.Add(await PurgeOneAsync(media, mediaUsages, cancellationToken));
         }
 
         return new PurgeMediaResponse(results.Count(r => r.Status == PurgeMediaStatus.Deleted), results);
@@ -104,7 +110,7 @@ public sealed class MediaPurgeService : IMediaPurgeService
 
     /// <summary>File trước, bản ghi sau: nơi lưu lỗi thì bản ghi còn nguyên để thử lại, không bao giờ để file mồ côi
     /// mà không còn dấu vết trong thư viện.</summary>
-    private async Task<PurgeMediaResult> PurgeOneAsync(MediaEntity media, CancellationToken cancellationToken)
+    private async Task<PurgeMediaResult> PurgeOneAsync(MediaEntity media, IReadOnlyList<MediaUsageResponse> detachedUsages, CancellationToken cancellationToken)
     {
         if (media.StorageProvider != MediaStorageProvider.External)
         {
@@ -124,10 +130,18 @@ public sealed class MediaPurgeService : IMediaPurgeService
             }
         }
 
+        // Quy tắc xóa: nơi đang dùng media tự nhả (đặt null / bỏ khỏi danh sách) thay vì chặn xóa.
+        var target = new[] { new MediaUsageTarget(media.Id, media.Url) };
+        foreach (var detacher in _usageDetachers)
+        {
+            await detacher.DetachAsync(target, cancellationToken);
+        }
+
         _db.Media.Remove(media);
         await _db.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Media {MediaId} ({FileName}, {Storage}) permanently deleted", media.Id, media.FileName, media.StorageProvider);
-        return new PurgeMediaResult(media.Id, PurgeMediaStatus.Deleted, media.FileName, null, []);
+        _logger.LogInformation("Media {MediaId} ({FileName}, {Storage}) permanently deleted; detached from {UsageCount} place(s)",
+            media.Id, media.FileName, media.StorageProvider, detachedUsages.Count);
+        return new PurgeMediaResult(media.Id, PurgeMediaStatus.Deleted, media.FileName, null, detachedUsages);
     }
 
     private static PurgeMediaResult Failed(MediaEntity media, string message) =>
@@ -151,7 +165,7 @@ public sealed class MediaPurgeService : IMediaPurgeService
                     result[usage.MediaId] = list = [];
                 }
 
-                var response = new MediaUsageResponse(usage.Module, usage.EntityId, usage.EntityName, usage.Field);
+                var response = new MediaUsageResponse(usage.Module, usage.EntityId, usage.EntityName, usage.Field, usage.CanDetach);
                 if (!list.Contains(response))
                 {
                     list.Add(response);

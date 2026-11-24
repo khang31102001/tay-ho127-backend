@@ -36,7 +36,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasOne<Category>()
             .WithMany()
             .HasForeignKey(p => p.CategoryId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(p => p.CategoryId);
 
         builder.HasMany(p => p.Media)

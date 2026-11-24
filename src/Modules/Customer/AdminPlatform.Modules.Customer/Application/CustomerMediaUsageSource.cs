@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AdminPlatform.Modules.Customer.Application;
 
 /// <summary>Khách hàng dùng media ở ảnh đại diện (avatar).</summary>
-public sealed class CustomerMediaUsageSource : IMediaUsageSource
+public sealed class CustomerMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private readonly ICustomerDbContext _db;
 
@@ -30,5 +30,17 @@ public sealed class CustomerMediaUsageSource : IMediaUsageSource
         return customers
             .Select(c => new MediaUsage(byIdText[c.AvatarMediaId!], "Khách hàng", c.Id.ToString(), c.FullName, "Ảnh đại diện"))
             .ToList();
+    }
+
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        await _db.Customers.Where(c => c.AvatarMediaId != null && idTexts.Contains(c.AvatarMediaId))
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.AvatarMediaId, (string?)null), cancellationToken);
     }
 }

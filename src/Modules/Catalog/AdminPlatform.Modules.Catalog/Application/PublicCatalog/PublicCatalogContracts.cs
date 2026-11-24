@@ -16,7 +16,7 @@ public sealed record PublicProductResponse(
     Guid Id,
     string Slug,
     string Name,
-    Guid CategoryId,
+    Guid? CategoryId,
     decimal Price,
     decimal? OldPrice,
     string? Description,

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AdminPlatform.Modules.Catalog.Application.Products;
 
 /// <summary>Sản phẩm dùng media ở: ảnh đại diện, danh sách ảnh, ảnh chèn trong mô tả chi tiết (HTML).</summary>
-public sealed class CatalogMediaUsageSource : IMediaUsageSource
+public sealed class CatalogMediaUsageSource : IMediaUsageSource, IMediaUsageDetacher
 {
     private const string ModuleName = "Sản phẩm";
 
@@ -43,9 +43,29 @@ public sealed class CatalogMediaUsageSource : IMediaUsageSource
                 .Where(p => p.Content != null && p.Content.Contains(target.Url))
                 .Select(p => new { p.Id, p.Name })
                 .ToListAsync(cancellationToken);
-            usages.AddRange(inContent.Select(p => new MediaUsage(target.MediaId, ModuleName, p.Id.ToString(), p.Name, "Mô tả chi tiết")));
+            usages.AddRange(inContent.Select(p => new MediaUsage(target.MediaId, ModuleName, p.Id.ToString(), p.Name, "Mô tả chi tiết", CanDetach: false)));
         }
 
         return usages;
+    }
+
+    /// <summary>Gỡ khỏi danh sách ảnh của sản phẩm. Ảnh đại diện tự về null nhờ khóa ngoại ON DELETE SET NULL.</summary>
+    public async Task DetachAsync(IReadOnlyCollection<MediaUsageTarget> targets, CancellationToken cancellationToken)
+    {
+        var idTexts = targets.Select(t => t.IdText).ToList();
+        if (idTexts.Count == 0)
+        {
+            return;
+        }
+
+        var products = await _db.Products.Include(p => p.Media)
+            .Where(p => p.Media.Any(m => idTexts.Contains(m.MediaId)))
+            .ToListAsync(cancellationToken);
+        foreach (var product in products)
+        {
+            product.RemoveMedia(idTexts);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

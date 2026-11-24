@@ -17,7 +17,7 @@ public class MediaPurgeTests
     }
 
     [Fact]
-    public async Task Media_used_by_a_product_cannot_be_purged_until_it_is_unlinked_then_file_and_record_are_gone()
+    public async Task Media_used_by_a_product_is_detached_from_it_then_file_and_record_are_gone()
     {
         using var client = await AuthTestHelper.CreateAdminClientAsync(_factory);
         var suffix = Guid.NewGuid().ToString("n")[..8];
@@ -37,24 +37,27 @@ public class MediaPurgeTests
         var product = await PostAsync<ProductResponse>(client, "/api/v1/catalog/products", new CreateProductRequest(
             $"Món {suffix}", null, leaf.Id, 10000, null, null, null, true, null, null, null, [media.Id.ToString()], [], media.Id));
 
-        // Đang là ảnh đại diện + ảnh trong danh sách → bị chặn, file và bản ghi còn nguyên.
+        // Đang là ảnh đại diện + ảnh trong danh sách → tra cứu thấy cả hai nơi dùng, và cả hai đều tự gỡ được.
         var usages = await client.GetFromJsonAsync<List<MediaUsageResponse>>($"/api/v1/media/{media.Id}/usages");
         Assert.Contains(usages!, u => u.EntityId == product.Id.ToString() && u.Field == "Ảnh đại diện");
         Assert.Contains(usages!, u => u.EntityId == product.Id.ToString() && u.Field == "Danh sách ảnh");
+        Assert.All(usages!, u => Assert.True(u.CanDetach));
 
-        var blocked = await PurgeAsync(client, media.Id);
-        Assert.Equal(0, blocked.DeletedCount);
-        Assert.Equal(PurgeMediaStatus.InUse, Assert.Single(blocked.Results).Status);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/v1/media/{media.Id}")).StatusCode);
-
-        // Gỡ khỏi sản phẩm rồi xóa vĩnh viễn: bản ghi và file đều mất.
-        Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync($"/api/v1/catalog/products/{product.Id}", new UpdateProductRequest(
-            product.Name, null, leaf.Id, 10000, null, null, null, true, null, null, null, [], [], null))).StatusCode);
-
+        // Quy tắc xóa: còn liên kết không chặn — xóa vĩnh viễn tự gỡ khỏi sản phẩm rồi xóa file và bản ghi,
+        // kết quả liệt kê các nơi đã gỡ.
         var purged = await PurgeAsync(client, media.Id);
         Assert.Equal(1, purged.DeletedCount);
+        var result = Assert.Single(purged.Results);
+        Assert.Equal(PurgeMediaStatus.Deleted, result.Status);
+        Assert.Contains(result.Usages, u => u.EntityId == product.Id.ToString() && u.Field == "Ảnh đại diện");
+        Assert.Contains(result.Usages, u => u.EntityId == product.Id.ToString() && u.Field == "Danh sách ảnh");
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/v1/media/{media.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(filePath)).StatusCode);
+
+        // Sản phẩm vẫn còn, chỉ mất tham chiếu tới ảnh đã xóa.
+        var afterPurge = await client.GetFromJsonAsync<ProductResponse>($"/api/v1/catalog/products/{product.Id}");
+        Assert.Null(afterPurge!.ThumbnailMediaId);
+        Assert.Empty(afterPurge.MediaIds);
 
         await client.DeleteAsync($"/api/v1/catalog/products/{product.Id}");
         await client.DeleteAsync($"/api/v1/catalog/categories/{leaf.Id}");
